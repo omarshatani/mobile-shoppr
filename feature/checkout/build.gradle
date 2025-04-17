@@ -1,0 +1,23 @@
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    namespace 'com.shoppr.checkout'
+    compileSdk 35
+    defaultConfig {
+        minSdk 24
+        targetSdk 35
+    }
+}
+
+dependencies {
+    implementation project(":core:ui")
+
+    androidTestImplementation(project(":app")){
+        exclude group: 'junit', module: 'junit'
+    }
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+}

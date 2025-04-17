@@ -1,0 +1,34 @@
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    namespace 'com.shoppr.login'
+    compileSdk 35
+    defaultConfig {
+        minSdk 24
+        targetSdk 35
+    }
+    buildFeatures {
+        viewBinding true
+    }
+}
+
+dependencies {
+    implementation libs.lifecycle.livedata.ktx
+    implementation libs.lifecycle.viewmodel.ktx
+    implementation libs.legacy.support.v4
+
+    implementation libs.navigation.fragment
+    implementation libs.navigation.ui
+    implementation libs.flexbox
+
+    implementation libs.firebase.ui.auth
+
+    androidTestImplementation(project(":app")){
+        exclude group: 'junit', module: 'junit'
+    }
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+}

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_nav_graph"
+    app:startDestination="@id/login_nav_graph">
+
+    <include
+        android:id="@+id/login_nav_graph"
+        app:graph="@navigation/login_nav_graph" />
+    <include
+        android:id="@+id/map_nav_graph"
+        app:graph="@navigation/map_nav_graph" />
+    <include
+        android:id="@+id/checkout_nav_graph"
+        app:graph="@navigation/checkout_nav_graph" />
+
+</navigation>

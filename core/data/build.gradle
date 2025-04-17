@@ -1,0 +1,28 @@
+plugins {
+    id 'com.android.library'
+    id 'com.google.gms.google-services'
+}
+
+android {
+    namespace 'com.shoppr.data'
+    compileSdk 35
+    defaultConfig {
+        minSdk 24
+        targetSdk 35
+    }
+}
+
+dependencies {
+    api project(":core:model")
+
+    implementation platform(libs.firebase.bom)
+    implementation libs.firebase.auth
+    implementation libs.firebase.firestore
+
+    androidTestImplementation(project(":app")){
+        exclude group: 'junit', module: 'junit'
+    }
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+}
