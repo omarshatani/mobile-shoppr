@@ -14,4 +14,26 @@
         android:id="@+id/checkout_nav_graph"
         app:graph="@navigation/checkout_nav_graph" />
 
+    <action
+        android:id="@+id/action_global_navigateToMap"
+        app:destination="@id/map_nav_graph"
+        app:popUpTo="@id/login_nav_graph"
+        app:popUpToInclusive="true" />
+
+    <action
+        android:id="@+id/action_global_navigateToCheckout"
+        app:destination="@id/checkout_nav_graph" />
+
+    <action
+        android:id="@+id/action_global_checkoutToMap"
+        app:destination="@id/map_nav_graph"
+        app:popUpTo="@id/checkout_nav_graph"
+        app:popUpToInclusive="true" />
+
+    <action
+        android:id="@+id/action_global_navigateToLogin"
+        app:destination="@id/login_nav_graph"
+        app:popUpTo="@id/main_nav_graph"
+        app:popUpToInclusive="true" />
+
 </navigation>

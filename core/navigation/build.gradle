@@ -1,0 +1,25 @@
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    namespace 'com.example.navigation'
+    compileSdk 35
+
+    defaultConfig {
+        minSdk 24
+        targetSdk 35
+    }
+}
+
+dependencies {
+    implementation libs.appcompat
+    implementation libs.material
+    androidTestImplementation(project(":app")) {
+        exclude group: 'junit', module: 'junit'
+    }
+
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+}

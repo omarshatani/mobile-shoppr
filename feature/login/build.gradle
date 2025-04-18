@@ -24,6 +24,7 @@ dependencies {
     implementation libs.flexbox
 
     implementation libs.firebase.ui.auth
+    implementation libs.play.services.auth
 
     androidTestImplementation(project(":app")){
         exclude group: 'junit', module: 'junit'
