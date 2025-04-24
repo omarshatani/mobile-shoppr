@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace 'com.example.navigation'
+    namespace 'com.shoppr.core.navigation'
     compileSdk 35
 
     defaultConfig {

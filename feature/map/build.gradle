@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.library'
     id "com.google.android.libraries.mapsplatform.secrets-gradle-plugin"
+    id 'com.google.dagger.hilt.android'
 }
 
 android {
@@ -29,12 +30,17 @@ secrets {
 }
 
 dependencies {
-    api project(":core:ui")
+    def hilt_version = "2.51.1"
+    implementation project(":core:ui")
+    implementation project(':core:navigation')
 
     implementation libs.play.services.maps
     implementation libs.appcompat
     implementation libs.navigation.fragment
     implementation libs.navigation.ui
+
+    implementation libs.hilt.android
+    annotationProcessor "com.google.dagger:hilt-compiler:$hilt_version"
 
     androidTestImplementation(project(":app")){
         exclude group: 'junit', module: 'junit'

@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace 'com.shoppr.model'
+    namespace 'com.shoppr.core.model'
     compileSdk 35
 
     defaultConfig {

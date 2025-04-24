@@ -1,9 +1,10 @@
 plugins {
     id 'com.android.library'
+    id 'com.google.dagger.hilt.android'
 }
 
 android {
-    namespace 'com.shoppr.ui'
+    namespace 'com.shoppr.core.ui'
     compileSdk 35
     defaultConfig {
         minSdk 24
@@ -12,6 +13,11 @@ android {
 }
 
 dependencies {
+    def hilt_version = "2.51.1"
+
+    implementation project(':core:domain')
+    implementation project(':core:navigation')
+
     implementation libs.material
     implementation libs.annotation
     implementation libs.lifecycle.livedata.ktx
@@ -24,6 +30,9 @@ dependencies {
 
     implementation libs.glide
     implementation libs.gson
+
+    implementation libs.hilt.android
+    annotationProcessor "com.google.dagger:hilt-compiler:$hilt_version"
 
     androidTestImplementation(project(":app")){
         exclude group: 'junit', module: 'junit'

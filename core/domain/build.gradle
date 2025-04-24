@@ -1,9 +1,10 @@
 plugins {
     id 'com.android.library'
+    id 'com.google.dagger.hilt.android'
 }
 
 android {
-    namespace 'com.shoppr.domain'
+    namespace 'com.shoppr.core.domain'
     compileSdk 35
     defaultConfig {
         minSdk 24
@@ -12,6 +13,13 @@ android {
 }
 
 dependencies {
+    def hilt_version = "2.51.1"
+
+    implementation project(":core:data")
+
+    implementation libs.hilt.android
+    annotationProcessor "com.google.dagger:hilt-compiler:$hilt_version"
+
     androidTestImplementation(project(":app")){
         exclude group: 'junit', module: 'junit'
     }
