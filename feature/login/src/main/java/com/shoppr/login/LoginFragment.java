@@ -11,6 +11,8 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -21,6 +23,7 @@ import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.shoppr.login.databinding.FragmentLoginBinding;
+import com.shoppr.ui.utils.InsetsUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -70,6 +73,11 @@ public class LoginFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(this).get(LoginViewModel.class);
+        // Apply insets
+        ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, windowInsets) -> {
+            InsetsUtils.applySystemBarInsetsAsPadding(view, windowInsets);
+            return WindowInsetsCompat.CONSUMED;
+        });
     }
 
     private void launchSignInFlow() {

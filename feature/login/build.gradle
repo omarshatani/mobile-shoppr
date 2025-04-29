@@ -18,6 +18,7 @@ android {
 dependencies {
     def hilt_version = "2.51.1"
     implementation project(':core:navigation')
+    implementation project(':core:ui')
 
     implementation libs.lifecycle.livedata.ktx
     implementation libs.lifecycle.viewmodel.ktx
