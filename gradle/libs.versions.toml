@@ -1,6 +1,7 @@
 [versions]
 agp = "8.8.2"
 firebaseBom = "33.12.0"
+firebaseBomVersion = "..."
 firebaseUiAuth = "9.0.0"
 flexbox = "3.0.0"
 glide = "4.16.0"
@@ -26,8 +27,10 @@ secretsGradlePlugin = "2.0.1"
 googleAndroidLibrariesMapsplatformSecretsGradlePlugin = "2.0.1"
 
 [libraries]
+com-google-firebase-firebase-auth = { module = "com.google.firebase:firebase-auth" }
 firebase-auth = { module = "com.google.firebase:firebase-auth" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-bom-vx = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBomVersion" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
 firebase-ui-auth = { module = "com.firebaseui:firebase-ui-auth", version.ref = "firebaseUiAuth" }
 flexbox = { module = "com.google.android.flexbox:flexbox", version.ref = "flexbox" }

@@ -1,6 +1,7 @@
 package com.shoppr.ui;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,12 +10,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewTreeLifecycleOwner;
 
 import com.shoppr.core.ui.R;
 import com.shoppr.domain.CheckInitialNavigationUseCase;
-import com.shoppr.navigation.NavigationRoute;
 import com.shoppr.navigation.Navigator;
+import com.shoppr.ui.utils.Event;
 
 import javax.inject.Inject;
 
@@ -25,15 +25,22 @@ public class SplashFragment extends Fragment {
     @Inject
     CheckInitialNavigationUseCase checkInitialNavigationUseCase;
     @Inject
-    Navigator appNavigator;
-    private SplashViewModel mViewModel;
-    // Flag to prevent multiple navigations
-    private boolean navigated = false;
+    Navigator navigator;
+    private static final String TAG = "SplashFragment";
+    private SplashViewModel viewModel;
 
     public static SplashFragment newInstance() {
         return new SplashFragment();
     }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        viewModel = new ViewModelProvider(this).get(SplashViewModel.class);
+
+    }
+
+    @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
@@ -43,43 +50,19 @@ public class SplashFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mViewModel = new ViewModelProvider(this).get(SplashViewModel.class);
-
-        // Use ViewTreeLifecycleOwner to observe lifecycle safely
-        ViewTreeLifecycleOwner.get(view).getLifecycle().addObserver(new androidx.lifecycle.DefaultLifecycleObserver() {
-            @Override
-            public void onStart(@NonNull androidx.lifecycle.LifecycleOwner owner) {
-                // Check auth state once the view is started and likely ready for navigation
-                if (!navigated) {
-                    checkAuthStateAndNavigate();
-                }
-            }
-        });
+        observeNavigation();
     }
 
-    private void checkAuthStateAndNavigate() {
-        if (!isAdded()) {
-            return;
-        }
-
-        CheckInitialNavigationUseCase.InitialTarget target = checkInitialNavigationUseCase.invoke();
-        NavigationRoute targetRoute = null;
-
-        switch (target) {
-            case MAP_SCREEN:
-                targetRoute = new NavigationRoute.MapRoute();
-                break;
-            case LOGIN_SCREEN:
-                targetRoute = new NavigationRoute.LoginRoute();
-                break;
-            case CHECKOUT_SCREEN:
-                targetRoute = new NavigationRoute.CheckoutRoute();
-                break;
-        }
-
-        if (targetRoute != null) {
-            appNavigator.navigate(targetRoute);
-        }
-
+    private void observeNavigation() {
+        viewModel.navigation.observe(getViewLifecycleOwner(), new Event.EventObserver<>(content -> {
+            // This lambda is only called once per event
+            Log.d(TAG, "Received navigation command: " + content.getClass().getSimpleName());
+            if (navigator != null) {
+                navigator.navigate(content);
+            } else {
+                Log.e(TAG, "Navigator was null, cannot execute navigation command.");
+            }
+            return null;
+        }));
     }
 }

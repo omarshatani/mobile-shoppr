@@ -25,8 +25,7 @@ public class AppNavigator implements Navigator {
     }
 
     @Inject
-    public AppNavigator() {
-    }
+    public AppNavigator() {}
 
     public void setNavController(NavController navController) {
         this.navController = navController;

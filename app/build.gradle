@@ -56,6 +56,9 @@ dependencies {
 
     implementation libs.multidex
 
+    implementation platform(libs.firebase.bom.vx)
+    implementation libs.com.google.firebase.firebase.auth
+
     implementation libs.hilt.android
     annotationProcessor "com.google.dagger:hilt-compiler:$hilt_version"
 

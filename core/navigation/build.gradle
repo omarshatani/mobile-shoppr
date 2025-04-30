@@ -15,10 +15,10 @@ android {
 dependencies {
     implementation libs.appcompat
     implementation libs.material
+
     androidTestImplementation(project(":app")) {
         exclude group: 'junit', module: 'junit'
     }
-
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
