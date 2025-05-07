@@ -17,4 +17,9 @@ public class AuthenticationRepository implements IAuthenticationRepository {
     public boolean isUserLoggedIn() {
         return firebaseAuth.getCurrentUser() != null;
     }
+
+    @Override
+    public void logout() {
+        firebaseAuth.signOut();
+    }
 }

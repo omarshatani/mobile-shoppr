@@ -17,6 +17,10 @@ public class CheckoutFragment extends Fragment {
     private CheckoutViewModel viewModel;
     private FragmentCheckoutBinding binding;
 
+    public CheckoutFragment() {
+
+    }
+
     public static CheckoutFragment newInstance() {
         return new CheckoutFragment();
     }

@@ -22,6 +22,9 @@ public class AppNavigator implements Navigator {
         ROUTES.put(NavigationRoute.LoginRoute.class, R.id.action_global_navigateToLogin);
         ROUTES.put(NavigationRoute.CheckoutRoute.class, R.id.action_global_navigateToCheckout);
         ROUTES.put(NavigationRoute.MapRoute.class, R.id.action_global_navigateToMap);
+        ROUTES.put(NavigationRoute.PostsRoute.class, R.id.action_global_navigateToPosts);
+        ROUTES.put(NavigationRoute.RequestsRoute.class, R.id.action_global_navigateToRequests);
+        ROUTES.put(NavigationRoute.ProfileRoute.class, R.id.action_global_navigateToProfile);
     }
 
     @Inject

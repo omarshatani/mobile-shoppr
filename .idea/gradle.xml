@@ -25,6 +25,9 @@
             <option value="$PROJECT_DIR$/feature/checkout" />
             <option value="$PROJECT_DIR$/feature/login" />
             <option value="$PROJECT_DIR$/feature/map" />
+            <option value="$PROJECT_DIR$/feature/post" />
+            <option value="$PROJECT_DIR$/feature/profile" />
+            <option value="$PROJECT_DIR$/feature/request" />
           </set>
         </option>
       </GradleProjectSettings>

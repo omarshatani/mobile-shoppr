@@ -47,7 +47,11 @@ dependencies {
     implementation project(':feature:login')
     implementation project(':feature:checkout')
     implementation project(':feature:map')
+    implementation project(':feature:post')
+    implementation project(':feature:request')
+    implementation project(':feature:profile')
 
+    implementation libs.material
     implementation libs.appcompat
     implementation libs.legacy.support.v4
     implementation libs.navigation.fragment

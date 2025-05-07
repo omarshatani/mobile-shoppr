@@ -1,0 +1,39 @@
+plugins {
+    id 'com.android.library'
+    id 'com.google.dagger.hilt.android'
+}
+
+android {
+    namespace 'com.shoppr.request'
+    compileSdk 35
+    defaultConfig {
+        minSdk 24
+        targetSdk 35
+    }
+    buildFeatures {
+        viewBinding = true
+    }
+}
+
+dependencies {
+    def hilt_version = "2.51.1"
+    implementation project(":core:ui")
+    implementation project(':core:navigation')
+
+    implementation libs.navigation.fragment
+    implementation libs.navigation.ui
+
+    implementation libs.legacy.support.v4
+    implementation libs.lifecycle.livedata.ktx
+    implementation libs.lifecycle.viewmodel.ktx
+
+    implementation libs.hilt.android
+    annotationProcessor "com.google.dagger:hilt-compiler:$hilt_version"
+
+    androidTestImplementation(project(":app")){
+        exclude group: 'junit', module: 'junit'
+    }
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+}

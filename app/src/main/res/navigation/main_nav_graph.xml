@@ -23,6 +23,18 @@
         android:id="@+id/checkout_nav_graph"
         app:graph="@navigation/checkout_nav_graph" />
 
+    <include
+        android:id="@+id/post_nav_graph"
+        app:graph="@navigation/post_nav_graph" />
+
+    <include
+        android:id="@+id/request_nav_graph"
+        app:graph="@navigation/request_nav_graph" />
+
+    <include
+        android:id="@+id/profile_nav_graph"
+        app:graph="@navigation/profile_nav_graph" />
+
     <action
         android:id="@+id/action_global_navigateToLogin"
         app:destination="@id/login_nav_graph" />
@@ -35,5 +47,16 @@
         android:id="@+id/action_global_navigateToCheckout"
         app:destination="@id/checkout_nav_graph" />
 
+    <action
+        android:id="@+id/action_global_navigateToPosts"
+        app:destination="@id/post_nav_graph" />
 
+    <action
+        android:id="@+id/action_global_navigateToRequests"
+        app:destination="@id/request_nav_graph" />
+
+    <action
+        android:id="@+id/action_global_navigateToProfile"
+        app:destination="@id/profile_nav_graph" />
+    
 </navigation>

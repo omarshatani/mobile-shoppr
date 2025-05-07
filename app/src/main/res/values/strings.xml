@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">shoppr</string>
+    <string name="map">Map</string>
+    <string name="profile">Profile</string>
 </resources>

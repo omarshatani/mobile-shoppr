@@ -39,6 +39,8 @@ dependencies {
     implementation libs.navigation.fragment
     implementation libs.navigation.ui
 
+    implementation libs.flexbox
+
     implementation libs.hilt.android
     annotationProcessor "com.google.dagger:hilt-compiler:$hilt_version"
 

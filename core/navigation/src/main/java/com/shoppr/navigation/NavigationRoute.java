@@ -14,4 +14,13 @@ public abstract class NavigationRoute {
     public static final class MapRoute extends NavigationRoute {
     }
 
+    public static final class PostsRoute extends NavigationRoute {
+    }
+
+    public static final class RequestsRoute extends NavigationRoute {
+    }
+
+    public static final class ProfileRoute extends NavigationRoute {
+    }
+
 }

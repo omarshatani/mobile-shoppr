@@ -7,7 +7,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -18,23 +17,15 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.firebase.ui.auth.AuthMethodPickerLayout;
 import com.firebase.ui.auth.AuthUI;
-import com.firebase.ui.auth.BuildConfig;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
 import com.firebase.ui.auth.IdpResponse;
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.shoppr.login.databinding.FragmentLoginBinding;
-import com.shoppr.navigation.NavigationRoute;
-import com.shoppr.navigation.Navigator;
 import com.shoppr.ui.utils.InsetsUtils;
 
 import java.util.Arrays;
 import java.util.List;
-
-import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -51,6 +42,8 @@ public class LoginFragment extends Fragment {
 	);
 	private FragmentLoginBinding binding;
 	private boolean hasLaunchedSignIn = false;
+
+	public LoginFragment() {}
 
 	public static LoginFragment newInstance() {
 		return new LoginFragment();
@@ -85,7 +78,7 @@ public class LoginFragment extends Fragment {
 		super.onViewCreated(view, savedInstanceState);
 		// Apply insets
 		ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, windowInsets) -> {
-			InsetsUtils.applySystemBarInsetsAsPadding(view, windowInsets);
+			InsetsUtils.applySystemBarInsetsAsPadding(v, windowInsets);
 			return WindowInsetsCompat.CONSUMED;
 		});
 
@@ -104,9 +97,8 @@ public class LoginFragment extends Fragment {
 		Intent signInIntent = AuthUI.getInstance() // Pass context here if needed by AuthUI internals
 				.createSignInIntentBuilder()
 				.setAvailableProviders(providers)
-				// Optional: Set logo, theme, etc. (Use resources from your app/core:ui module if needed)
 				.setLogo(R.mipmap.ic_launcher)
-				// .setTheme(com.yourcompany.yourapp.core.ui.R.style.AuthTheme)
+				.setTheme(com.shoppr.core.ui.R.style.Theme_Shoppr)
 				.setTosAndPrivacyPolicyUrls(
 						"https://yourcompany.com/terms.html",
 						"https://yourcompany.com/privacy.html")

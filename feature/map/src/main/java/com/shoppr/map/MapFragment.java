@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -14,10 +16,13 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.shoppr.map.databinding.FragmentMapBinding;
+import com.shoppr.ui.utils.InsetsUtils;
 
 public class MapFragment extends Fragment {
 
 	private FragmentMapBinding binding;
+
+	public MapFragment() {};
 
 	@Nullable
 	@Override
@@ -29,12 +34,11 @@ public class MapFragment extends Fragment {
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
-		SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
 
+		SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
 		if (mapFragment != null) {
 			mapFragment.getMapAsync(googleMap -> {
-				googleMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
-				googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(0, 0), 10));
+				googleMap.setPadding(16, 0, 0, 64);
 			});
 		}
 	}
