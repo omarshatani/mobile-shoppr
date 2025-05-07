@@ -9,8 +9,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-public class InsetsUtils {
-    private InsetsUtils() {}
+public class InsetUtils {
+    private InsetUtils() {}
 
     public static void applySystemBarInsetsAsPadding(View view, WindowInsetsCompat windowInsets) {
         // Apply padding for both system bars and ime (keyboard) if you want content

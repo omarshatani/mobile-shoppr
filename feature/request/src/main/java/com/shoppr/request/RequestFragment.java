@@ -8,14 +8,14 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.shoppr.request.databinding.FragmentRequestBinding;
-import com.shoppr.ui.utils.InsetsUtils;
+import com.shoppr.ui.BaseFragment;
+import com.shoppr.ui.utils.InsetUtils;
 
-public class RequestFragment extends Fragment {
+public class RequestFragment extends BaseFragment {
 
 	private static final String TAG = "RequestFragment";
 	private FragmentRequestBinding binding;
@@ -43,11 +43,6 @@ public class RequestFragment extends Fragment {
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
-
-		ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, windowInsets) -> {
-			InsetsUtils.applySystemBarInsetsAsPadding(view, windowInsets);
-			return WindowInsetsCompat.CONSUMED;
-		});
 	}
 
 	@Override

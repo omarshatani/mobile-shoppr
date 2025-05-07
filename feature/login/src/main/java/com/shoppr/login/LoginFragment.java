@@ -13,7 +13,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -22,7 +21,8 @@ import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
 import com.firebase.ui.auth.IdpResponse;
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
 import com.shoppr.login.databinding.FragmentLoginBinding;
-import com.shoppr.ui.utils.InsetsUtils;
+import com.shoppr.ui.BaseFragment;
+import com.shoppr.ui.utils.InsetUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,7 +30,7 @@ import java.util.List;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class LoginFragment extends Fragment {
+public class LoginFragment extends BaseFragment {
 	private static final String TAG = "LoginFragment";
 
 	// Get the ViewModel scoped to this Fragment
@@ -68,19 +68,13 @@ public class LoginFragment extends Fragment {
 	}
 
 	@Override
-	public void onDestroyView() {
-		super.onDestroyView();
-		binding = null;
-	}
-
-	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 		// Apply insets
-		ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, windowInsets) -> {
-			InsetsUtils.applySystemBarInsetsAsPadding(v, windowInsets);
-			return WindowInsetsCompat.CONSUMED;
-		});
+//		ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, windowInsets) -> {
+//			InsetUtils.applySystemBarInsetsAsPadding(v, windowInsets);
+//			return windowInsets;
+//		});
 
 		if (!hasLaunchedSignIn) {
 			launchSignInFlow();
@@ -140,5 +134,11 @@ public class LoginFragment extends Fragment {
 		authUI.useEmulator("10.0.2.2", 9099); // TODO: verify if it's using an emulator
 
 		return authUI;
+	}
+
+	@Override
+	public void onDestroyView() {
+		super.onDestroyView();
+		binding = null;
 	}
 }

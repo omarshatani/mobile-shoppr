@@ -2,8 +2,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="Theme.Shoppr.Base" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">@color/black</item>
+        <item name="android:windowLightStatusBar">true</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:navigationBarDividerColor" tools:targetApi="28">
             @android:color/transparent
