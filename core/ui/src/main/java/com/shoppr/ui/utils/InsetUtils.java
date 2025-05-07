@@ -1,8 +1,12 @@
 package com.shoppr.ui.utils;
 
+import android.content.res.Resources;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.DimenRes;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.Insets;
 import androidx.core.view.WindowInsetsCompat;
@@ -10,48 +14,56 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class InsetUtils {
+    private static final String TAG = "InsetUtils";
     private InsetUtils() {}
 
-    public static void applySystemBarInsetsAsPadding(View view, WindowInsetsCompat windowInsets) {
-        // Apply padding for both system bars and ime (keyboard) if you want content
-        // to adjust even when keyboard is open. Often just systemBars is needed for basic padding.
-        Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.ime());
-
-        // Preserve original padding (especially horizontal)
-        int originalPaddingLeft = view.getPaddingLeft();
-        int originalPaddingRight = view.getPaddingRight();
-
-        // Apply insets as padding
-        view.setPadding(
-                originalPaddingLeft,
-                insets.top,           // Apply top inset (status bar)
-                originalPaddingRight,
-                insets.bottom         // Apply bottom inset (nav bar / gesture bar / keyboard)
-        );
-    }
-
     /**
-     * More flexible version allowing selective application of padding.
+     * Applies system bar insets (status bar, navigation bar) and IME insets
+     * as padding to the top and bottom of the provided view.
+     * Also adds padding for a standard BottomNavigationView height defined by a dimension resource.
+     * Preserves the view's original left and right padding.
+     * Ideal for applying to the root view of fragments that should respect system bars
+     * AND the bottom navigation bar.
      *
-     * @param view         The view to apply padding to.
+     * @param rootView     The root view of the fragment to apply padding to.
      * @param windowInsets The WindowInsetsCompat object received by the listener.
-     * @param applyTop     Apply top system bar inset as padding.
-     * @param applyBottom  Apply bottom system bar inset as padding.
-     * @param applyLeft    Apply left system bar inset as padding.
-     * @param applyRight   Apply right system bar inset as padding.
+     * @param bottomNavHeightDimenRes The dimension resource ID (e.g., R.dimen.bottom_nav_height)
+     * for the expected height of the BottomNavigationView.
      */
-    public static void applySystemBarInsetsAsPadding(View view, WindowInsetsCompat windowInsets,
-                                                     boolean applyTop, boolean applyBottom,
-                                                     boolean applyLeft, boolean applyRight) {
+    public static void applyBottomNavPadding(
+        @NonNull View rootView,
+        @NonNull WindowInsetsCompat windowInsets,
+        @DimenRes int bottomNavHeightDimenRes // Pass the dimension resource ID
+    ) {
+        Insets systemBarsInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+        Insets imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
 
-        Insets systemBarInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+        // --- Get expected BottomNav height from dimension resource ---
+        int bottomNavHeight = 0;
+        try {
+            bottomNavHeight = rootView.getResources().getDimensionPixelSize(bottomNavHeightDimenRes);
+        } catch (Resources.NotFoundException e) {
+            Log.e(TAG, "Dimension resource ID " + bottomNavHeightDimenRes + " not found!", e);
+            // Optionally use a fallback pixel value
+            // bottomNavHeight = (int) (56 * rootView.getResources().getDisplayMetrics().density);
+        }
+        // -------------------------------------------------------------
 
-        int paddingLeft = applyLeft ? systemBarInsets.left : view.getPaddingLeft();
-        int paddingTop = applyTop ? systemBarInsets.top : view.getPaddingTop();
-        int paddingRight = applyRight ? systemBarInsets.right : view.getPaddingRight();
-        int paddingBottom = applyBottom ? systemBarInsets.bottom : view.getPaddingBottom();
+        // Calculate total bottom padding needed
+        // Use max of system nav bar or keyboard inset, then add bottom nav height
+        int totalBottomPadding = Math.max(systemBarsInsets.bottom, imeInsets.bottom) + bottomNavHeight;
 
-        view.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
+        // Apply padding to the root view
+        // Preserve original horizontal padding, apply calculated top/bottom
+        Log.d(TAG, "Applying padding to view ID " + rootView.getId() + ": Left=" + rootView.getPaddingLeft() +
+            ", Top=" + systemBarsInsets.top + ", Right=" + rootView.getPaddingRight() +
+            ", Bottom=" + totalBottomPadding);
+        rootView.setPadding(
+            rootView.getPaddingLeft(),
+            rootView.getPaddingTop(),
+            rootView.getPaddingRight(),
+            totalBottomPadding  // Apply calculated bottom padding
+        );
     }
 
     /**

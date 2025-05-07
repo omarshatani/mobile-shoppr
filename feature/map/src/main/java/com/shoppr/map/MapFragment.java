@@ -7,14 +7,15 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.view.WindowCompat;
-import androidx.fragment.app.Fragment;
+import androidx.core.view.ViewCompat;
 
 import com.google.android.gms.maps.SupportMapFragment;
 import com.shoppr.map.databinding.FragmentMapBinding;
 import com.shoppr.ui.BaseFragment;
+import com.shoppr.ui.utils.InsetUtils;
 
 public class MapFragment extends BaseFragment {
+	private static final String TAG = "MapFragment";
 	private FragmentMapBinding binding;
 
 	public MapFragment() {};
@@ -48,9 +49,20 @@ public class MapFragment extends BaseFragment {
 		SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
 		if (mapFragment != null) {
 			mapFragment.getMapAsync(googleMap -> {
-				googleMap.setPadding(16, 0, 0, 64);
 			});
 		}
+
+		ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
+			InsetUtils.applyBottomNavPadding(
+					v,
+					windowInsets,
+					com.shoppr.core.ui.R.dimen.bottom_nav_height // Pass the resource ID
+			);
+			// Consume the insets as this fragment's root is now padded
+			return windowInsets;
+		});
+		// Request initial insets
+		ViewCompat.requestApplyInsets(view);
 	}
 
 	@Override
