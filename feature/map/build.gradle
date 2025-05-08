@@ -35,6 +35,11 @@ dependencies {
     implementation project(':core:navigation')
 
     implementation libs.play.services.maps
+    implementation libs.play.services.location
+
+    implementation libs.lifecycle.viewmodel
+    implementation libs.lifecycle.livedata
+
     implementation libs.appcompat
     implementation libs.navigation.fragment
     implementation libs.navigation.ui

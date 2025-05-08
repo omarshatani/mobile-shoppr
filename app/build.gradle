@@ -58,6 +58,8 @@ dependencies {
     implementation libs.navigation.ui
     implementation libs.flexbox
 
+    implementation libs.play.services.location
+
     implementation libs.multidex
 
     implementation platform(libs.firebase.bom.vx)
