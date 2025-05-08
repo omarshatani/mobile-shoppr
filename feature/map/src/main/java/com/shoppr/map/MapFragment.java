@@ -16,7 +16,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -42,10 +41,8 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	private final ActivityResultLauncher<String> requestPermissionLauncher =
 			registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
 				Log.d(TAG, "Permission result received: " + isGranted);
-				// Pass the result to the ViewModel
 				viewModel.onLocationPermissionResult(isGranted);
 				if (!isGranted) {
-					// Optional: Show a toast or explanation if permission denied
 					Toast.makeText(requireContext(), R.string.location_permission_denied, Toast.LENGTH_SHORT).show();
 				}
 			});
@@ -80,7 +77,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 
-		SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
+		mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
 		if (mapFragment != null) {
 			mapFragment.getMapAsync(this);
 		} else {
@@ -89,7 +86,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 
 		setupFabClickListener();
 		observeViewModel();
-		setupRootViewInsets(binding.getRoot()); // Pass the root view from binding
+		setupRootViewInsets(binding.getRoot());
 	}
 
 	@Override
@@ -120,7 +117,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		Log.d(TAG, "onDestroyView called, binding set to null");
 	}
 
-	// --- ViewModel Observation ---
 	private void observeViewModel() {
 		// Observe permission changes
 		viewModel.locationPermissionGranted.observe(getViewLifecycleOwner(), this::updateMapMyLocationUI);
@@ -151,10 +147,8 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		}));
 	}
 
-	// --- UI Updates ---
 	@SuppressLint("MissingPermission")
 	private void updateMapMyLocationUI(Boolean isGranted) {
-		// ... (implementation remains the same) ...
 		if (googleMap == null) return;
 		try {
 			if (Boolean.TRUE.equals(isGranted)) {
@@ -172,7 +166,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	}
 
 	private void setupFabClickListener() {
-		// Use binding to access FAB
 		if (binding != null) {
 			binding.fabMyLocation.setOnClickListener(v -> {
 				Log.d(TAG, "My Location FAB clicked");
@@ -188,7 +181,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
 	}
 
-	// --- Permission Handling ---
 	private boolean hasFineLocationPermission() {
 		return ContextCompat.checkSelfPermission(
 				requireContext(),
@@ -196,18 +188,15 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		) == PackageManager.PERMISSION_GRANTED;
 	}
 
-	// --- Inset Handling (Padding Root View) ---
 	private void setupRootViewInsets(View view) {
 		ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
 			InsetUtils.applyBottomNavPadding(
 					v,
 					windowInsets,
-					com.shoppr.core.ui.R.dimen.bottom_nav_height // Pass the resource ID
+					com.shoppr.core.ui.R.dimen.bottom_nav_height
 			);
-			// Consume the insets as this fragment's root is now padded
 			return windowInsets;
 		});
-		// Request initial insets
 		ViewCompat.requestApplyInsets(view);
 	}
 
