@@ -42,15 +42,24 @@ public class ProfileFragment extends BaseFragment {
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
-		ViewCompat.setOnApplyWindowInsetsListener(view, (View v, WindowInsetsCompat insets) -> {
-			InsetUtils.applyStatusBarInsetAsPaddingTop(v, insets);
-			return WindowInsetsCompat.CONSUMED;
-		});
+		setupRootViewInsets(view);
 	}
 
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
 		binding = null;
+	}
+
+	private void setupRootViewInsets(View view) {
+		ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
+			InsetUtils.applyBottomNavPadding(
+					v,
+					windowInsets,
+					com.shoppr.core.ui.R.dimen.bottom_nav_height
+			);
+			return windowInsets;
+		});
+		ViewCompat.requestApplyInsets(view);
 	}
 }

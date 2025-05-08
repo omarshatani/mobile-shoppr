@@ -114,10 +114,8 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	}
 
 	private void observeViewModel() {
-		// Observe permission changes
 		viewModel.locationPermissionGranted.observe(getViewLifecycleOwner(), this::updateMapMyLocationUI);
 
-		// Observe FAB icon changes - use binding to access FAB
 		viewModel.fabIconResId.observe(getViewLifecycleOwner(), iconResId -> {
 			if (binding != null && iconResId != null) {
 				binding.fabMyLocation.setImageResource(iconResId);
