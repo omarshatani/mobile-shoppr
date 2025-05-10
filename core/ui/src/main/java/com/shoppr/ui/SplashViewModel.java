@@ -32,10 +32,10 @@ public class SplashViewModel extends ViewModel {
 		NavigationRoute targetRoute = null;
 		switch (target) {
 			case MAP_SCREEN:
-				targetRoute = new NavigationRoute.MapRoute();
+				targetRoute = new NavigationRoute.SplashToMap();
 				break;
 			case LOGIN_SCREEN:
-				targetRoute = new NavigationRoute.LoginRoute();
+				targetRoute = new NavigationRoute.SplashToLogin();
 				break;
 		}
 		if (targetRoute != null) {
@@ -43,7 +43,7 @@ public class SplashViewModel extends ViewModel {
 			_navigationCommand.postValue(new Event<>(targetRoute));
 		} else {
 			// Handle error case - maybe navigate to Login by default?
-			_navigationCommand.postValue(new Event<>(new NavigationRoute.LoginRoute()));
+			_navigationCommand.postValue(new Event<>(new NavigationRoute.SplashToLogin()));
 		}
 	}
 }

@@ -11,14 +11,22 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.shoppr.navigation.Navigator;
 import com.shoppr.profile.databinding.FragmentProfileBinding;
 import com.shoppr.ui.BaseFragment;
 import com.shoppr.ui.utils.InsetUtils;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class ProfileFragment extends BaseFragment {
 	private static final String TAG = "ProfileFragment";
 	private FragmentProfileBinding binding;
 	private ProfileViewModel viewModel;
+	@Inject
+	Navigator navigator;
 
 	public ProfileFragment() {}
 
@@ -43,6 +51,7 @@ public class ProfileFragment extends BaseFragment {
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 		setupRootViewInsets(view);
+		setupLogoutCta();
 	}
 
 	@Override
@@ -61,5 +70,13 @@ public class ProfileFragment extends BaseFragment {
 			return windowInsets;
 		});
 		ViewCompat.requestApplyInsets(view);
+	}
+
+	private void setupLogoutCta () {
+		binding.ctaLogout.setOnClickListener(v -> viewModel.logout());
+
+		viewModel.navigationCommand.observe(getViewLifecycleOwner(), command -> {
+			navigator.navigate(command.peekContent());
+		});
 	}
 }

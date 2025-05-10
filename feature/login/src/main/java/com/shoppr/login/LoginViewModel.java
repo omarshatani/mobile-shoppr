@@ -25,7 +25,7 @@ public class LoginViewModel extends ViewModel {
 	public void onSignInSuccess() {
 		Log.i(TAG, "Sign in successful, requesting navigation to Map.");
 		// Request navigation to the main app screen
-		navigator.navigate(new NavigationRoute.MapRoute());
+		navigator.navigate(new NavigationRoute.LoginToMap());
 	}
 
 	public void onSignInFailed(String errorMessage) {

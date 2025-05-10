@@ -2,25 +2,37 @@ package com.shoppr.navigation;
 
 public abstract class NavigationRoute {
 
-    private NavigationRoute() {
-    }
+	private NavigationRoute() {
+	}
 
-    public static final class LoginRoute extends NavigationRoute {
-    }
+	public static final class SplashToLogin extends NavigationRoute {
+	}
 
-    public static final class CheckoutRoute extends NavigationRoute {
-    }
+	public static final class SplashToMap extends NavigationRoute {
+	}
 
-    public static final class MapRoute extends NavigationRoute {
-    }
+	public static final class Login extends NavigationRoute {
+	}
 
-    public static final class PostsRoute extends NavigationRoute {
-    }
+	public static final class LoginToMap extends NavigationRoute {
+	}
 
-    public static final class RequestsRoute extends NavigationRoute {
-    }
+	public static final class Checkout extends NavigationRoute {
+	}
 
-    public static final class ProfileRoute extends NavigationRoute {
-    }
+	public static final class Map extends NavigationRoute {
+	}
+
+	public static final class Posts extends NavigationRoute {
+	}
+
+	public static final class Requests extends NavigationRoute {
+	}
+
+	public static final class Profile extends NavigationRoute {
+	}
+
+	public static final class ProfileToLogin extends NavigationRoute {
+	}
 
 }

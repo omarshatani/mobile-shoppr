@@ -1,6 +1,7 @@
 package com.shoppr.data.di;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.shoppr.data.datasource.FirebaseAuthDataSource;
 import com.shoppr.data.model.IAuthenticationRepository;
 import com.shoppr.data.repository.AuthenticationRepository;
 
@@ -17,8 +18,8 @@ public class RepositoryModule {
 
     @Provides
     @Singleton
-    public IAuthenticationRepository provideAuthenticationRepository(FirebaseAuth firebaseAuth) {
-        return new AuthenticationRepository(firebaseAuth);
+    public IAuthenticationRepository provideAuthenticationRepository(FirebaseAuthDataSource firebaseAuthDataSource) {
+        return new AuthenticationRepository(firebaseAuthDataSource);
     }
 
 }

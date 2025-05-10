@@ -1,25 +1,26 @@
 package com.shoppr.data.repository;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.shoppr.data.datasource.FirebaseAuthDataSource;
 import com.shoppr.data.model.IAuthenticationRepository;
 
 import javax.inject.Inject;
 
 public class AuthenticationRepository implements IAuthenticationRepository {
-    FirebaseAuth firebaseAuth;
+    FirebaseAuthDataSource firebaseAuthDataSource;
 
     @Inject
-    public AuthenticationRepository(FirebaseAuth firebaseAuth) {
-        this.firebaseAuth = firebaseAuth;
+    public AuthenticationRepository(FirebaseAuthDataSource firebaseAuthDataSource) {
+        this.firebaseAuthDataSource = firebaseAuthDataSource;
     }
 
     @Override
     public boolean isUserLoggedIn() {
-        return firebaseAuth.getCurrentUser() != null;
+        return firebaseAuthDataSource.getCurrentUser() != null;
     }
 
     @Override
     public void logout() {
-        firebaseAuth.signOut();
+        firebaseAuthDataSource.signOut();
     }
 }

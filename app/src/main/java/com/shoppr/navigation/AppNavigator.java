@@ -19,12 +19,16 @@ public class AppNavigator implements Navigator {
     private static final Map<Class<? extends NavigationRoute>, Integer> ROUTES = new HashMap<>();
 
     static {
-        ROUTES.put(NavigationRoute.LoginRoute.class, R.id.action_global_navigateToLogin);
-        ROUTES.put(NavigationRoute.CheckoutRoute.class, R.id.action_global_navigateToCheckout);
-        ROUTES.put(NavigationRoute.MapRoute.class, R.id.action_global_navigateToMap);
-        ROUTES.put(NavigationRoute.PostsRoute.class, R.id.action_global_navigateToPosts);
-        ROUTES.put(NavigationRoute.RequestsRoute.class, R.id.action_global_navigateToRequests);
-        ROUTES.put(NavigationRoute.ProfileRoute.class, R.id.action_global_navigateToProfile);
+        ROUTES.put(NavigationRoute.SplashToLogin.class, R.id.action_splash_to_login);
+        ROUTES.put(NavigationRoute.SplashToMap.class, R.id.action_splash_to_map);
+        ROUTES.put(NavigationRoute.Login.class, R.id.action_global_navigateToLogin);
+        ROUTES.put(NavigationRoute.LoginToMap.class, R.id.action_login_to_map);
+        ROUTES.put(NavigationRoute.Checkout.class, R.id.action_global_navigateToCheckout);
+        ROUTES.put(NavigationRoute.Map.class, R.id.action_global_navigateToMap);
+        ROUTES.put(NavigationRoute.Posts.class, R.id.action_global_navigateToPosts);
+        ROUTES.put(NavigationRoute.Requests.class, R.id.action_global_navigateToRequests);
+        ROUTES.put(NavigationRoute.Profile.class, R.id.action_global_navigateToProfile);
+        ROUTES.put(NavigationRoute.ProfileToLogin.class, R.id.action_profile_to_login);
     }
 
     @Inject
