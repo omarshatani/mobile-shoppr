@@ -6,10 +6,7 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDestination;
 import androidx.navigation.NavGraph;
@@ -57,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
 		NavigationUI.setupWithNavController(bottomNavView, navController);
 		// Setup listener to hide/show BottomNav based on destination
 		setupBottomNavVisibility(navController);
-
 	}
 
 	// Hides/shows the BottomNavigationView based on the current destination

@@ -12,8 +12,6 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.view.ViewCompat;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.firebase.ui.auth.AuthUI;
@@ -22,7 +20,6 @@ import com.firebase.ui.auth.IdpResponse;
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
 import com.shoppr.login.databinding.FragmentLoginBinding;
 import com.shoppr.ui.BaseFragment;
-import com.shoppr.ui.utils.InsetUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -70,12 +67,6 @@ public class LoginFragment extends BaseFragment {
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
-		// Apply insets
-//		ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, windowInsets) -> {
-//			InsetUtils.applySystemBarInsetsAsPadding(v, windowInsets);
-//			return windowInsets;
-//		});
-
 		if (!hasLaunchedSignIn) {
 			launchSignInFlow();
 			hasLaunchedSignIn = true;
@@ -96,7 +87,6 @@ public class LoginFragment extends BaseFragment {
 				.setTosAndPrivacyPolicyUrls(
 						"https://yourcompany.com/terms.html",
 						"https://yourcompany.com/privacy.html")
-				.setCredentialManagerEnabled(true)
 				.build();
 
 		Log.d(TAG, "Launching Sign-in Intent from Fragment");

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ProfileMenuItemView">
+        <attr name="menuItemIcon" format="reference" />
+        <attr name="menuItemText" format="string" />
+        <attr name="menuItemShowChevron" format="boolean" />
+    </declare-styleable>
+</resources>

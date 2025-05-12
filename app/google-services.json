@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "92024457014-i40ndiifipegqgeqoab5spmfsv6elfig.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.shoppr",
+            "certificate_hash": "9d1909f7ea71a6ca9d72582f327b97def4f8d3c8"
+          }
+        },
+        {
           "client_id": "92024457014-a1hi492eagloavf5b3lmsqin50o0pmk7.apps.googleusercontent.com",
           "client_type": 3
         }

@@ -13,6 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Shoppr"
         android:enableOnBackInvokedCallback="true"
+        tools:replace="android:theme"
         tools:targetApi="33">
         <activity
             android:name=".MainActivity"
