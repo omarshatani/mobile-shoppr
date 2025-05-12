@@ -8,6 +8,7 @@
             @android:color/transparent
         </item>
         <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
+        <item name="colorSurface">#B6B6B6</item>
     </style>
 
     <style name="Theme.Shoppr" parent="Theme.Shoppr.Base" />
