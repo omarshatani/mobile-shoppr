@@ -18,13 +18,12 @@ public class ProfileViewModel extends ViewModel {
 	private final MutableLiveData<Event<NavigationRoute>> _navigationCommand = new MutableLiveData<>();
 	public LiveData<Event<NavigationRoute>> navigationCommand = _navigationCommand;
 
-
 	@Inject
 	public ProfileViewModel(LogoutUseCase logoutUseCase) {
 		this.logoutUseCase = logoutUseCase;
 	}
 
-	public void logout () {
+	public void logout() {
 		logoutUseCase.invoke();
 		_navigationCommand.setValue(new Event<>(new NavigationRoute.ProfileToLogin()));
 	}

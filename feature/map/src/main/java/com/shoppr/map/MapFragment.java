@@ -55,6 +55,10 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
         return false;
     }
 
+    @Override
+    protected boolean isLightStatusBarRequired() {
+        return true;
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {

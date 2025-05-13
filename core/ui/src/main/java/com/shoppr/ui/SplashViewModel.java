@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.shoppr.domain.CheckInitialNavigationUseCase;
+import com.shoppr.navigation.InitialTarget;
 import com.shoppr.navigation.NavigationRoute;
 import com.shoppr.ui.utils.Event;
 
@@ -14,7 +15,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
 public class SplashViewModel extends ViewModel {
-
 	private final CheckInitialNavigationUseCase checkInitialNavigationUseCase;
 
 	private final MutableLiveData<Event<NavigationRoute>> _navigationCommand = new MutableLiveData<>();
@@ -28,7 +28,7 @@ public class SplashViewModel extends ViewModel {
 	}
 
 	private void checkInitialState() {
-		CheckInitialNavigationUseCase.InitialTarget target = checkInitialNavigationUseCase.invoke();
+		InitialTarget target = checkInitialNavigationUseCase.invoke();
 		NavigationRoute targetRoute = null;
 		switch (target) {
 			case MAP_SCREEN:

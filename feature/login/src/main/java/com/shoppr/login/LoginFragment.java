@@ -1,6 +1,5 @@
 package com.shoppr.login;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,13 +15,16 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
-import com.firebase.ui.auth.IdpResponse;
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
 import com.shoppr.login.databinding.FragmentLoginBinding;
+import com.shoppr.navigation.NavigationRoute;
+import com.shoppr.navigation.Navigator;
 import com.shoppr.ui.BaseFragment;
 
 import java.util.Arrays;
 import java.util.List;
+
+import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -30,9 +32,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class LoginFragment extends BaseFragment {
 	private static final String TAG = "LoginFragment";
 
-	// Get the ViewModel scoped to this Fragment
 	private LoginViewModel viewModel;
-	// Launcher setup remains the same
 	private final ActivityResultLauncher<Intent> signInLauncher = registerForActivityResult(
 			new FirebaseAuthUIActivityResultContract(),
 			this::onSignInResult
@@ -40,7 +40,11 @@ public class LoginFragment extends BaseFragment {
 	private FragmentLoginBinding binding;
 	private boolean hasLaunchedSignIn = false;
 
-	public LoginFragment() {}
+	@Inject
+	Navigator navigator;
+
+	public LoginFragment() {
+	}
 
 	public static LoginFragment newInstance() {
 		return new LoginFragment();
@@ -49,7 +53,7 @@ public class LoginFragment extends BaseFragment {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		// Initialize ViewModel
+		// ViewModel is now Hilt-managed, obtained via ViewModelProvider
 		viewModel = new ViewModelProvider(this).get(LoginViewModel.class);
 	}
 
@@ -57,73 +61,105 @@ public class LoginFragment extends BaseFragment {
 	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
 													 @Nullable Bundle savedInstanceState) {
 		binding = FragmentLoginBinding.inflate(inflater, container, false);
-
-//		AuthUI authUI = AuthUI.getInstance();
-//		authUI.useEmulator("10.0.2.2", 9099);
-
 		return binding.getRoot();
 	}
+
 
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
-		if (!hasLaunchedSignIn) {
+		observeViewModel();
+
+		// Launch sign-in only if the ViewModel indicates no logged-in user (via User LiveData)
+		// and if we haven't tried launching already in this fragment instance.
+		if (viewModel.loggedInUserLiveData.getValue() == null && !hasLaunchedSignIn) {
+			Log.d(TAG, "onViewCreated: No domain user and sign-in not launched. Launching sign-in flow.");
 			launchSignInFlow();
 			hasLaunchedSignIn = true;
+		} else if (viewModel.loggedInUserLiveData.getValue() != null) {
+			Log.d(TAG, "onViewCreated: Domain user already present (" + viewModel.loggedInUserLiveData.getValue().getId() + "). Navigation should be handled by ViewModel.");
+		} else if (hasLaunchedSignIn) {
+			Log.d(TAG, "onViewCreated: Sign-in was launched, but still no domain user. Waiting for result or AuthState observation.");
 		}
+	}
+
+	private void observeViewModel() {
+		// Observe your domain user model
+		viewModel.loggedInUserLiveData.observe(getViewLifecycleOwner(), user -> { // Changed from loggedInUser to user
+			if (user != null) { // Changed from loggedInUser to user
+				Log.d(TAG, "observeViewModel (loggedInUserLiveData): Observed User: " + user.getId() + " Name: " + user.getName());
+				// Navigation is now primarily driven by the _navigationRoute LiveData,
+				// which is triggered by the ObserveAuthStateUseCase after profile checks.
+			} else {
+				Log.d(TAG, "observeViewModel (loggedInUserLiveData): Observed no User (signed out).");
+				// If user is null and we haven't just tried to sign in,
+				// maybe ensure the sign-in flow is available or re-trigger if appropriate.
+				if (!hasLaunchedSignIn && (viewModel.getNavigationRoute().getValue() == null || !(viewModel.getNavigationRoute().getValue() instanceof NavigationRoute.LoginToMap))) {
+					// This condition is to avoid re-launching if we are already trying to log in or have just logged out.
+					// Or if a navigation to map is pending (which means login was successful)
+					Log.d(TAG, "User is null, sign-in not in progress. Ensuring login flow is active/available.");
+					// Potentially re-call launchSignInFlow() if it's safe and makes sense in your UX.
+					// For now, we assume the user stays on the login screen.
+				}
+			}
+		});
+
+		viewModel.getNavigationRoute().observe(getViewLifecycleOwner(), route -> {
+			if (route == null) return;
+			Log.d(TAG, "observeViewModel (navigationRoute): Received route: " + route.getClass().getSimpleName() + ". Attempting to navigate.");
+			navigator.navigate(route);
+
+			if (route instanceof NavigationRoute.LoginToMap) {
+				Toast.makeText(requireContext(), "Login Successful! Navigating to Map...", Toast.LENGTH_SHORT).show();
+			}
+			viewModel.onNavigationComplete();
+		});
+
+		viewModel.getToastMessage().observe(getViewLifecycleOwner(), message -> {
+			if (message != null && !message.isEmpty()) {
+				Log.d(TAG, "observeViewModel (toastMessage): Received message: " + message);
+				Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
+				viewModel.onToastMessageShown();
+			}
+		});
 	}
 
 	private void launchSignInFlow() {
 		List<AuthUI.IdpConfig> providers = Arrays.asList(
 				new AuthUI.IdpConfig.EmailBuilder().build(),
 				new AuthUI.IdpConfig.GoogleBuilder().build());
-		// Create and launch sign-in intent
-		// Use requireContext() to get context from Fragment
-		Intent signInIntent = AuthUI.getInstance() // Pass context here if needed by AuthUI internals
+		Intent signInIntent = AuthUI.getInstance()
 				.createSignInIntentBuilder()
 				.setAvailableProviders(providers)
-				.setLogo(R.mipmap.ic_launcher)
+				.setLogo(com.shoppr.core.ui.R.mipmap.ic_launcher)
 				.setTheme(com.shoppr.core.ui.R.style.Theme_Shoppr)
 				.setTosAndPrivacyPolicyUrls(
-						"https://yourcompany.com/terms.html",
-						"https://yourcompany.com/privacy.html")
+						"[https://yourcompany.com/terms.html](https://yourcompany.com/terms.html)",
+						"[https://yourcompany.com/privacy.html](https://yourcompany.com/privacy.html)")
 				.build();
-
-		Log.d(TAG, "Launching Sign-in Intent from Fragment");
+		Log.d(TAG, "launchSignInFlow: Launching Sign-in Intent from Fragment");
 		signInLauncher.launch(signInIntent);
 	}
 
-	// Handles the result - Calls the ViewModel
+	// Fragment receives FirebaseAuthUIAuthenticationResult and passes it to ViewModel
 	private void onSignInResult(@NonNull FirebaseAuthUIAuthenticationResult result) {
-		IdpResponse response = result.getIdpResponse();
-		hasLaunchedSignIn = false;
-
-		if (result.getResultCode() == Activity.RESULT_OK) {
-			// *** Tell the ViewModel about success ***
-			viewModel.onSignInSuccess();
-		} else {
-			// Sign in failed or cancelled
-			if (response == null) {
-				// *** Tell the ViewModel about cancellation ***
-				viewModel.onSignInCancelled();
-				Toast.makeText(requireContext(), "Sign-in cancelled", Toast.LENGTH_SHORT).show();
-			} else if (response.getError() != null) {
-				// *** Tell the ViewModel about the error ***
-				String errorMessage = response.getError().getMessage();
-				viewModel.onSignInFailed(errorMessage != null ? errorMessage : "Unknown error");
-				Toast.makeText(requireContext(), "Sign-in failed: " + ": " + errorMessage, Toast.LENGTH_LONG).show();
-			} else {
-				viewModel.onSignInFailed("Unknown error code: " + result.getResultCode());
-				Toast.makeText(requireContext(), "Sign-in error", Toast.LENGTH_SHORT).show();
-			}
-		}
+		Log.d(TAG, "onSignInResult: Received result from FirebaseUI. ResultCode: " + result.getResultCode());
+		hasLaunchedSignIn = false; // Reset flag
+		viewModel.processSignInResult(result); // ViewModel now handles this via a UseCase
 	}
 
-	private AuthUI getAuthUI() {
-		AuthUI authUI = AuthUI.getInstance();
-		authUI.useEmulator("10.0.2.2", 9099); // TODO: verify if it's using an emulator
+	@Override
+	public void onStart() {
+		super.onStart();
+		Log.d(TAG, "onStart: Telling ViewModel to start observing auth state.");
+		viewModel.registerAuthStateListener(); // Tells ViewModel to have its UseCase start observing
+	}
 
-		return authUI;
+	@Override
+	public void onStop() {
+		super.onStop();
+		Log.d(TAG, "onStop: Telling ViewModel to stop observing auth state.");
+		viewModel.unregisterAuthStateListener(); // Tells ViewModel to have its UseCase stop observing
 	}
 
 	@Override

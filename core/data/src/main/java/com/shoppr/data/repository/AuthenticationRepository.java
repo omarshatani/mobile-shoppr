@@ -1,26 +1,13 @@
 package com.shoppr.data.repository;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.shoppr.data.datasource.FirebaseAuthDataSource;
-import com.shoppr.data.model.IAuthenticationRepository;
+import androidx.lifecycle.LiveData;
 
-import javax.inject.Inject;
+import com.shoppr.model.User;
 
-public class AuthenticationRepository implements IAuthenticationRepository {
-    FirebaseAuthDataSource firebaseAuthDataSource;
-
-    @Inject
-    public AuthenticationRepository(FirebaseAuthDataSource firebaseAuthDataSource) {
-        this.firebaseAuthDataSource = firebaseAuthDataSource;
-    }
-
-    @Override
-    public boolean isUserLoggedIn() {
-        return firebaseAuthDataSource.getCurrentUser() != null;
-    }
-
-    @Override
-    public void logout() {
-        firebaseAuthDataSource.signOut();
-    }
-}
+ public interface AuthenticationRepository {
+    LiveData<User> getAuthState();
+    boolean isUserLoggedIn();
+    void logout();
+    void startObservingAuthState();
+    void stopObservingAuthState();
+ }

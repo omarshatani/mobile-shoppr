@@ -1,5 +1,15 @@
 package com.shoppr.data.repository;
 
-public class UserRepository {
+import androidx.annotation.Nullable;
 
+import com.shoppr.model.User;
+
+public interface UserRepository {
+	interface ProfileOperationCallbacks {
+		void onSuccess(User user); // Returns the created/fetched domain User
+
+		void onError(String message);
+	}
+
+	void getOrCreateUserProfile(String uid, @Nullable String displayName, @Nullable String email, @Nullable String photoUrl, ProfileOperationCallbacks callbacks);
 }

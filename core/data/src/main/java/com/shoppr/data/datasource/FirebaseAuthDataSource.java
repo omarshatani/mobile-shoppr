@@ -1,23 +1,14 @@
 package com.shoppr.data.datasource;
 
-import com.google.firebase.auth.FirebaseAuth;
+import androidx.lifecycle.LiveData;
+
 import com.google.firebase.auth.FirebaseUser;
+import com.shoppr.model.User;
 
-import javax.inject.Inject;
-
-public class FirebaseAuthDataSource {
-	FirebaseAuth auth;
-
-	@Inject
-	public FirebaseAuthDataSource(FirebaseAuth auth) {
-		this.auth = auth;
-	}
-
-	public FirebaseUser getCurrentUser() {
-		return auth.getCurrentUser();
-	}
-
-	public void signOut() {
-		auth.signOut();
-	}
+public interface FirebaseAuthDataSource {
+	LiveData<User> getDomainUserAuthStateLiveData();
+	FirebaseUser getCurrentFirebaseUser();
+	void startObserving();
+	void stopObserving();
+	void signOut();
 }

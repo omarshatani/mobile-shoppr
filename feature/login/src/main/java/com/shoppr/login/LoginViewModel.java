@@ -1,43 +1,134 @@
 package com.shoppr.login;
 
+import android.app.Activity;
+import android.app.Application;
 import android.util.Log;
 
-import androidx.lifecycle.ViewModel;
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
+import com.firebase.ui.auth.IdpResponse;
+import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
+import com.shoppr.domain.HandleSignInResultUseCase;
+import com.shoppr.domain.ObserveAuthStateUseCase;
+import com.shoppr.model.User;
 import com.shoppr.navigation.NavigationRoute;
-import com.shoppr.navigation.Navigator;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
-public class LoginViewModel extends ViewModel {
-
-	private final Navigator navigator;
+public class LoginViewModel extends AndroidViewModel implements ObserveAuthStateUseCase.AuthCallbacks {
 	private static final String TAG = "LoginViewModel";
 
+	private final ObserveAuthStateUseCase observeAuthStateUseCase;
+	private final HandleSignInResultUseCase handleSignInResultUseCase;
+
+	public final LiveData<User> loggedInUserLiveData;
+
+	private final MutableLiveData<NavigationRoute> _navigationRoute = new MutableLiveData<>();
+
+	public LiveData<NavigationRoute> getNavigationRoute() {
+		return _navigationRoute;
+	}
+
+	private final MutableLiveData<String> _toastMessage = new MutableLiveData<>();
+
+	public LiveData<String> getToastMessage() {
+		return _toastMessage;
+	}
+
 	@Inject
-	public LoginViewModel(Navigator navigator) {
-		this.navigator = navigator;
+	public LoginViewModel(@NonNull Application application,
+												ObserveAuthStateUseCase observeAuthStateUseCase,
+												HandleSignInResultUseCase handleSignInResultUseCase) {
+		super(application);
+		this.observeAuthStateUseCase = observeAuthStateUseCase;
+		this.handleSignInResultUseCase = handleSignInResultUseCase;
+
+		this.observeAuthStateUseCase.setAuthCallbacks(this);
+		this.loggedInUserLiveData = this.observeAuthStateUseCase.getLoggedInUser();
 	}
 
-	public void onSignInSuccess() {
-		Log.i(TAG, "Sign in successful, requesting navigation to Map.");
-		// Request navigation to the main app screen
-		navigator.navigate(new NavigationRoute.LoginToMap());
+	@Override
+	public void onUserAuthenticatedAndProfileReady(User user, NavigationRoute route) {
+		Log.d(TAG, "ViewModel: onUserAuthenticatedAndProfileReady. User: " + user.getId() + ", Route: " + route.getClass().getSimpleName());
+		_navigationRoute.postValue(route);
 	}
 
-	public void onSignInFailed(String errorMessage) {
-		Log.w(TAG, "Sign in failed: " + errorMessage);
-		// Potentially update some LiveData here to show an error message in the Fragment
-		// For now, we do nothing, user stays on login screen
+	@Override
+	public void onAuthenticationError(String message) {
+		Log.e(TAG, "ViewModel: onAuthenticationError. Message: " + message);
+		_toastMessage.postValue(message);
 	}
 
-	public void onSignInCancelled() {
-		Log.w(TAG, "Sign in cancelled.");
-		// Optional: Navigate back if cancellation should exit the login flow?
-		// navigator.goBack();
-		// For now, do nothing, user stays on login screen
+	@Override
+	public void onUserLoggedOut() {
+		Log.d(TAG, "ViewModel: onUserLoggedOut. User is now null.");
+	}
+
+	public void registerAuthStateListener() {
+		Log.d(TAG, "ViewModel: Telling ObserveAuthStateUseCase to start observing.");
+		observeAuthStateUseCase.startObserving();
+	}
+
+	public void unregisterAuthStateListener() {
+		Log.d(TAG, "ViewModel: Telling ObserveAuthStateUseCase to stop observing.");
+		observeAuthStateUseCase.stopObserving();
+	}
+
+	public void processSignInResult(FirebaseAuthUIAuthenticationResult firebaseResult) {
+		Log.d(TAG, "ViewModel: processSignInResult from Fragment. ResultCode: " + firebaseResult.getResultCode());
+		boolean isSuccess = firebaseResult.getResultCode() == Activity.RESULT_OK;
+		IdpResponse idpResponse = firebaseResult.getIdpResponse();
+		boolean isCancellation = false;
+		String errorMessage = null;
+
+		if (!isSuccess) {
+			if (idpResponse == null) {
+				isCancellation = true;
+			} else if (idpResponse.getError() != null) {
+				errorMessage = idpResponse.getError().getMessage();
+			} else {
+				errorMessage = "Sign-in flow didn't complete successfully. Code: " + firebaseResult.getResultCode();
+			}
+		}
+
+		handleSignInResultUseCase.process(isSuccess, isCancellation, errorMessage, new HandleSignInResultUseCase.SignInResultCallbacks() {
+			@Override
+			public void onSuccess() {
+				Log.d(TAG, "ViewModel: HandleSignInResultUseCase reported SUCCESS.");
+			}
+
+			@Override
+			public void onCancelled() {
+				Log.w(TAG, "ViewModel: HandleSignInResultUseCase reported CANCELLED.");
+				_toastMessage.setValue("Sign-in cancelled by user.");
+			}
+
+			@Override
+			public void onError(String message) {
+				Log.e(TAG, "ViewModel: HandleSignInResultUseCase reported ERROR: " + message);
+				_toastMessage.setValue("Sign-in failed: " + message);
+			}
+		});
+	}
+
+	public void onNavigationComplete() {
+		Log.d(TAG, "onNavigationComplete: Resetting navigation route.");
+		_navigationRoute.setValue(null);
+	}
+
+	public void onToastMessageShown() {
+		Log.d(TAG, "onToastMessageShown: Resetting toast message.");
+		_toastMessage.setValue(null);
+	}
+
+	@Override
+	protected void onCleared() {
+		super.onCleared();
 	}
 }

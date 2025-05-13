@@ -27,8 +27,7 @@ public class ProfileFragment extends BaseFragment {
     @Inject
     Navigator navigator;
 
-    public ProfileFragment() {
-    }
+    public ProfileFragment() {}
 
     public static ProfileFragment newInstance() {
         return new ProfileFragment();

@@ -1,5 +1,6 @@
 package com.shoppr.ui;
 
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -39,7 +40,16 @@ public abstract class BaseFragment extends Fragment {
 	}
 
 	protected boolean isLightStatusBarRequired() {
-		// Default behavior assumes a light background, needing dark icons
+		// Default behavior:
+		// If system is in Dark Theme, we want LIGHT icons (return false).
+		// If system is in Light Theme, we want DARK icons (return true).
+		// This means we return true if the system is NOT in dark mode.
+		if (getContext() != null) { // Ensure context is available to get resources
+			return (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
+					!= Configuration.UI_MODE_NIGHT_YES;
+		}
+		// Fallback if context is not available (should ideally not happen when this is called)
+		// Defaulting to true (dark icons) might be a "safer" visual fallback on many light themes.
 		return true;
 	}
 

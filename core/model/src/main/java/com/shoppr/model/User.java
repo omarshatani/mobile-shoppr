@@ -57,7 +57,7 @@ public class User {
 		this.address = address;
 	}
 
-	static class Builder {
+	public static class Builder {
 		private String id;
 		private String name;
 		private String email;

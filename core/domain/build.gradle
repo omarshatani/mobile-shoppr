@@ -16,6 +16,8 @@ dependencies {
     def hilt_version = "2.51.1"
 
     implementation project(":core:data")
+    implementation project(":core:model")
+    implementation project(":core:navigation")
 
     implementation libs.hilt.android
     annotationProcessor "com.google.dagger:hilt-compiler:$hilt_version"

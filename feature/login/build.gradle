@@ -18,6 +18,8 @@ android {
 dependencies {
     def hilt_version = "2.51.1"
     implementation project(':core:navigation')
+    implementation project(':core:domain')
+    implementation project(':core:model')
     implementation project(':core:ui')
 
     implementation libs.lifecycle.livedata.ktx
@@ -34,7 +36,7 @@ dependencies {
     implementation libs.hilt.android
     annotationProcessor "com.google.dagger:hilt-compiler:$hilt_version"
 
-    androidTestImplementation(project(":app")){
+    androidTestImplementation(project(":app")) {
         exclude group: 'junit', module: 'junit'
     }
     testImplementation libs.junit
