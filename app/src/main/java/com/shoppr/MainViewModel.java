@@ -21,7 +21,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class MainViewModel extends AndroidViewModel {
 	private static final String TAG = "MainViewModel";
 	private final ObserveAuthStateUseCase observeAuthStateUseCase;
-	public final LiveData<User> loggedInUserWithProfileLiveData;
 	public final LiveData<Event<String>> authenticationErrorEvents;
 
 	private final MutableLiveData<Event<NavigationRoute>> _navigationCommand = new MutableLiveData<>();
@@ -37,7 +36,6 @@ public class MainViewModel extends AndroidViewModel {
 	public MainViewModel(@NonNull Application application, ObserveAuthStateUseCase observeAuthStateUseCase) {
 		super(application);
 		this.observeAuthStateUseCase = observeAuthStateUseCase;
-		this.loggedInUserWithProfileLiveData = this.observeAuthStateUseCase.getLoggedInUserWithProfile();
 		this.authenticationErrorEvents = this.observeAuthStateUseCase.getAuthenticationErrorEvents();
 
 		authStateObserver = user -> {
@@ -56,7 +54,8 @@ public class MainViewModel extends AndroidViewModel {
 				_navigationCommand.postValue(new Event<>(new NavigationRoute.Login()));
 			}
 		};
-		this.loggedInUserWithProfileLiveData.observeForever(authStateObserver);
+
+		observeAuthStateUseCase.getLoggedInUserWithProfile().observeForever(authStateObserver);
 	}
 
 	public void startAuthObservation() {
@@ -73,6 +72,6 @@ public class MainViewModel extends AndroidViewModel {
 	protected void onCleared() {
 		super.onCleared();
 		Log.d(TAG, "onCleared: MainViewModel is being cleared.");
-		this.loggedInUserWithProfileLiveData.removeObserver(authStateObserver); // Clean up observeForever
+		observeAuthStateUseCase.getLoggedInUserWithProfile().removeObserver(authStateObserver); // Clean up observeForever
 	}
 }

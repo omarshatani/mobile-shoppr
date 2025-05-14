@@ -25,30 +25,18 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class LoginViewModel extends AndroidViewModel {
 	private static final String TAG = "LoginViewModel";
 
+	private boolean waitingForUserProfile = false;
 	private final ObserveAuthStateUseCase observeAuthStateUseCase;
-	private final HandleSignInResultUseCase handleSignInResultUseCase;
-
 	public final LiveData<User> loggedInUserWithProfileLiveData;
 	public final LiveData<Event<String>> authenticationErrorEvents;
-
 	private final MutableLiveData<Event<NavigationRoute>> _navigationCommand = new MutableLiveData<>();
-
+	private final MutableLiveData<Event<String>> _signInFlowToastMessage = new MutableLiveData<>();
 	public LiveData<Event<NavigationRoute>> getNavigationCommand() {
 		return _navigationCommand;
 	}
-
-	private final MutableLiveData<Event<String>> _signInFlowToastMessage = new MutableLiveData<>();
-
 	public LiveData<Event<String>> getSignInFlowToastMessage() {
 		return _signInFlowToastMessage;
 	}
-
-	// Removed _isSignInFlowCurrentlyActive LiveData. Fragment manages its hasLaunchedSignIn flag.
-
-	// Flag to indicate a login attempt (FirebaseUI returned RESULT_OK) has been made
-	// and we are now waiting for the ObserveAuthStateUseCase to provide the full User profile.
-	private boolean waitingForUserProfile = false;
-
 
 	@Inject
 	public LoginViewModel(@NonNull Application application,
@@ -56,7 +44,6 @@ public class LoginViewModel extends AndroidViewModel {
 												HandleSignInResultUseCase handleSignInResultUseCase) {
 		super(application);
 		this.observeAuthStateUseCase = observeAuthStateUseCase;
-		this.handleSignInResultUseCase = handleSignInResultUseCase;
 
 		this.loggedInUserWithProfileLiveData = this.observeAuthStateUseCase.getLoggedInUserWithProfile();
 		this.authenticationErrorEvents = this.observeAuthStateUseCase.getAuthenticationErrorEvents();

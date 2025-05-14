@@ -10,7 +10,7 @@ import com.shoppr.model.User;
 import javax.inject.Inject;
 
 public class CreateUserProfileUseCaseImpl implements CreateUserProfileUseCase {
-	private static final String TAG_CREATE_USER_UC = "CreateUserProfileUC";
+	private static final String TAG = "CreateUserProfileUC";
 	private final UserRepository userRepository;
 
 	@Inject
@@ -21,7 +21,7 @@ public class CreateUserProfileUseCaseImpl implements CreateUserProfileUseCase {
 	@Override
 	public void execute(String uid, @Nullable String displayName, @Nullable String email, @Nullable String photoUrl,
 											ProfileCreationCallbacks callbacks) {
-		Log.d(TAG_CREATE_USER_UC, "Executing for UID: " + uid);
+		Log.d(TAG, "Executing for UID: " + uid);
 		userRepository.getOrCreateUserProfile(uid, displayName, email, photoUrl, new UserRepository.ProfileOperationCallbacks() {
 			@Override
 			public void onSuccess(User user) {
