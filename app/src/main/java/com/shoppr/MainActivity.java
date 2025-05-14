@@ -7,6 +7,7 @@ import android.view.View;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDestination;
 import androidx.navigation.NavGraph;
@@ -15,6 +16,7 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.shoppr.navigation.AppNavigator;
+import com.shoppr.navigation.NavigationRoute;
 
 import javax.inject.Inject;
 
@@ -24,6 +26,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class MainActivity extends AppCompatActivity {
 	@Inject
 	AppNavigator appNavigator;
+	private MainViewModel viewModel;
 	private BottomNavigationView bottomNavView;
 
 	@Override
@@ -33,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
 
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+
+		viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
 		if (getSupportActionBar() != null) {
 			getSupportActionBar().hide();
@@ -54,6 +59,39 @@ public class MainActivity extends AppCompatActivity {
 		NavigationUI.setupWithNavController(bottomNavView, navController);
 		// Setup listener to hide/show BottomNav based on destination
 		setupBottomNavVisibility(navController);
+
+		observeViewModel();
+	}
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+		viewModel.startAuthObservation();
+	}
+
+	@Override
+	protected void onStop() {
+		super.onStop();
+		viewModel.stopAuthObservation();
+	}
+
+	private void observeViewModel() {
+		viewModel.getNavigationCommand().observe(this, event -> {
+			NavigationRoute route = event.getContentIfNotHandled();
+			if (route == null) {
+				return;
+				// Handle other global navigation events if MainViewModel emits them
+			}
+
+			if (route instanceof NavigationRoute.Login) {
+				// Use your AppNavigator to navigate to the login screen
+				// This might involve finding the NavController for your main graph
+				// and then calling appNavigator.navigate(route)
+				Log.d("MainActivity", "Navigating to Login due to logout or initial state.");
+				// Example: appNavigator.setNavController(NavHostFragment.findNavController(getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment)));
+				appNavigator.navigate(new NavigationRoute.Login());
+			}
+		});
 	}
 
 	// Hides/shows the BottomNavigationView based on the current destination

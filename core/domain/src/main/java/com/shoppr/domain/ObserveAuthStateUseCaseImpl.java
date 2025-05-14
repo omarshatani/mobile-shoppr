@@ -6,7 +6,6 @@ import androidx.lifecycle.Transformations;
 
 import com.shoppr.data.repository.AuthenticationRepository;
 import com.shoppr.model.User;
-import com.shoppr.navigation.NavigationRoute;
 
 import javax.inject.Inject;
 
@@ -29,7 +28,7 @@ public class ObserveAuthStateUseCaseImpl implements ObserveAuthStateUseCase {
 							public void onProfileReadyOrExists(User fullUserProfile) {
 								fullProfileUserLiveData.postValue(fullUserProfile);
 								if (authCallbacks != null)
-									authCallbacks.onUserAuthenticatedAndProfileReady(fullUserProfile, new NavigationRoute.LoginToMap());
+									authCallbacks.onUserAuthenticatedAndProfileReady(fullUserProfile);
 							}
 
 							@Override

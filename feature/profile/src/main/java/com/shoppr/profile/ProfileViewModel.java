@@ -1,6 +1,5 @@
 package com.shoppr.profile;
 
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
@@ -16,7 +15,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class ProfileViewModel extends ViewModel {
 	private final LogoutUseCase logoutUseCase;
 	private final MutableLiveData<Event<NavigationRoute>> _navigationCommand = new MutableLiveData<>();
-	public LiveData<Event<NavigationRoute>> navigationCommand = _navigationCommand;
 
 	@Inject
 	public ProfileViewModel(LogoutUseCase logoutUseCase) {
@@ -25,6 +23,5 @@ public class ProfileViewModel extends ViewModel {
 
 	public void logout() {
 		logoutUseCase.invoke();
-		_navigationCommand.setValue(new Event<>(new NavigationRoute.ProfileToLogin()));
 	}
 }

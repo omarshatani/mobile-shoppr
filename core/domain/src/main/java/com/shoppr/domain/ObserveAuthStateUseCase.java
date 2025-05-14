@@ -6,13 +6,19 @@ import com.shoppr.model.User;
 import com.shoppr.navigation.NavigationRoute;
 
 public interface ObserveAuthStateUseCase {
-    LiveData<User> getLoggedInUser();
-    void startObserving();
-    void stopObserving();
-    void setAuthCallbacks(AuthCallbacks callbacks); // For ViewModel to react
-    interface AuthCallbacks {
-        void onUserAuthenticatedAndProfileReady(User user, NavigationRoute route);
-        void onAuthenticationError(String message); // Covers profile errors too
-        void onUserLoggedOut(); // If explicit navigation is needed on logout
-    }
- }
+	LiveData<User> getLoggedInUser();
+
+	void startObserving();
+
+	void stopObserving();
+
+	interface AuthCallbacks {
+		void onUserAuthenticatedAndProfileReady(User user); // Route decision now made by ViewModel
+
+		void onAuthenticationError(String message);
+
+		void onUserLoggedOut();
+	}
+
+	void setAuthCallbacks(AuthCallbacks callbacks);
+}
