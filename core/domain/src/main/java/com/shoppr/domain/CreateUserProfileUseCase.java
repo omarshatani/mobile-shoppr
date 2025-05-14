@@ -5,8 +5,8 @@ import androidx.annotation.Nullable;
 import com.shoppr.model.User;
 
 public interface CreateUserProfileUseCase {
-	interface ProfileCreationCallbacks { // Remains the same
-		void onProfileReadyOrExists(User user); // Pass the domain user
+	interface ProfileCreationCallbacks {
+		void onProfileReadyOrExists(User user); // Returns the full User domain object
 
 		void onProfileCreationError(String message);
 	}

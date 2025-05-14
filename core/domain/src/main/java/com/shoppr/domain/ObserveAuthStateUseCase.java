@@ -2,23 +2,15 @@ package com.shoppr.domain;
 
 import androidx.lifecycle.LiveData;
 
+import com.shoppr.model.Event;
 import com.shoppr.model.User;
-import com.shoppr.navigation.NavigationRoute;
 
 public interface ObserveAuthStateUseCase {
-	LiveData<User> getLoggedInUser();
+	LiveData<User> getLoggedInUserWithProfile(); // Emits full User (after profile) or null
+
+	LiveData<Event<String>> getAuthenticationErrorEvents(); // For errors during auth/profile process
 
 	void startObserving();
 
 	void stopObserving();
-
-	interface AuthCallbacks {
-		void onUserAuthenticatedAndProfileReady(User user); // Route decision now made by ViewModel
-
-		void onAuthenticationError(String message);
-
-		void onUserLoggedOut();
-	}
-
-	void setAuthCallbacks(AuthCallbacks callbacks);
 }

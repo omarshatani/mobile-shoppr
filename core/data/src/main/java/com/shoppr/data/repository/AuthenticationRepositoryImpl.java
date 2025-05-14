@@ -18,8 +18,8 @@ public class AuthenticationRepositoryImpl implements AuthenticationRepository {
 	}
 
 	@Override
-	public LiveData<User> getAuthState() {
-		return firebaseAuthDataSourceImpl.getDomainUserAuthStateLiveData();
+	public LiveData<User> getRawAuthState() {
+		return firebaseAuthDataSourceImpl.getUserAuthStateLiveData();
 	}
 
 	@Override

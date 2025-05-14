@@ -13,6 +13,8 @@ android {
 }
 
 dependencies {
+    implementation libs.lifecycle.livedata.ktx
+
     androidTestImplementation(project(":app")){
         exclude group: 'junit', module: 'junit'
     }

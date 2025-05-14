@@ -5,9 +5,9 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.shoppr.domain.CheckInitialNavigationUseCase;
+import com.shoppr.model.Event;
 import com.shoppr.navigation.InitialTarget;
 import com.shoppr.navigation.NavigationRoute;
-import com.shoppr.ui.utils.Event;
 
 import javax.inject.Inject;
 

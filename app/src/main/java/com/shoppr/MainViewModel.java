@@ -9,19 +9,20 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.shoppr.domain.ObserveAuthStateUseCase;
+import com.shoppr.model.Event;
 import com.shoppr.model.User;
 import com.shoppr.navigation.NavigationRoute;
-import com.shoppr.ui.utils.Event;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
-public class MainViewModel extends AndroidViewModel implements ObserveAuthStateUseCase.AuthCallbacks {
+public class MainViewModel extends AndroidViewModel {
 	private static final String TAG = "MainViewModel";
 	private final ObserveAuthStateUseCase observeAuthStateUseCase;
-	public final LiveData<User> loggedInUserLiveData;
+	public final LiveData<User> loggedInUserWithProfileLiveData;
+	public final LiveData<Event<String>> authenticationErrorEvents;
 
 	private final MutableLiveData<Event<NavigationRoute>> _navigationCommand = new MutableLiveData<>();
 
@@ -29,42 +30,49 @@ public class MainViewModel extends AndroidViewModel implements ObserveAuthStateU
 		return _navigationCommand;
 	}
 
+	private boolean initialCheckDone = false;
+	private final androidx.lifecycle.Observer<User> authStateObserver; // To manage observeForever
+
 	@Inject
 	public MainViewModel(@NonNull Application application, ObserveAuthStateUseCase observeAuthStateUseCase) {
 		super(application);
 		this.observeAuthStateUseCase = observeAuthStateUseCase;
-		this.observeAuthStateUseCase.setAuthCallbacks(this); // MainViewModel handles global auth reactions
-		this.loggedInUserLiveData = this.observeAuthStateUseCase.getLoggedInUser();
+		this.loggedInUserWithProfileLiveData = this.observeAuthStateUseCase.getLoggedInUserWithProfile();
+		this.authenticationErrorEvents = this.observeAuthStateUseCase.getAuthenticationErrorEvents();
+
+		authStateObserver = user -> {
+			Log.d(TAG, "MainViewModel: Observed loggedInUserWithProfile. User: " + (user != null ? user.getId() : "null"));
+			if (!initialCheckDone) {
+				initialCheckDone = true;
+				if (user != null) {
+					Log.d(TAG, "Initial check: User logged in. Navigating to SplashToMap.");
+					_navigationCommand.postValue(new Event<>(new NavigationRoute.SplashToMap()));
+				} else {
+					Log.d(TAG, "Initial check: User not logged in. Navigating to SplashToLogin.");
+					_navigationCommand.postValue(new Event<>(new NavigationRoute.SplashToLogin()));
+				}
+			} else if (user == null) {
+				Log.d(TAG, "User logged out (detected by MainViewModel). Triggering navigation to Login.");
+				_navigationCommand.postValue(new Event<>(new NavigationRoute.Login()));
+			}
+		};
+		this.loggedInUserWithProfileLiveData.observeForever(authStateObserver);
 	}
 
 	public void startAuthObservation() {
+		Log.d(TAG, "MainViewModel: Telling ObserveAuthStateUseCase to start observing.");
 		observeAuthStateUseCase.startObserving();
 	}
 
 	public void stopAuthObservation() {
+		Log.d(TAG, "MainViewModel: Telling ObserveAuthStateUseCase to stop observing.");
 		observeAuthStateUseCase.stopObserving();
 	}
 
 	@Override
-	public void onUserAuthenticatedAndProfileReady(User user) { // Route parameter removed
-		Log.d(TAG, "MainViewModel: onUserAuthenticatedAndProfileReady. User: " + user.getId());
-		// This callback might be hit if MainViewModel is the *only* callback listener,
-		// or if ObserveAuthStateUseCase calls back all listeners.
-		// If LoginViewModel handles LoginToMap, MainViewModel might not need to do anything here,
-		// or it could verify app is in a correct state.
+	protected void onCleared() {
+		super.onCleared();
+		Log.d(TAG, "onCleared: MainViewModel is being cleared.");
+		this.loggedInUserWithProfileLiveData.removeObserver(authStateObserver); // Clean up observeForever
 	}
-
-	@Override
-	public void onAuthenticationError(String message) {
-		Log.e(TAG, "MainViewModel: onAuthenticationError. Message: " + message);
-		// Optionally show a global toast or error state via its own LiveData
-	}
-
-	@Override
-	public void onUserLoggedOut() {
-		Log.d(TAG, "MainViewModel: onUserLoggedOut. User is now null. Triggering navigation to Login.");
-		_navigationCommand.setValue(new Event<>(new NavigationRoute.Login())); // Navigate to Login
-	}
-
-	public void onNavigationEventHandled() { /* Called by MainActivity */ }
 }

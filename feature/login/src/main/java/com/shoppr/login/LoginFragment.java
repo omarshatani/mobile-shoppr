@@ -20,7 +20,6 @@ import com.shoppr.login.databinding.FragmentLoginBinding;
 import com.shoppr.navigation.NavigationRoute;
 import com.shoppr.navigation.Navigator;
 import com.shoppr.ui.BaseFragment;
-import com.shoppr.ui.utils.Event;
 
 import java.util.Arrays;
 import java.util.List;
@@ -68,71 +67,64 @@ public class LoginFragment extends BaseFragment {
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
-		observeViewModel();
-
-		if (viewModel.loggedInUserLiveData.getValue() == null && !hasLaunchedSignIn) {
-			Log.d(TAG, "onViewCreated: No domain user and sign-in not launched. Launching sign-in flow.");
+		// This prevents re-launching if the flow is already active or if user is already logged in.
+		if (!hasLaunchedSignIn) {
+			Log.d(TAG, "onViewCreated: No current user and sign-in flow not active. Launching sign-in flow.");
 			launchSignInFlow();
-			hasLaunchedSignIn = true;
-		} else if (viewModel.loggedInUserLiveData.getValue() != null) {
-			Log.d(TAG, "onViewCreated: Domain user already present (" + viewModel.loggedInUserLiveData.getValue().getId() + "). Navigation should be handled by ViewModel.");
-		} else if (hasLaunchedSignIn) {
-			Log.d(TAG, "onViewCreated: Sign-in was launched, but still no domain user. Waiting for result or AuthState observation.");
+		} else {
+			Log.d(TAG, "onViewCreated: Sign-in flow is already active. Waiting for result.");
 		}
+
+		observeViewModel();
 	}
 
 	private void observeViewModel() {
-		viewModel.loggedInUserLiveData.observe(getViewLifecycleOwner(), user -> {
-			if (user != null) {
-				Log.d(TAG, "observeViewModel (loggedInUserLiveData): Observed User: " + user.getId() + " Name: " + user.getName());
-			} else {
-				Log.d(TAG, "observeViewModel (loggedInUserLiveData): Observed no User (signed out).");
-				Event<NavigationRoute> currentNavEvent = viewModel.getNavigationCommand().getValue();
-				boolean navigatingToMap = currentNavEvent != null && currentNavEvent.peekContent() instanceof NavigationRoute.LoginToMap;
-
-				if (!hasLaunchedSignIn && !navigatingToMap) { // Check if already navigating to map
-					Log.d(TAG, "User is null, sign-in not in progress and not currently navigating to map. LoginFragment is active.");
-				}
-			}
-		});
-
 		viewModel.getNavigationCommand().observe(getViewLifecycleOwner(), event -> {
-			NavigationRoute route = event.peekContent(); // Peek first
+			if (event == null) {
+				return;
+			}
 
+			NavigationRoute route = event.peekContent();
 			if (route instanceof NavigationRoute.LoginToMap) {
-				// This is a route LoginFragment's ViewModel specifically initiates.
-				NavigationRoute consumedRoute = event.getContentIfNotHandled(); // Now consume
+				NavigationRoute consumedRoute = event.getContentIfNotHandled();
 				if (consumedRoute != null) {
 					Log.d(TAG, "LoginFragment: Handling and navigating to LoginToMap.");
-					navigator.navigate(consumedRoute);
 					Toast.makeText(requireContext(), "Login Successful! Navigating to Map...", Toast.LENGTH_SHORT).show();
-					// viewModel.onNavigationEventHandled(); // Call if your Event wrapper needs explicit reset notification
-				} else {
-					Log.d(TAG, "LoginFragment: LoginToMap event was already handled or is not for this observer instance.");
+					navigator.navigate(consumedRoute);
+					viewModel.onNavigationComplete();
 				}
 			} else if (route != null) {
-				// This LoginFragment should generally not handle other navigation routes
-				// that are not specific to its own successful completion.
-				// Global navigation (like to Login screen after logout from elsewhere)
-				// should be handled by MainActivity observing MainViewModel.
-				Log.w(TAG, "LoginFragment: LoginViewModel emitted a route (" + route.getClass().getSimpleName() + ") that this fragment is not specifically handling with UI feedback.");
-				// If there's a generic navigation that *must* happen from here, consume and navigate:
-				// NavigationRoute consumedRoute = event.getContentIfNotHandled();
-				// if (consumedRoute != null) { appNavigator.navigate(consumedRoute); }
+				Log.w(TAG, "LoginFragment: Received a navigation command (" + route.getClass().getSimpleName() + ") not specifically handled with UI feedback here.");
 			}
 		});
 
-		viewModel.getToastMessage().observe(getViewLifecycleOwner(), event -> {
-			String message = event.getContentIfNotHandled(); // Consume the event
+		viewModel.getSignInFlowToastMessage().observe(getViewLifecycleOwner(), event -> {
+			if (event == null) {
+				return;
+			}
+
+			String message = event.getContentIfNotHandled();
 			if (message != null && !message.isEmpty()) {
-				Log.d(TAG, "observeViewModel (toastMessage): Received message: " + message);
+				Log.d(TAG, "LoginFragment Observer (signInFlowToastMessage): " + message);
 				Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
-				// viewModel.onToastMessageEventHandled(); // Call if your Event wrapper needs explicit reset notification
+			}
+		});
+
+		viewModel.authenticationErrorEvents.observe(getViewLifecycleOwner(), event -> {
+			if (event == null) {
+				return;
+			}
+
+			String errorMessage = event.getContentIfNotHandled();
+			if (errorMessage != null) {
+				Log.e(TAG, "LoginFragment Observer (authenticationErrorEvents): Auth Error: " + errorMessage);
+				Toast.makeText(requireContext(), "Authentication process error: " + errorMessage, Toast.LENGTH_LONG).show();
 			}
 		});
 	}
 
 	private void launchSignInFlow() {
+		hasLaunchedSignIn = true;
 		List<AuthUI.IdpConfig> providers = Arrays.asList(
 				new AuthUI.IdpConfig.EmailBuilder().build(),
 				new AuthUI.IdpConfig.GoogleBuilder().build());
@@ -151,7 +143,6 @@ public class LoginFragment extends BaseFragment {
 
 	private void onSignInResult(@NonNull FirebaseAuthUIAuthenticationResult result) {
 		Log.d(TAG, "onSignInResult: Received result from FirebaseUI. ResultCode: " + result.getResultCode());
-		hasLaunchedSignIn = false;
 		viewModel.processSignInResult(result);
 	}
 

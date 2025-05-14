@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.shoppr.navigation.NavigationRoute;
 import com.shoppr.navigation.Navigator;
 import com.shoppr.profile.databinding.FragmentProfileBinding;
 import com.shoppr.ui.BaseFragment;
@@ -54,6 +55,7 @@ public class ProfileFragment extends BaseFragment {
 		setupUserName();
 		setupEmail();
 		setupLogoutCta();
+		observeViewModel();
 	}
 
 
@@ -61,6 +63,19 @@ public class ProfileFragment extends BaseFragment {
 	public void onDestroy() {
 		super.onDestroy();
 		binding = null;
+	}
+
+	private void observeViewModel() {
+		viewModel.getNavigationCommand().observe(getViewLifecycleOwner(), event -> {
+			NavigationRoute route = event.peekContent();
+			if (route instanceof NavigationRoute.ProfileToLogin) {
+				NavigationRoute consumedRoute = event.getContentIfNotHandled();
+				if (consumedRoute == null) {
+					return;
+				}
+				navigator.navigate(consumedRoute);
+			}
+		});
 	}
 
 	private void setupRootViewInsets(View view) {
@@ -85,6 +100,6 @@ public class ProfileFragment extends BaseFragment {
 	}
 
 	private void setupLogoutCta() {
-		binding.buttonLogout.setOnClickListener(v -> viewModel.logout());
+		binding.buttonLogout.setOnClickListener(v -> viewModel.onLogoutClicked());
 	}
 }

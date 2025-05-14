@@ -18,7 +18,7 @@ public class FirebaseAuthDataSourceImpl implements FirebaseAuthDataSource {
 	private static final String TAG = "FirebaseAuthDS";
 	private final FirebaseAuth firebaseAuth;
 	private final FirebaseUserMapper userMapper;
-	private final MutableLiveData<User> domainUserLiveData = new MutableLiveData<>(null); // Exposes domain User
+	private final MutableLiveData<User> userLiveData = new MutableLiveData<>(null); // Exposes domain User
 	private FirebaseAuth.AuthStateListener authStateListener;
 
 	@Inject
@@ -28,8 +28,8 @@ public class FirebaseAuthDataSourceImpl implements FirebaseAuthDataSource {
 		updateDomainUser();
 	}
 
-	public LiveData<User> getDomainUserAuthStateLiveData() {
-		return domainUserLiveData;
+	public LiveData<User> getUserAuthStateLiveData() {
+		return userLiveData;
 	}
 
 	public FirebaseUser getCurrentFirebaseUser() { // Still useful for some direct Firebase ops if needed
@@ -45,7 +45,7 @@ public class FirebaseAuthDataSourceImpl implements FirebaseAuthDataSource {
 			authStateListener = auth -> {
 				FirebaseUser fUser = auth.getCurrentUser();
 				Log.d(TAG, "Listener triggered. FirebaseUser: " + (fUser != null ? fUser.getUid() : "null"));
-				domainUserLiveData.postValue(userMapper.toUser(fUser));
+				userLiveData.postValue(userMapper.toUser(fUser));
 			};
 		}
 		firebaseAuth.addAuthStateListener(authStateListener);
@@ -60,6 +60,6 @@ public class FirebaseAuthDataSourceImpl implements FirebaseAuthDataSource {
 	}
 
 	private void updateDomainUser() {
-		domainUserLiveData.postValue(this.userMapper.toUser(this.firebaseAuth.getCurrentUser()));
+		userLiveData.postValue(this.userMapper.toUser(this.firebaseAuth.getCurrentUser()));
 	}
 }

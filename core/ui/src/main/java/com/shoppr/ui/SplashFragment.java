@@ -12,8 +12,8 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.shoppr.core.ui.R;
+import com.shoppr.model.Event;
 import com.shoppr.navigation.Navigator;
-import com.shoppr.ui.utils.Event;
 
 import javax.inject.Inject;
 
@@ -55,7 +55,6 @@ public class SplashFragment extends Fragment {
 			} else {
 				Log.e(TAG, "Navigator was null, cannot execute navigation command.");
 			}
-			return null;
 		}));
 	}
 }

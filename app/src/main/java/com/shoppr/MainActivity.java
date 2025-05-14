@@ -83,13 +83,13 @@ public class MainActivity extends AppCompatActivity {
 				// Handle other global navigation events if MainViewModel emits them
 			}
 
-			if (route instanceof NavigationRoute.Login) {
+			if (route instanceof NavigationRoute.ProfileToLogin) {
 				// Use your AppNavigator to navigate to the login screen
 				// This might involve finding the NavController for your main graph
 				// and then calling appNavigator.navigate(route)
 				Log.d("MainActivity", "Navigating to Login due to logout or initial state.");
 				// Example: appNavigator.setNavController(NavHostFragment.findNavController(getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment)));
-				appNavigator.navigate(new NavigationRoute.Login());
+				appNavigator.navigate(new NavigationRoute.ProfileToLogin());
 			}
 		});
 	}

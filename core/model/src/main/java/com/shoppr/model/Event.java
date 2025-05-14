@@ -1,6 +1,4 @@
-package com.shoppr.ui.utils;
-
-// In core:ui or core:domain (e.g., util/Event.java)
+package com.shoppr.model;
 
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
@@ -71,8 +69,7 @@ public class Event<T> {
 		}
 
 		public interface OnEventUnhandledContent<T> {
-			// Use kotlin.Unit or Void for Java depending on implementation
-			Object onEventUnhandled(T content); // Changed return to Object for flexibility
+			void onEventUnhandled(T content);
 		}
 	}
 }

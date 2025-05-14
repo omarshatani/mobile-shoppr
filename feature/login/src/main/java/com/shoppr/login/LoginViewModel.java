@@ -13,22 +13,23 @@ import com.firebase.ui.auth.IdpResponse;
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
 import com.shoppr.domain.HandleSignInResultUseCase;
 import com.shoppr.domain.ObserveAuthStateUseCase;
+import com.shoppr.model.Event;
 import com.shoppr.model.User;
 import com.shoppr.navigation.NavigationRoute;
-import com.shoppr.ui.utils.Event;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
-public class LoginViewModel extends AndroidViewModel implements ObserveAuthStateUseCase.AuthCallbacks {
+public class LoginViewModel extends AndroidViewModel {
 	private static final String TAG = "LoginViewModel";
 
 	private final ObserveAuthStateUseCase observeAuthStateUseCase;
 	private final HandleSignInResultUseCase handleSignInResultUseCase;
 
-	public final LiveData<User> loggedInUserLiveData;
+	public final LiveData<User> loggedInUserWithProfileLiveData;
+	public final LiveData<Event<String>> authenticationErrorEvents;
 
 	private final MutableLiveData<Event<NavigationRoute>> _navigationCommand = new MutableLiveData<>();
 
@@ -36,11 +37,18 @@ public class LoginViewModel extends AndroidViewModel implements ObserveAuthState
 		return _navigationCommand;
 	}
 
-	private final MutableLiveData<Event<String>> _toastMessage = new MutableLiveData<>();
+	private final MutableLiveData<Event<String>> _signInFlowToastMessage = new MutableLiveData<>();
 
-	public LiveData<Event<String>> getToastMessage() {
-		return _toastMessage;
+	public LiveData<Event<String>> getSignInFlowToastMessage() {
+		return _signInFlowToastMessage;
 	}
+
+	// Removed _isSignInFlowCurrentlyActive LiveData. Fragment manages its hasLaunchedSignIn flag.
+
+	// Flag to indicate a login attempt (FirebaseUI returned RESULT_OK) has been made
+	// and we are now waiting for the ObserveAuthStateUseCase to provide the full User profile.
+	private boolean waitingForUserProfile = false;
+
 
 	@Inject
 	public LoginViewModel(@NonNull Application application,
@@ -50,32 +58,27 @@ public class LoginViewModel extends AndroidViewModel implements ObserveAuthState
 		this.observeAuthStateUseCase = observeAuthStateUseCase;
 		this.handleSignInResultUseCase = handleSignInResultUseCase;
 
-		this.observeAuthStateUseCase.setAuthCallbacks(this);
-		this.loggedInUserLiveData = this.observeAuthStateUseCase.getLoggedInUser();
+		this.loggedInUserWithProfileLiveData = this.observeAuthStateUseCase.getLoggedInUserWithProfile();
+		this.authenticationErrorEvents = this.observeAuthStateUseCase.getAuthenticationErrorEvents();
+
 	}
 
-	@Override
-	public void onUserAuthenticatedAndProfileReady(User user) { // Route parameter removed
-		Log.d(TAG, "LoginViewModel: onUserAuthenticatedAndProfileReady. User: " + user.getId());
-		// This ViewModel knows that after its login flow, it should go to Map.
-		_navigationCommand.postValue(new Event<>(new NavigationRoute.LoginToMap()));
+	private void observeAuthState() {
+		this.observeAuthStateUseCase.getLoggedInUserWithProfile().observeForever(this::verifyUserStateAndNavigate);
 	}
 
-	@Override
-	public void onAuthenticationError(String message) {
-		Log.e(TAG, "LoginViewModel: onAuthenticationError. Message: " + message);
-		_toastMessage.postValue(new Event<>(message));
-	}
+	private void verifyUserStateAndNavigate(User user) {
+		if (waitingForUserProfile) {
+			return;
+		}
 
-	@Override
-	public void onUserLoggedOut() {
-		Log.d(TAG, "LoginViewModel: onUserLoggedOut. User is now null.");
-		// LoginViewModel is for the login screen. When onUserLoggedOut is called (e.g.,
-		// if an auto-login attempt fails or user logs out from elsewhere while this VM is active),
-		// it means the app should be on/remain on the login screen.
-		// No navigation command needed from here to go *to* login, as this VM serves the login screen.
+		if (user != null) {
+			Log.d(TAG, "LoginViewModel: loggedInUserWithProfileLiveData changed. User: " + user.getId() + ", waitingForProfile: " + waitingForUserProfile);
+			_navigationCommand.postValue(new Event<>(new NavigationRoute.LoginToMap()));
+			waitingForUserProfile = false;
+			observeAuthStateUseCase.getLoggedInUserWithProfile().removeObserver(this::verifyUserStateAndNavigate);
+		}
 	}
-
 
 	public void registerAuthStateListener() {
 		Log.d(TAG, "LoginViewModel: Telling ObserveAuthStateUseCase to start observing.");
@@ -84,58 +87,27 @@ public class LoginViewModel extends AndroidViewModel implements ObserveAuthState
 
 	public void unregisterAuthStateListener() {
 		Log.d(TAG, "LoginViewModel: Telling ObserveAuthStateUseCase to stop observing.");
+		observeAuthStateUseCase.getLoggedInUserWithProfile().removeObserver(this::verifyUserStateAndNavigate);
 		observeAuthStateUseCase.stopObserving();
 	}
 
 	public void processSignInResult(FirebaseAuthUIAuthenticationResult firebaseResult) {
 		Log.d(TAG, "LoginViewModel: processSignInResult from Fragment. ResultCode: " + firebaseResult.getResultCode());
-		boolean isSuccess = firebaseResult.getResultCode() == Activity.RESULT_OK;
-		IdpResponse idpResponse = firebaseResult.getIdpResponse();
-		boolean isCancellation = false;
-		String errorMessage = null;
+		waitingForUserProfile = true;
 
-		if (!isSuccess) {
-			if (idpResponse == null) {
-				isCancellation = true;
-			} else if (idpResponse.getError() != null) {
-				errorMessage = idpResponse.getError().getMessage();
-			} else {
-				errorMessage = "Sign-in flow didn't complete successfully. Code: " + firebaseResult.getResultCode();
-			}
-		}
-
-		handleSignInResultUseCase.process(isSuccess, isCancellation, errorMessage, new HandleSignInResultUseCase.SignInResultCallbacks() {
-			@Override
-			public void onSuccess() {
-				Log.d(TAG, "LoginViewModel: HandleSignInResultUseCase reported SUCCESS from FirebaseUI flow.");
-				// ObserveAuthStateUseCase will now take over, check profile, and trigger
-				// onUserAuthenticatedAndProfileReady which posts the navigation event.
-			}
-
-			@Override
-			public void onCancelled() {
-				Log.w(TAG, "LoginViewModel: HandleSignInResultUseCase reported CANCELLED from FirebaseUI flow.");
-				_toastMessage.setValue(new Event<>("Sign-in cancelled by user."));
-			}
-
-			@Override
-			public void onError(String message) {
-				Log.e(TAG, "LoginViewModel: HandleSignInResultUseCase reported ERROR from FirebaseUI flow: " + message);
-				_toastMessage.setValue(new Event<>("Sign-in failed: " + message));
-			}
-		});
+		observeAuthState();
 	}
 
-	public void onNavigationEventHandled() {
-		Log.d(TAG, "LoginViewModel: Navigation event considered handled by Fragment.");
-	}
-
-	public void onToastMessageEventHandled() {
-		Log.d(TAG, "LoginViewModel: Toast message event considered handled by Fragment.");
+	public void onNavigationComplete() {
+		Log.d(TAG, "onNavigationComplete: Resetting navigation route.");
+		_navigationCommand.postValue(null);
 	}
 
 	@Override
 	protected void onCleared() {
 		super.onCleared();
+		Log.d(TAG, "onCleared: LoginViewModel is being cleared.");
+		// If using observeForever for loggedInUserWithProfileLiveData, remove observer here
+		observeAuthStateUseCase.getLoggedInUserWithProfile().removeObserver(this::verifyUserStateAndNavigate);
 	}
 }

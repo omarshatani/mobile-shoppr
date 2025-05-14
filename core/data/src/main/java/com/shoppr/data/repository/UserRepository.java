@@ -4,9 +4,9 @@ import androidx.annotation.Nullable;
 
 import com.shoppr.model.User;
 
-public interface UserRepository {
+public interface UserRepository { // Renamed from IUserRepository
 	interface ProfileOperationCallbacks {
-		void onSuccess(User user); // Returns the created/fetched domain User
+		void onSuccess(User user); // Returns the full, created/fetched domain User from Firestore
 
 		void onError(String message);
 	}

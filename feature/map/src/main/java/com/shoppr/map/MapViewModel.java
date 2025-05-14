@@ -12,7 +12,8 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.CancellationTokenSource;
-import com.shoppr.ui.utils.Event;
+import com.shoppr.model.Event;
+
 
 import javax.inject.Inject;
 

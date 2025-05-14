@@ -28,6 +28,7 @@ playServicesLocation = "21.3.0"
 playServicesMaps = "19.2.0"
 secretsGradlePlugin = "2.0.1"
 googleAndroidLibrariesMapsplatformSecretsGradlePlugin = "2.0.1"
+lifecycleLivedataCore = "2.9.0"
 
 [libraries]
 com-google-firebase-firebase-auth = { module = "com.google.firebase:firebase-auth" }
@@ -61,6 +62,7 @@ play-services-auth = { module = "com.google.android.gms:play-services-auth", ver
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
 secrets-gradle-plugin = { module = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin", version.ref = "secretsGradlePlugin" }
+lifecycle-livedata-core = { group = "androidx.lifecycle", name = "lifecycle-livedata-core", version.ref = "lifecycleLivedataCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
