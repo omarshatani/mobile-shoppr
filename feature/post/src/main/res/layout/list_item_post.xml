@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="8dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginBottom="4dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <ImageView
+            android:id="@+id/image_post_item"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="?attr/colorSurfaceVariant"
+            android:scaleType="centerCrop"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:srcCompat="@tools:sample/backgrounds/scenic" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/text_post_item_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:textColor="?attr/colorOnSurface"
+            app:layout_constraintEnd_toStartOf="@id/chip_post_item_status"
+            app:layout_constraintStart_toEndOf="@id/image_post_item"
+            app:layout_constraintTop_toTopOf="@id/image_post_item"
+            tools:text="Selling: Vintage Leather Jacket" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_post_item_status"
+            style="@style/Widget.Material3.Chip.Suggestion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?attr/colorOnPrimaryContainer"
+            android:textSize="10sp"
+            app:chipBackgroundColor="?attr/colorPrimaryContainer"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/text_post_item_title"
+            tools:text="Active" />
+
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/text_post_item_category"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@id/text_post_item_title"
+            app:layout_constraintTop_toBottomOf="@id/text_post_item_title"
+            tools:text="Category: Apparel / Type: Selling" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/text_post_item_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorPrimary"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="@id/text_post_item_title"
+            app:layout_constraintTop_toBottomOf="@id/text_post_item_category"
+            tools:text="$75.00" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/text_post_item_offers_or_date"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textAppearance="?attr/textAppearanceCaption"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            app:layout_constraintBottom_toBottomOf="@id/image_post_item"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@id/text_post_item_title"
+            app:layout_constraintTop_toBottomOf="@id/text_post_item_price"
+            tools:text="3 Offers Received / May 14, 2025" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>
