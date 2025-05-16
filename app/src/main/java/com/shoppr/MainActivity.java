@@ -98,15 +98,22 @@ public class MainActivity extends AppCompatActivity {
 	private void setupBottomNavVisibility(NavController navController) {
 		navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
 			int destinationId = destination.getId();
-			// Define which destinations should HIDE the bottom nav
-			boolean shouldHide = destinationId == R.id.splashFragment ||
-					isLoginFlowDestination(destination); // Check if in login flow
 
-			if (shouldHide) {
+			bottomNavView.setVisibility(View.VISIBLE);
+
+			// Define which destinations should HIDE the bottom nav
+			if (destinationId == R.id.splashFragment) {
 				bottomNavView.setVisibility(View.GONE);
-			} else {
-				bottomNavView.setVisibility(View.VISIBLE);
 			}
+
+			if (isLoginFlowDestination(destination)) {
+				bottomNavView.setVisibility(View.GONE);
+			}
+
+			if (destinationId == com.shoppr.post.R.id.create_post_fragment) {
+				bottomNavView.setVisibility(View.GONE);
+			}
+
 		});
 	}
 

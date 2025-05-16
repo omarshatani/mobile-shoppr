@@ -7,15 +7,18 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.NavigationUI;
 
+import com.google.android.material.appbar.MaterialToolbar;
 import com.shoppr.navigation.Navigator;
 import com.shoppr.post.databinding.FragmentCreatePostBinding;
+import com.shoppr.ui.BaseFragment;
 
 import javax.inject.Inject;
 
-public class CreatePostFragment extends Fragment {
+public class CreatePostFragment extends BaseFragment {
 	private static final String TAG = "CreatePostFragment";
 	private CreatePostViewModel viewModel;
 	private FragmentCreatePostBinding binding;
@@ -44,8 +47,12 @@ public class CreatePostFragment extends Fragment {
 		viewModel = new ViewModelProvider(this).get(CreatePostViewModel.class);
 	}
 
-	private void observeViewModel() {
+	@Override
+	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
 
+		MaterialToolbar toolbar = view.findViewById(R.id.toolbar_create_post);
+		NavigationUI.setupWithNavController(toolbar, NavHostFragment.findNavController(this));
 	}
 
 }
