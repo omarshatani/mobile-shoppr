@@ -82,4 +82,10 @@
         app:popUpTo="@id/main_nav_graph"
         app:popUpToInclusive="true" />
 
+    <action
+        android:id="@+id/action_posts_to_create_post"
+        app:destination="@id/create_post_fragment"
+        app:popUpTo="@id/post_nav_graph"
+        app:popUpToInclusive="true" />
+
 </navigation>
