@@ -1,17 +1,16 @@
 package com.shoppr.domain;
 
-import com.shoppr.data.repository.AuthenticationRepositoryImpl;
+import com.shoppr.data.repository.AuthenticationRepository;
 import com.shoppr.navigation.InitialTarget;
 
 import javax.inject.Inject;
 
 public class CheckInitialNavigationUseCaseImpl implements CheckInitialNavigationUseCase {
     private static final String TAG = "CheckInitialNavigationUseCase";
-
-    private final AuthenticationRepositoryImpl authRepository;
+    private final AuthenticationRepository authRepository;
 
     @Inject
-    public CheckInitialNavigationUseCaseImpl(AuthenticationRepositoryImpl authRepository) {
+    public CheckInitialNavigationUseCaseImpl(AuthenticationRepository authRepository) {
         this.authRepository = authRepository;
     }
 
