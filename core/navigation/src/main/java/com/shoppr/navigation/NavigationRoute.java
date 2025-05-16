@@ -26,6 +26,8 @@ public abstract class NavigationRoute {
 	public static final class Posts extends NavigationRoute {
 	}
 
+	public static final class PostsToCreatePost extends NavigationRoute {}
+
 	public static final class Requests extends NavigationRoute {
 	}
 

@@ -29,6 +29,7 @@ public class AppNavigator implements Navigator {
         ROUTES.put(NavigationRoute.Requests.class, R.id.action_global_navigateToRequests);
         ROUTES.put(NavigationRoute.Profile.class, R.id.action_global_navigateToProfile);
         ROUTES.put(NavigationRoute.ProfileToLogin.class, R.id.action_profile_to_login);
+        ROUTES.put(NavigationRoute.PostsToCreatePost.class, R.id.action_posts_to_create_post);
     }
 
     @Inject
@@ -65,6 +66,7 @@ public class AppNavigator implements Navigator {
         }
 
     }
+
 
     @Override
     public void goBack() {
