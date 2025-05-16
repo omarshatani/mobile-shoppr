@@ -8,5 +8,14 @@
         android:id="@+id/post_fragment"
         android:name="com.shoppr.post.PostFragment"
         android:label="Post"
-        tools:layout="@layout/fragment_post" />
+        tools:layout="@layout/fragment_post" >
+        <action
+            android:id="@+id/action_post_fragment_to_create_post_fragment"
+            app:destination="@id/create_post_fragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/create_post_fragment"
+        android:name="com.shoppr.post.CreatePostFragment"
+        android:label="Create Post"
+        tools:layout="@layout/fragment_create_post" />
 </navigation>
