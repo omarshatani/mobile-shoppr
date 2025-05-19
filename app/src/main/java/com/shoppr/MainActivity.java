@@ -66,13 +66,13 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	protected void onStart() {
 		super.onStart();
-		viewModel.startAuthObservation();
+		viewModel.startGlobalAuthObservation();
 	}
 
 	@Override
 	protected void onStop() {
 		super.onStop();
-		viewModel.stopAuthObservation();
+		viewModel.stopGlobalAuthObservation();
 	}
 
 	private void observeViewModel() {

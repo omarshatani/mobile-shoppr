@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 
 import com.shoppr.domain.ObserveAuthStateUseCase;
 import com.shoppr.model.Event;
@@ -21,7 +22,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class MainViewModel extends AndroidViewModel {
 	private static final String TAG = "MainViewModel";
 	private final ObserveAuthStateUseCase observeAuthStateUseCase;
-	public final LiveData<Event<String>> authenticationErrorEvents;
+	public final LiveData<User> rawAuthUserLiveData; // MainVM observes raw auth state
+	// Potentially, MainVM could also use CreateUserProfileUseCase if it needs the full profile for its UI
 
 	private final MutableLiveData<Event<NavigationRoute>> _navigationCommand = new MutableLiveData<>();
 
@@ -30,48 +32,48 @@ public class MainViewModel extends AndroidViewModel {
 	}
 
 	private boolean initialCheckDone = false;
-	private final androidx.lifecycle.Observer<User> authStateObserver; // To manage observeForever
+	private final Observer<User> mainAuthStateObserver;
 
 	@Inject
 	public MainViewModel(@NonNull Application application, ObserveAuthStateUseCase observeAuthStateUseCase) {
 		super(application);
 		this.observeAuthStateUseCase = observeAuthStateUseCase;
-		this.authenticationErrorEvents = this.observeAuthStateUseCase.getAuthenticationErrorEvents();
+		this.rawAuthUserLiveData = this.observeAuthStateUseCase.getRawAuthUser();
 
-		authStateObserver = user -> {
-			Log.d(TAG, "MainViewModel: Observed loggedInUserWithProfile. User: " + (user != null ? user.getId() : "null"));
+		mainAuthStateObserver = rawUser -> {
+			Log.d(TAG, "MainViewModel: Observed rawAuthUser. User: " + (rawUser != null ? rawUser.getId() : "null"));
 			if (!initialCheckDone) {
 				initialCheckDone = true;
-				if (user != null) {
-					Log.d(TAG, "Initial check: User logged in. Navigating to SplashToMap.");
+				if (rawUser != null) {
+					Log.d(TAG, "Initial check: Raw user logged in. Navigating to SplashToMap.");
 					_navigationCommand.postValue(new Event<>(new NavigationRoute.SplashToMap()));
 				} else {
-					Log.d(TAG, "Initial check: User not logged in. Navigating to SplashToLogin.");
+					Log.d(TAG, "Initial check: Raw user not logged in. Navigating to SplashToLogin.");
 					_navigationCommand.postValue(new Event<>(new NavigationRoute.SplashToLogin()));
 				}
-			} else if (user == null) {
-				Log.d(TAG, "User logged out (detected by MainViewModel). Triggering navigation to Login.");
+			} else if (rawUser == null) {
+				Log.d(TAG, "Raw user logged out (detected by MainViewModel). Triggering navigation to Login.");
 				_navigationCommand.postValue(new Event<>(new NavigationRoute.Login()));
 			}
 		};
-
-		observeAuthStateUseCase.getLoggedInUserWithProfile().observeForever(authStateObserver);
 	}
 
-	public void startAuthObservation() {
-		Log.d(TAG, "MainViewModel: Telling ObserveAuthStateUseCase to start observing.");
+	public void startGlobalAuthObservation() {
+		Log.d(TAG, "MainViewModel: Telling ObserveAuthStateUseCase to start observing AND adding local observer to rawAuthUserLiveData.");
 		observeAuthStateUseCase.startObserving();
+		this.rawAuthUserLiveData.observeForever(mainAuthStateObserver);
 	}
 
-	public void stopAuthObservation() {
-		Log.d(TAG, "MainViewModel: Telling ObserveAuthStateUseCase to stop observing.");
+	public void stopGlobalAuthObservation() {
+		Log.d(TAG, "MainViewModel: Telling ObserveAuthStateUseCase to stop observing AND removing local observer from rawAuthUserLiveData.");
+		this.rawAuthUserLiveData.removeObserver(mainAuthStateObserver);
 		observeAuthStateUseCase.stopObserving();
 	}
 
 	@Override
 	protected void onCleared() {
 		super.onCleared();
-		Log.d(TAG, "onCleared: MainViewModel is being cleared.");
-		observeAuthStateUseCase.getLoggedInUserWithProfile().removeObserver(authStateObserver); // Clean up observeForever
+		Log.d(TAG, "onCleared: MainViewModel is being cleared. Removing observer.");
+		this.rawAuthUserLiveData.removeObserver(mainAuthStateObserver);
 	}
 }
