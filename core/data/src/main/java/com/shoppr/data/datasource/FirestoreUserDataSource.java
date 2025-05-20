@@ -2,7 +2,7 @@ package com.shoppr.data.datasource;
 
 import com.shoppr.model.User;
 
-public interface FirestoreUserDataSource { // Renamed from IUserDataSource
+public interface FirestoreUserDataSource {
     interface FirestoreOperationCallbacks {
         void onSuccess(User user);
 

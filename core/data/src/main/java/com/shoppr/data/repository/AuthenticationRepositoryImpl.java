@@ -1,5 +1,7 @@
 package com.shoppr.data.repository;
 
+import android.util.Log;
+
 import androidx.lifecycle.LiveData;
 
 import com.shoppr.data.datasource.FirebaseAuthDataSourceImpl;
@@ -10,35 +12,40 @@ import javax.inject.Singleton;
 
 @Singleton
 public class AuthenticationRepositoryImpl implements AuthenticationRepository {
-	private final FirebaseAuthDataSourceImpl firebaseAuthDataSourceImpl;
+	private static final String TAG = "AuthRepoImpl";
+	private final FirebaseAuthDataSourceImpl firebaseAuthDataSource; // Using concrete FirebaseAuthDataSource
 
 	@Inject
-	public AuthenticationRepositoryImpl(FirebaseAuthDataSourceImpl firebaseAuthDataSourceImpl) {
-		this.firebaseAuthDataSourceImpl = firebaseAuthDataSourceImpl;
+	public AuthenticationRepositoryImpl(FirebaseAuthDataSourceImpl firebaseAuthDataSource) {
+		this.firebaseAuthDataSource = firebaseAuthDataSource;
 	}
 
 	@Override
 	public LiveData<User> getRawAuthState() {
-		return firebaseAuthDataSourceImpl.getUserAuthStateLiveData();
+		// This LiveData<User> comes from FirebaseAuthDataSourceImpl after mapping FirebaseUser
+		return firebaseAuthDataSource.getUserAuthStateLiveData();
 	}
 
 	@Override
 	public boolean isUserLoggedIn() {
-		return firebaseAuthDataSourceImpl.getCurrentFirebaseUser() != null;
+		return firebaseAuthDataSource.getCurrentFirebaseUser() != null;
 	}
 
 	@Override
 	public void logout() {
-		firebaseAuthDataSourceImpl.signOut();
+		Log.d(TAG, "logout() called. Delegating to FirebaseAuthDataSource.");
+		firebaseAuthDataSource.signOut();
 	}
 
 	@Override
 	public void startObservingAuthState() {
-		firebaseAuthDataSourceImpl.startObserving();
+		Log.d(TAG, "startObservingAuthState() called. Delegating to FirebaseAuthDataSource.");
+		firebaseAuthDataSource.startObserving();
 	}
 
 	@Override
 	public void stopObservingAuthState() {
-		firebaseAuthDataSourceImpl.stopObserving();
+		Log.d(TAG, "stopObservingAuthState() called. Delegating to FirebaseAuthDataSource.");
+		firebaseAuthDataSource.stopObserving();
 	}
 }

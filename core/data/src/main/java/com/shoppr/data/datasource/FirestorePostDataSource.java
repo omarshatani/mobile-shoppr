@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 
 import com.shoppr.model.Post;
 
-public interface PostDataSource {
+public interface FirestorePostDataSource {
     interface FirestorePostCallbacks {
         void onSuccess();
 

@@ -1,6 +1,7 @@
 package com.shoppr.model;
 
 public class Post {
+	private String id;
 	private String title;
 	private String description;
 	private String price;
@@ -15,6 +16,7 @@ public class Post {
 	}
 
 	private Post(Builder builder) {
+		this.id = builder.id;
 		this.title = builder.title;
 		this.description = builder.description;
 		this.price = builder.price;
@@ -24,6 +26,14 @@ public class Post {
 		this.category = builder.category;
 		this.lister = builder.lister;
 		this.requests = builder.requests;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	public String getTitle() {
@@ -99,6 +109,7 @@ public class Post {
 	}
 
 	static class Builder {
+		private String id;
 		private String title;
 		private String description;
 		private String price;
@@ -108,6 +119,11 @@ public class Post {
 		private String category;
 		private User lister;
 		private String[] requests;
+
+		public Builder id(String id) {
+			this.id = id;
+			return this;
+		}
 
 		public Builder title(String title) {
 			this.title = title;
