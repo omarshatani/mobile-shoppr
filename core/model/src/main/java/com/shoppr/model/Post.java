@@ -1,6 +1,6 @@
 package com.shoppr.model;
 
-public class Listing {
+public class Post {
 	private String title;
 	private String description;
 	private String price;
@@ -10,10 +10,10 @@ public class Listing {
 	private User lister;
 	private String[] requests;
 
-	public Listing() {
+	public Post() {
 	}
 
-	private Listing(Builder builder) {
+	private Post(Builder builder) {
 		this.title = builder.title;
 		this.description = builder.description;
 		this.price = builder.price;
@@ -138,8 +138,8 @@ public class Listing {
 			return this;
 		}
 
-		public Listing build() {
-			return new Listing(this);
+		public Post build() {
+			return new Post(this);
 		}
 
 	}
