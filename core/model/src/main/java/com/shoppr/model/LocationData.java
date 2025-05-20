@@ -3,22 +3,22 @@ package com.shoppr.model;
 import androidx.annotation.Nullable;
 
 public class LocationData {
-    public final double latitude;
-    public final double longitude;
+    public final Double latitude;
+    public final Double longitude;
     @Nullable
     public final String addressString;
 
-    public LocationData(double latitude, double longitude, @Nullable String addressString) {
+    public LocationData(Double latitude, Double longitude, @Nullable String addressString) {
         this.latitude = latitude;
         this.longitude = longitude;
         this.addressString = addressString;
     }
 
-    public double getLatitude() {
+    public Double getLatitude() {
         return latitude;
     }
 
-    public double getLongitude() {
+    public Double getLongitude() {
         return longitude;
     }
 

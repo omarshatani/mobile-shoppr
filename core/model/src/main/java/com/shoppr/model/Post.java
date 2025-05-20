@@ -108,7 +108,7 @@ public class Post {
 		this.requests = requests;
 	}
 
-	static class Builder {
+	public static class Builder {
 		private String id;
 		private String title;
 		private String description;

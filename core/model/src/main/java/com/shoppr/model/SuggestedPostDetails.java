@@ -9,7 +9,7 @@ import androidx.annotation.Nullable;
  */
 public class SuggestedPostDetails {
     @NonNull
-    public final ListingType listingType; // e.g., "SELLING_ITEM", "WANTING_TO_BUY_ITEM", "OFFERING_SERVICE", "REQUESTING_SERVICE"
+    public final ListingType listingType;
     @NonNull
     public final String suggestedTitle;
     @NonNull
@@ -19,16 +19,12 @@ public class SuggestedPostDetails {
     @Nullable
     public final String suggestedCategory; // Optional
 
-    // Note: Price and currency are handled separately as they come from user's direct input ("Base Offer")
-    // and potentially as a secondary extraction from text by the LLM.
-    // This model focuses on what the LLM primarily suggests based on text.
-
     public SuggestedPostDetails(
-            @NonNull ListingType listingType,
-            @NonNull String suggestedTitle,
-            @NonNull String suggestedDescription,
-            @NonNull String extractedItemName,
-            @Nullable String suggestedCategory) {
+        @NonNull ListingType listingType,
+        @NonNull String suggestedTitle,
+        @NonNull String suggestedDescription,
+        @NonNull String extractedItemName,
+        @Nullable String suggestedCategory) {
         this.listingType = listingType;
         this.suggestedTitle = suggestedTitle;
         this.suggestedDescription = suggestedDescription;
@@ -66,11 +62,11 @@ public class SuggestedPostDetails {
     @Override
     public String toString() {
         return "SuggestedPostDetails{" +
-                "listingType='" + listingType + '\'' +
-                ", suggestedTitle='" + suggestedTitle + '\'' +
-                ", suggestedDescription='" + suggestedDescription + '\'' +
-                ", extractedItemName='" + extractedItemName + '\'' +
-                ", suggestedCategory='" + suggestedCategory + '\'' +
-                '}';
+            "listingType=" + listingType.name() +
+            ", suggestedTitle='" + suggestedTitle + '\'' +
+            ", suggestedDescription='" + suggestedDescription + '\'' +
+            ", extractedItemName='" + extractedItemName + '\'' +
+            ", suggestedCategory='" + suggestedCategory + '\'' +
+            '}';
     }
 }

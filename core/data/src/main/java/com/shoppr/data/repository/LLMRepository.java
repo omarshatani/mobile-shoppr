@@ -5,16 +5,18 @@ import androidx.annotation.Nullable;
 
 import com.shoppr.model.SuggestedPostDetails;
 
+import java.util.List;
+
 public interface LLMRepository {
     interface LLMAnalysisCallbacks {
-        void onSuccess(@NonNull SuggestedPostDetails suggestions);
+        void onSuccess(@NonNull SuggestedPostDetails suggestions); // Returns domain model
         void onError(@NonNull String message);
     }
-
-    void analyzeTextForPost(
-            @NonNull String text,
-            @Nullable Double baseOfferPrice,
-            @Nullable String baseOfferCurrency,
-            @NonNull LLMAnalysisCallbacks callbacks
+    void getPostSuggestionsFromLLM( // Renamed for clarity
+        @NonNull String text,
+        @Nullable List<String> imageUrls,
+        @Nullable String baseOfferPrice,
+        @Nullable String baseOfferCurrency,
+        @NonNull LLMAnalysisCallbacks callbacks
     );
-}
+ }
