@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
@@ -15,6 +16,7 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.shoppr.navigation.Navigator;
 import com.shoppr.post.databinding.FragmentCreatePostBinding;
 import com.shoppr.ui.BaseFragment;
+import com.shoppr.ui.utils.InsetUtils;
 
 import javax.inject.Inject;
 
@@ -25,7 +27,6 @@ public class CreatePostFragment extends BaseFragment {
 
 	@Inject
 	Navigator navigator;
-
 
 	public static CreatePostFragment newInstance() {
 		return new CreatePostFragment();
@@ -53,6 +54,11 @@ public class CreatePostFragment extends BaseFragment {
 
 		MaterialToolbar toolbar = view.findViewById(R.id.toolbar_create_post);
 		NavigationUI.setupWithNavController(toolbar, NavHostFragment.findNavController(this));
+
+		ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
+			binding.toolbarCreatePost.setPadding(0, InsetUtils.getTopInset(insets), 0, 0);
+			return insets;
+		});
 	}
 
 }

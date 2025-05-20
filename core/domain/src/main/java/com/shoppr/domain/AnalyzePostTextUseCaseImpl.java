@@ -3,6 +3,7 @@ package com.shoppr.domain;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.shoppr.data.repository.LLMRepository;
 import com.shoppr.model.SuggestedPostDetails;
@@ -19,18 +20,24 @@ public class AnalyzePostTextUseCaseImpl implements AnalyzePostTextUseCase {
 	}
 
 	@Override
-	public void execute(@NonNull String rawText, @NonNull final AnalysisCallbacks useCaseCallbacks) {
-		Log.d(TAG, "Executing text analysis for: \"" + rawText + "\"");
+	public void execute(
+			@NonNull String rawText,
+			@Nullable Double baseOfferPrice,
+			@Nullable String baseOfferCurrency,
+			@NonNull final AnalysisCallbacks useCaseCallbacks) {
+
+		Log.d(TAG, "Executing text analysis for: \"" + rawText + "\", Price: " + baseOfferPrice + ", Currency: " + baseOfferCurrency);
 
 		if (rawText.trim().isEmpty()) {
 			useCaseCallbacks.onError("Input text cannot be empty.");
 			return;
 		}
 
-		llmRepository.analyzeTextForPost(rawText, new LLMRepository.LLMAnalysisCallbacks() {
+		// Delegate to the repository to handle the actual Cloud Function call
+		llmRepository.analyzeTextForPost(rawText, baseOfferPrice, baseOfferCurrency, new LLMRepository.LLMAnalysisCallbacks() {
 			@Override
 			public void onSuccess(@NonNull SuggestedPostDetails suggestions) {
-				Log.d(TAG, "LLMRepository returned success. Title: " + suggestions.title);
+				Log.d(TAG, "LLMRepository returned success. Title: " + suggestions.getSuggestedTitle());
 				useCaseCallbacks.onSuccess(suggestions);
 			}
 

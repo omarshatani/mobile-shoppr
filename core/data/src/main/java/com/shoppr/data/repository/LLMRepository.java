@@ -1,13 +1,20 @@
 package com.shoppr.data.repository;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.shoppr.model.SuggestedPostDetails;
 
-public interface LLMRepository { // Or a more generic CloudFunctionRepository
+public interface LLMRepository {
     interface LLMAnalysisCallbacks {
-        void onSuccess(@NonNull SuggestedPostDetails suggestions); // Returns domain model
+        void onSuccess(@NonNull SuggestedPostDetails suggestions);
         void onError(@NonNull String message);
     }
-    void analyzeTextForPost(@NonNull String text, @NonNull LLMAnalysisCallbacks callbacks);
- }
+
+    void analyzeTextForPost(
+            @NonNull String text,
+            @Nullable Double baseOfferPrice,
+            @Nullable String baseOfferCurrency,
+            @NonNull LLMAnalysisCallbacks callbacks
+    );
+}

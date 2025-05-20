@@ -1,52 +1,76 @@
 package com.shoppr.model;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+/**
+ * Represents the structured suggestions extracted by the LLM
+ * for creating a new post. This is a domain model.
+ */
 public class SuggestedPostDetails {
-	public final String listingType; // e.g., "SELLING_ITEM", "WANTING_TO_BUY_ITEM", etc.
-	public final String title;
-	public final String description;
-	public final String itemName;
-	public final Double price; // Using Double to allow for null
-	public final String currency;
-	public final String category;
+    @NonNull
+    public final ListingType listingType; // e.g., "SELLING_ITEM", "WANTING_TO_BUY_ITEM", "OFFERING_SERVICE", "REQUESTING_SERVICE"
+    @NonNull
+    public final String suggestedTitle;
+    @NonNull
+    public final String suggestedDescription;
+    @NonNull
+    public final String extractedItemName; // The primary item/service identified
+    @Nullable
+    public final String suggestedCategory; // Optional
 
-	public SuggestedPostDetails(String listingType, String title, String description, String itemName, @Nullable Double price, @Nullable String currency, @Nullable String category) {
-		this.listingType = listingType;
-		this.title = title;
-		this.description = description;
-		this.itemName = itemName;
-		this.price = price;
-		this.currency = currency;
-		this.category = category;
-	}
-	// Add getters if your User model uses private fields and getters
+    // Note: Price and currency are handled separately as they come from user's direct input ("Base Offer")
+    // and potentially as a secondary extraction from text by the LLM.
+    // This model focuses on what the LLM primarily suggests based on text.
 
-    public String getListingType() {
+    public SuggestedPostDetails(
+            @NonNull ListingType listingType,
+            @NonNull String suggestedTitle,
+            @NonNull String suggestedDescription,
+            @NonNull String extractedItemName,
+            @Nullable String suggestedCategory) {
+        this.listingType = listingType;
+        this.suggestedTitle = suggestedTitle;
+        this.suggestedDescription = suggestedDescription;
+        this.extractedItemName = extractedItemName;
+        this.suggestedCategory = suggestedCategory;
+    }
+
+    // --- Getters ---
+    @NonNull
+    public ListingType getListingType() {
         return listingType;
     }
 
-    public String getTitle() {
-        return title;
+    @NonNull
+    public String getSuggestedTitle() {
+        return suggestedTitle;
     }
 
-    public String getDescription() {
-        return description;
+    @NonNull
+    public String getSuggestedDescription() {
+        return suggestedDescription;
     }
 
-    public String getItemName() {
-        return itemName;
+    @NonNull
+    public String getExtractedItemName() {
+        return extractedItemName;
     }
 
-    public Double getPrice() {
-        return price;
+    @Nullable
+    public String getSuggestedCategory() {
+        return suggestedCategory;
     }
 
-    public String getCurrency() {
-        return currency;
-    }
-
-    public String getCategory() {
-        return category;
+    @NonNull
+    @Override
+    public String toString() {
+        return "SuggestedPostDetails{" +
+                "listingType='" + listingType + '\'' +
+                ", suggestedTitle='" + suggestedTitle + '\'' +
+                ", suggestedDescription='" + suggestedDescription + '\'' +
+                ", extractedItemName='" + extractedItemName + '\'' +
+                ", suggestedCategory='" + suggestedCategory + '\'' +
+                '}';
     }
 }

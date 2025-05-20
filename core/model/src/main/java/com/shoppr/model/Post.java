@@ -7,6 +7,7 @@ public class Post {
 	private ListingState state;
 	private ListingType type;
 	private String[] imageUrl;
+	private String category;
 	private User lister;
 	private String[] requests;
 
@@ -20,6 +21,7 @@ public class Post {
 		this.state = builder.state;
 		this.type = builder.type;
 		this.imageUrl = builder.imageUrl;
+		this.category = builder.category;
 		this.lister = builder.lister;
 		this.requests = builder.requests;
 	}
@@ -72,6 +74,14 @@ public class Post {
 		this.imageUrl = imageUrl;
 	}
 
+	public String getCategory() {
+		return category;
+	}
+
+	public void setCategory(String category) {
+		this.category = category;
+	}
+
 	public User getLister() {
 		return lister;
 	}
@@ -95,6 +105,7 @@ public class Post {
 		private ListingState state;
 		private ListingType type;
 		private String[] imageUrl;
+		private String category;
 		private User lister;
 		private String[] requests;
 
@@ -118,7 +129,7 @@ public class Post {
 			return this;
 		}
 
-		public Builder description(ListingType type) {
+		public Builder type(ListingType type) {
 			this.type = type;
 			return this;
 		}
@@ -128,7 +139,12 @@ public class Post {
 			return this;
 		}
 
-		public Builder imageUrl(User lister) {
+		public Builder category(String category) {
+			this.category = category;
+			return this;
+		}
+
+		public Builder lister(User lister) {
 			this.lister = lister;
 			return this;
 		}

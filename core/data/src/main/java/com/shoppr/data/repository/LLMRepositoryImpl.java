@@ -3,9 +3,11 @@ package com.shoppr.data.repository;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.firebase.functions.FirebaseFunctions;
 import com.google.firebase.functions.FirebaseFunctionsException;
+import com.shoppr.model.ListingType;
 import com.shoppr.model.SuggestedPostDetails;
 
 import java.util.HashMap;
@@ -19,16 +21,27 @@ public class LLMRepositoryImpl implements LLMRepository {
     private final FirebaseFunctions functions;
 
     @Inject
-    public LLMRepositoryImpl(FirebaseFunctions functions) {
+    public LLMRepositoryImpl(FirebaseFunctions functions) { // FirebaseFunctions provided by Hilt
         this.functions = functions;
     }
 
     @Override
-    public void analyzeTextForPost(@NonNull String text, @NonNull final LLMAnalysisCallbacks callbacks) {
+    public void analyzeTextForPost(
+            @NonNull String text,
+            @Nullable Double baseOfferPrice,
+            @Nullable String baseOfferCurrency,
+            @NonNull final LLMAnalysisCallbacks callbacks) {
+
         Map<String, Object> data = new HashMap<>();
         data.put("text", text);
+        if (baseOfferPrice != null) {
+            data.put("baseOfferPrice", baseOfferPrice);
+        }
+        if (baseOfferCurrency != null && !baseOfferCurrency.isEmpty()) {
+            data.put("baseOfferCurrency", baseOfferCurrency);
+        }
 
-        Log.d(TAG, "Calling Firebase Cloud Function: " + CLOUD_FUNCTION_NAME + " with text: " + text);
+        Log.d(TAG, "Calling Firebase Cloud Function: " + CLOUD_FUNCTION_NAME + " with data: " + data.toString());
 
         functions.getHttpsCallable(CLOUD_FUNCTION_NAME)
             .call(data)
@@ -44,13 +57,16 @@ public class LLMRepositoryImpl implements LLMRepository {
                                 SuggestedPostDetails suggestions = mapToSuggestedPostDetails(suggestionsMap);
                                 callbacks.onSuccess(suggestions);
                             } else {
-                                callbacks.onError("Cloud function returned success but 'data' field is missing or null.");
+                                Log.e(TAG, "Cloud function returned success but 'data' field is missing or null.");
+                                callbacks.onError("AI service response format error (data missing).");
                             }
                         } else {
                             String errorMessage = "Cloud function indicated failure.";
                             if (resultData != null && resultData.get("error") instanceof Map) {
                                 Map<String, Object> errorMap = (Map<String, Object>) resultData.get("error");
                                 errorMessage = (String) errorMap.getOrDefault("message", errorMessage);
+                            } else if (resultData != null && resultData.get("errorMessage") instanceof String) {
+                                errorMessage = (String) resultData.get("errorMessage");
                             }
                             Log.e(TAG, "Cloud function failed or returned success:false. Message: " + errorMessage + " Full response: " + resultData);
                             callbacks.onError(errorMessage);
@@ -62,7 +78,7 @@ public class LLMRepositoryImpl implements LLMRepository {
                 } else {
                     Exception e = task.getException();
                     Log.e(TAG, "Cloud function call failed.", e);
-                    String errorMessage = "Failed to connect to AI service.";
+                    String errorMessage = "Failed to connect to AI analysis service.";
                     if (e instanceof FirebaseFunctionsException) {
                         FirebaseFunctionsException ffe = (FirebaseFunctionsException) e;
                         errorMessage = "AI service error (" + ffe.getCode() + "): " + ffe.getMessage();
@@ -76,25 +92,26 @@ public class LLMRepositoryImpl implements LLMRepository {
 
     // Helper to map from generic Map to your domain SuggestedPostDetails
     private SuggestedPostDetails mapToSuggestedPostDetails(Map<String, Object> map) {
-        String listingType = (String) map.get("listingType");
-        String title = (String) map.get("title");
-        String description = (String) map.get("description");
-        String itemName = (String) map.get("itemName");
-        Double price = null;
-        if (map.get("price") instanceof Number) {
-            price = ((Number) map.get("price")).doubleValue();
+        String listingTypeStr = (String) map.get("listingType");
+        ListingType listingTypeEnum = ListingType.SELLING_ITEM; // Default
+        if (listingTypeStr != null) {
+            try {
+                listingTypeEnum = ListingType.valueOf(listingTypeStr.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                Log.w(TAG, "Invalid listingType string from LLM: " + listingTypeStr + ". Defaulting.");
+            }
         }
-        String currency = (String) map.get("currency");
-        String category = (String) map.get("category");
 
-        // Add null checks and defaults as necessary
+        String title = (String) map.get("suggestedTitle");
+        String description = (String) map.get("suggestedDescription");
+        String itemName = (String) map.get("extractedItemName");
+        String category = (String) map.get("suggestedCategory");
+
         return new SuggestedPostDetails(
-            listingType != null ? listingType : "UNKNOWN",
-            title != null ? title : "",
+                listingTypeEnum,
+                title != null ? title : "Untitled",
             description != null ? description : "",
-            itemName != null ? itemName : "",
-            price,
-            currency,
+                itemName != null ? itemName : "N/A",
             category
         );
     }
