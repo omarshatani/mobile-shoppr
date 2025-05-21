@@ -1,4 +1,4 @@
-package com.shoppr.domain;
+package com.shoppr.domain.datasource;
 
 import androidx.annotation.NonNull;
 

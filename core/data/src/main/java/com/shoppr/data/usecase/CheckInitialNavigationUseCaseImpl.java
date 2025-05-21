@@ -1,7 +1,7 @@
 package com.shoppr.data.usecase;
 
-import com.shoppr.domain.AuthenticationRepository;
-import com.shoppr.domain.CheckInitialNavigationUseCase;
+import com.shoppr.domain.repository.AuthenticationRepository;
+import com.shoppr.domain.usecase.CheckInitialNavigationUseCase;
 import com.shoppr.navigation.InitialTarget;
 
 import javax.inject.Inject;

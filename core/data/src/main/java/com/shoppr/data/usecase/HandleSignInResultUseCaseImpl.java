@@ -4,7 +4,7 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import com.shoppr.domain.HandleSignInResultUseCase;
+import com.shoppr.domain.usecase.HandleSignInResultUseCase;
 
 import javax.inject.Inject;
 

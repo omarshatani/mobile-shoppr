@@ -4,8 +4,8 @@ import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 
-import com.shoppr.domain.AuthenticationRepository;
-import com.shoppr.domain.ObserveAuthStateUseCase;
+import com.shoppr.domain.repository.AuthenticationRepository;
+import com.shoppr.domain.usecase.ObserveAuthStateUseCase;
 import com.shoppr.model.User;
 
 import javax.inject.Inject;

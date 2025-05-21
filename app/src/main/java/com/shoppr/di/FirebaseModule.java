@@ -1,4 +1,4 @@
-package com.shoppr.data.di;
+package com.shoppr.di;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;

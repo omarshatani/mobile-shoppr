@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
-import com.shoppr.domain.FirestoreUserDataSource;
+import com.shoppr.domain.datasource.FirestoreUserDataSource;
 import com.shoppr.model.User;
 
 import javax.inject.Inject;

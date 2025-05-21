@@ -61,6 +61,11 @@ dependencies {
     implementation libs.navigation.ui
     implementation libs.flexbox
 
+    implementation platform(libs.firebase.bom)
+    implementation libs.firebase.auth
+    implementation libs.firebase.firestore
+    implementation libs.firebase.functions.ktx
+
     implementation libs.play.services.location
 
     implementation libs.multidex

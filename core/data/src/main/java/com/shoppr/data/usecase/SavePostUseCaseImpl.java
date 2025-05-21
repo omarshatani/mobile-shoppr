@@ -1,10 +1,11 @@
-package com.shoppr.domain;
+package com.shoppr.data.usecase;
 
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.shoppr.data.repository.PostRepository;
+import com.shoppr.domain.repository.PostRepository;
+import com.shoppr.domain.usecase.SavePostUseCase;
 import com.shoppr.model.Post;
 
 import javax.inject.Inject;

@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.shoppr.domain.CheckInitialNavigationUseCase;
+import com.shoppr.domain.usecase.CheckInitialNavigationUseCase;
 import com.shoppr.model.Event;
 import com.shoppr.navigation.InitialTarget;
 import com.shoppr.navigation.NavigationRoute;

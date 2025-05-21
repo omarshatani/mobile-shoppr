@@ -5,8 +5,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.shoppr.domain.UpdateUserDefaultLocationUseCase;
-import com.shoppr.domain.UserRepository;
+import com.shoppr.domain.repository.UserRepository;
+import com.shoppr.domain.usecase.UpdateUserDefaultLocationUseCase;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

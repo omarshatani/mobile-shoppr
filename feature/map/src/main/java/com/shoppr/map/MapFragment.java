@@ -91,6 +91,18 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	}
 
 	@Override
+	public void onStart() {
+		super.onStart();
+		viewModel.onMapFragmentStarted();
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+		viewModel.onMapFragmentStopped();
+	}
+
+	@Override
 	public void onMapReady(@NonNull GoogleMap googleMap) {
 		this.googleMap = googleMap;
 		Log.d(TAG, "onMapReady called. Map is ready.");
@@ -115,6 +127,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		googleMap = null;
 		mapFragment = null;
 		binding = null;
+		viewModel.onMapFragmentStopped();
 		Log.d(TAG, "onDestroyView called, binding set to null");
 	}
 
@@ -175,6 +188,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 
 	private void requestLocationPermission() {
 		Log.d(TAG, "Requesting location permission...");
+		viewModel.onLocationSearching();
 		requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
 	}
 
@@ -196,5 +210,4 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		});
 		ViewCompat.requestApplyInsets(view);
 	}
-
 }

@@ -3,7 +3,6 @@ package com.shoppr.data.adapter;
 import androidx.annotation.Nullable;
 
 import com.google.firebase.auth.FirebaseUser;
-import com.shoppr.domain.FirebaseUserMapper;
 import com.shoppr.model.User;
 
 import javax.inject.Inject;

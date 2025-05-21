@@ -7,8 +7,8 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.shoppr.domain.FirebaseAuthDataSource;
-import com.shoppr.domain.FirebaseUserMapper;
+import com.shoppr.data.adapter.FirebaseUserMapper;
+import com.shoppr.domain.datasource.FirebaseAuthDataSource;
 import com.shoppr.model.User;
 
 import javax.inject.Inject;
@@ -16,51 +16,64 @@ import javax.inject.Singleton;
 
 @Singleton
 public class FirebaseAuthDataSourceImpl implements FirebaseAuthDataSource {
-	private static final String TAG = "FirebaseAuthDS";
-	private final FirebaseAuth firebaseAuth;
-	private final FirebaseUserMapper userMapper;
-	private final MutableLiveData<User> userLiveData = new MutableLiveData<>(null); // Exposes domain User
+	private static final String TAG = "FirebaseAuthDSImpl";
+	private final FirebaseAuth firebaseAuthSdk; // The actual Firebase SDK
+	private final FirebaseUserMapper userMapper; // Mapper to convert to domain User
+
+	private final MutableLiveData<User> domainUserAuthStateLiveData = new MutableLiveData<>(null);
 	private FirebaseAuth.AuthStateListener authStateListener;
 
 	@Inject
-	public FirebaseAuthDataSourceImpl(FirebaseAuth firebaseAuth, FirebaseUserMapper userMapper) {
-		this.firebaseAuth = firebaseAuth;
+	public FirebaseAuthDataSourceImpl(FirebaseAuth firebaseAuthSdk, FirebaseUserMapper userMapper) {
+		this.firebaseAuthSdk = firebaseAuthSdk;
 		this.userMapper = userMapper;
-		updateDomainUser();
+		// Initialize LiveData with the current state
+		FirebaseUser initialFirebaseUser = this.firebaseAuthSdk.getCurrentUser();
+		Log.d(TAG, "Initializing with FirebaseUser: " + (initialFirebaseUser != null ? initialFirebaseUser.getUid() : "null"));
+		domainUserAuthStateLiveData.postValue(this.userMapper.toUser(initialFirebaseUser));
 	}
 
-	public LiveData<User> getUserAuthStateLiveData() {
-		return userLiveData;
+	@Override
+	public LiveData<User> getDomainUserAuthStateLiveData() {
+		return domainUserAuthStateLiveData;
 	}
 
-	public FirebaseUser getCurrentFirebaseUser() { // Still useful for some direct Firebase ops if needed
-		return firebaseAuth.getCurrentUser();
+	// This internal method can be used by AuthenticationRepositoryImpl if it needs the raw FirebaseUser
+	// but it's not part of the FirebaseAuthDataSource *interface* for the domain.
+	public FirebaseUser getCurrentFirebaseUser() {
+		return firebaseAuthSdk.getCurrentUser();
 	}
 
+	@Override
+	public boolean isCurrentUserLoggedIn() {
+		return firebaseAuthSdk.getCurrentUser() != null;
+	}
+
+	@Override
 	public void signOut() {
-		firebaseAuth.signOut();
+		Log.d(TAG, "Signing out user from Firebase.");
+		firebaseAuthSdk.signOut();
+		// Listener will update domainUserAuthStateLiveData
 	}
 
+	@Override
 	public void startObserving() {
 		if (authStateListener == null) {
-			authStateListener = auth -> {
-				FirebaseUser fUser = auth.getCurrentUser();
-				Log.d(TAG, "Listener triggered. FirebaseUser: " + (fUser != null ? fUser.getUid() : "null"));
-				userLiveData.postValue(userMapper.toUser(fUser));
+			authStateListener = authSdk -> { // authSdk is FirebaseAuth instance
+				FirebaseUser fUser = authSdk.getCurrentUser();
+				Log.d(TAG, "Firebase AuthStateListener triggered. FirebaseUser: " + (fUser != null ? fUser.getUid() : "null"));
+				domainUserAuthStateLiveData.postValue(userMapper.toUser(fUser));
 			};
 		}
-		firebaseAuth.addAuthStateListener(authStateListener);
-		Log.d(TAG, "Started observing auth state in FirebaseAuthDataSource.");
+		firebaseAuthSdk.addAuthStateListener(authStateListener);
+		Log.d(TAG, "Started observing auth state in FirebaseAuthDataSourceImpl.");
 	}
 
+	@Override
 	public void stopObserving() {
 		if (authStateListener != null) {
-			firebaseAuth.removeAuthStateListener(authStateListener);
-			Log.d(TAG, "Stopped observing auth state in FirebaseAuthDataSource.");
+			firebaseAuthSdk.removeAuthStateListener(authStateListener);
+			Log.d(TAG, "Stopped observing auth state in FirebaseAuthDataSourceImpl.");
 		}
-	}
-
-	private void updateDomainUser() {
-		userLiveData.postValue(this.userMapper.toUser(this.firebaseAuth.getCurrentUser()));
 	}
 }

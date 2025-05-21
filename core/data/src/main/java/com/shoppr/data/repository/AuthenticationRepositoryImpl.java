@@ -4,8 +4,8 @@ import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 
-import com.shoppr.data.datasource.FirebaseAuthDataSourceImpl;
-import com.shoppr.domain.AuthenticationRepository;
+import com.shoppr.domain.datasource.FirebaseAuthDataSource;
+import com.shoppr.domain.repository.AuthenticationRepository;
 import com.shoppr.model.User;
 
 import javax.inject.Inject;
@@ -14,22 +14,22 @@ import javax.inject.Singleton;
 @Singleton
 public class AuthenticationRepositoryImpl implements AuthenticationRepository {
 	private static final String TAG = "AuthRepoImpl";
-	private final FirebaseAuthDataSourceImpl firebaseAuthDataSource; // Using concrete FirebaseAuthDataSource
+	private final FirebaseAuthDataSource firebaseAuthDataSource; // Using concrete FirebaseAuthDataSource
 
 	@Inject
-	public AuthenticationRepositoryImpl(FirebaseAuthDataSourceImpl firebaseAuthDataSource) {
+	public AuthenticationRepositoryImpl(FirebaseAuthDataSource firebaseAuthDataSource) {
 		this.firebaseAuthDataSource = firebaseAuthDataSource;
 	}
 
 	@Override
 	public LiveData<User> getRawAuthState() {
 		// This LiveData<User> comes from FirebaseAuthDataSourceImpl after mapping FirebaseUser
-		return firebaseAuthDataSource.getUserAuthStateLiveData();
+		return firebaseAuthDataSource.getDomainUserAuthStateLiveData();
 	}
 
 	@Override
 	public boolean isUserLoggedIn() {
-		return firebaseAuthDataSource.getCurrentFirebaseUser() != null;
+		return firebaseAuthDataSource.isCurrentUserLoggedIn();
 	}
 
 	@Override

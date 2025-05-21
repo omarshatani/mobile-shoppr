@@ -17,7 +17,7 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.CancellationTokenSource;
-import com.shoppr.domain.GetCurrentDeviceLocationUseCase;
+import com.shoppr.domain.usecase.GetCurrentDeviceLocationUseCase;
 
 import java.io.IOException;
 import java.util.List;

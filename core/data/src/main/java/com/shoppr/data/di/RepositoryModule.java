@@ -5,14 +5,14 @@ import com.google.firebase.functions.FirebaseFunctions;
 import com.shoppr.data.datasource.FirebaseAuthDataSourceImpl;
 import com.shoppr.data.datasource.FirestorePostDataSourceImpl;
 import com.shoppr.data.datasource.FirestoreUserDataSourceImpl;
-import com.shoppr.data.repository.AuthenticationRepository;
 import com.shoppr.data.repository.AuthenticationRepositoryImpl;
-import com.shoppr.data.repository.LLMRepository;
 import com.shoppr.data.repository.LLMRepositoryImpl;
-import com.shoppr.data.repository.PostRepository;
 import com.shoppr.data.repository.PostRepositoryImpl;
-import com.shoppr.data.repository.UserRepository;
 import com.shoppr.data.repository.UserRepositoryImpl;
+import com.shoppr.domain.repository.AuthenticationRepository;
+import com.shoppr.domain.repository.LLMRepository;
+import com.shoppr.domain.repository.PostRepository;
+import com.shoppr.domain.repository.UserRepository;
 
 import javax.inject.Singleton;
 

@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
+import com.shoppr.domain.datasource.FirestorePostDataSource;
 import com.shoppr.model.Post;
 
 import javax.inject.Inject;

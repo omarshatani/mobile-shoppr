@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import com.google.firebase.functions.FirebaseFunctions;
 import com.google.firebase.functions.FirebaseFunctionsException;
 import com.google.firebase.functions.HttpsCallableResult;
+import com.shoppr.domain.repository.LLMRepository;
 import com.shoppr.model.ListingType;
 import com.shoppr.model.SuggestedPostDetails;
 

@@ -5,8 +5,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.shoppr.domain.CreateUserProfileUseCase;
-import com.shoppr.domain.UserRepository;
+import com.shoppr.domain.repository.UserRepository;
+import com.shoppr.domain.usecase.CreateUserProfileUseCase;
 import com.shoppr.model.User;
 
 import javax.inject.Inject;

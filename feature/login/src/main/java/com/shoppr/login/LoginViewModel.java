@@ -12,8 +12,8 @@ import androidx.lifecycle.Observer;
 
 import com.firebase.ui.auth.IdpResponse;
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
-import com.shoppr.domain.CreateUserProfileUseCase;
-import com.shoppr.domain.ObserveAuthStateUseCase;
+import com.shoppr.domain.usecase.CreateUserProfileUseCase;
+import com.shoppr.domain.usecase.ObserveAuthStateUseCase;
 import com.shoppr.model.Event;
 import com.shoppr.model.User;
 import com.shoppr.navigation.NavigationRoute;

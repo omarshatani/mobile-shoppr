@@ -1,7 +1,7 @@
 package com.shoppr.data.di;
 
+import com.shoppr.data.adapter.FirebaseUserMapper;
 import com.shoppr.data.adapter.FirebaseUserToUserMapper;
-import com.shoppr.domain.FirebaseUserMapper;
 
 import javax.inject.Singleton;
 

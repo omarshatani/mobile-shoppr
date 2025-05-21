@@ -3,12 +3,12 @@ package com.shoppr.data.di;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.shoppr.data.adapter.FirebaseUserToUserMapper;
-import com.shoppr.data.datasource.FirebaseAuthDataSource;
 import com.shoppr.data.datasource.FirebaseAuthDataSourceImpl;
-import com.shoppr.data.datasource.FirestorePostDataSource;
 import com.shoppr.data.datasource.FirestorePostDataSourceImpl;
-import com.shoppr.data.datasource.FirestoreUserDataSource;
 import com.shoppr.data.datasource.FirestoreUserDataSourceImpl;
+import com.shoppr.domain.datasource.FirebaseAuthDataSource;
+import com.shoppr.domain.datasource.FirestorePostDataSource;
+import com.shoppr.domain.datasource.FirestoreUserDataSource;
 
 import javax.inject.Singleton;
 

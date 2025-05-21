@@ -9,7 +9,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 
-import com.shoppr.domain.ObserveAuthStateUseCase;
+import com.shoppr.domain.usecase.ObserveAuthStateUseCase;
 import com.shoppr.model.Event;
 import com.shoppr.model.User;
 import com.shoppr.navigation.NavigationRoute;

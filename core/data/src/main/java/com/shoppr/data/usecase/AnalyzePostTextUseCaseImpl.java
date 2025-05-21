@@ -1,11 +1,12 @@
-package com.shoppr.domain;
+package com.shoppr.data.usecase;
 
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.shoppr.data.repository.LLMRepository;
+import com.shoppr.domain.repository.LLMRepository;
+import com.shoppr.domain.usecase.AnalyzePostTextUseCase;
 import com.shoppr.model.SuggestedPostDetails;
 
 import java.util.List;

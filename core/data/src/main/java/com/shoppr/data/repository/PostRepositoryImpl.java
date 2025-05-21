@@ -4,7 +4,8 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.shoppr.data.datasource.FirestorePostDataSource;
+import com.shoppr.domain.datasource.FirestorePostDataSource;
+import com.shoppr.domain.repository.PostRepository;
 import com.shoppr.model.Post;
 
 import javax.inject.Inject;
