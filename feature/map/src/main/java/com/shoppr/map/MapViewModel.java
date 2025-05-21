@@ -95,15 +95,10 @@ public class MapViewModel extends AndroidViewModel {
         getCurrentUserUseCase.stopObserving();
     }
 
-    public void onLocationSearching() {
-        _fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_location_searching);
-    }
-
     public void onLocationPermissionResult(boolean isGranted) {
         Log.d(TAG, "Location permission result: " + isGranted);
         _locationPermissionGranted.setValue(isGranted);
         if (isGranted) {
-            _fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_gps_fixed); // Standard icon
             fetchAndSaveDeviceLocation();
         } else {
             _fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_location_disabled); // Disabled icon
@@ -126,7 +121,7 @@ public class MapViewModel extends AndroidViewModel {
         Log.d(TAG, "Map manually moved by user.");
         isMapManuallyMoved = true;
         // Optionally change FAB icon to indicate "re-center" mode if desired
-        onLocationSearching();
+        _fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_location_searching);
     }
 
     private void fetchAndSaveDeviceLocation() {
@@ -140,7 +135,7 @@ public class MapViewModel extends AndroidViewModel {
 
         Log.d(TAG, "Attempting to fetch device location for user: " + currentUserId);
         // Potentially show a loading indicator on FAB or map
-        // _fabIconResId.setValue(R.drawable.ic_location_searching_24); // Example searching icon
+        _fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_location_searching);
 
         getCurrentDeviceLocationUseCase.execute(new GetCurrentDeviceLocationUseCase.GetDeviceLocationCallbacks() {
             @Override
@@ -150,7 +145,7 @@ public class MapViewModel extends AndroidViewModel {
                     _moveToLocationEvent.postValue(new Event<>(new LatLng(deviceLocation.latitude, deviceLocation.longitude)));
                     initialLocationSet = true;
                 }
-                // _fabIconResId.setValue(R.drawable.ic_my_location_24); // Reset to default
+                _fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_gps_fixed);
 
                 // Update user's profile with this new location in Firestore
                 updateUserDefaultLocationUseCase.execute(
@@ -178,7 +173,7 @@ public class MapViewModel extends AndroidViewModel {
             @Override
             public void onDeviceLocationError(@NonNull String message) {
                 Log.e(TAG, "Failed to fetch device location: " + message);
-                // _fabIconResId.setValue(R.drawable.ic_my_location_24); // Reset to default or error icon
+                _fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_location_disabled); // Reset to default or error icon
                 if (!message.toLowerCase().contains("permission")) { // Don't toast for permission denial again
                     _toastMessageEvent.postValue(new Event<>("Could not get current location: " + message));
                 }

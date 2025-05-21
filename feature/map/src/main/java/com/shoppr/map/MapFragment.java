@@ -144,7 +144,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		viewModel.moveToLocationEvent.observe(getViewLifecycleOwner(), new Event.EventObserver<>(latLng -> {
 			Log.d(TAG, "Received moveToLocationEvent: " + latLng);
 			if (googleMap != null && latLng != null) {
-				googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f));
+				googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f));
 			}
 		}));
 
@@ -188,7 +188,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 
 	private void requestLocationPermission() {
 		Log.d(TAG, "Requesting location permission...");
-		viewModel.onLocationSearching();
 		requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
 	}
 
