@@ -1,4 +1,4 @@
-package com.shoppr.data.adapter;
+package com.shoppr.domain;
 
 import androidx.annotation.Nullable;
 

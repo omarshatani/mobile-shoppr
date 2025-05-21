@@ -1,8 +1,10 @@
-package com.shoppr.domain;
+package com.shoppr.data.usecase;
 
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+
+import com.shoppr.domain.HandleSignInResultUseCase;
 
 import javax.inject.Inject;
 
@@ -13,7 +15,7 @@ public class HandleSignInResultUseCaseImpl implements HandleSignInResultUseCase 
 
 	@Override
 	public void process(boolean isSuccess, boolean isCancellation, @Nullable String errorMessage,
-											SignInResultCallbacks callbacks) {
+						HandleSignInResultUseCase.SignInResultCallbacks callbacks) {
 		Log.d("HandleSignInResultUCImpl", "Processing. Success: " + isSuccess + ", Cancelled: " + isCancellation);
 		if (isSuccess) {
 			callbacks.onSuccess();

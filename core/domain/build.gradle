@@ -14,10 +14,13 @@ android {
 
 dependencies {
     def hilt_version = "2.51.1"
-
     implementation project(":core:data")
     implementation project(":core:model")
     implementation project(":core:navigation")
+
+    implementation platform(libs.firebase.bom)
+    implementation libs.firebase.auth
+    implementation libs.firebase.firestore
 
     implementation libs.hilt.android
     annotationProcessor "com.google.dagger:hilt-compiler:$hilt_version"

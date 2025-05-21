@@ -5,6 +5,7 @@ import android.util.Log;
 import androidx.lifecycle.LiveData;
 
 import com.shoppr.data.datasource.FirebaseAuthDataSourceImpl;
+import com.shoppr.domain.AuthenticationRepository;
 import com.shoppr.model.User;
 
 import javax.inject.Inject;

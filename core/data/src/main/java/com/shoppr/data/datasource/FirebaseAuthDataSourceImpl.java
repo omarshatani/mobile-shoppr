@@ -7,7 +7,8 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.shoppr.data.adapter.FirebaseUserMapper;
+import com.shoppr.domain.FirebaseAuthDataSource;
+import com.shoppr.domain.FirebaseUserMapper;
 import com.shoppr.model.User;
 
 import javax.inject.Inject;

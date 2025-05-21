@@ -1,10 +1,12 @@
-package com.shoppr.domain;
+package com.shoppr.data.usecase;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.shoppr.data.repository.UserRepository;
+import com.shoppr.domain.CreateUserProfileUseCase;
+import com.shoppr.domain.UserRepository;
 import com.shoppr.model.User;
 
 import javax.inject.Inject;
@@ -24,12 +26,12 @@ public class CreateUserProfileUseCaseImpl implements CreateUserProfileUseCase {
 		Log.d(TAG, "Executing for UID: " + uid);
 		userRepository.getOrCreateUserProfile(uid, displayName, email, photoUrl, new UserRepository.ProfileOperationCallbacks() {
 			@Override
-			public void onSuccess(User user) {
+			public void onSuccess(@NonNull User user) {
 				callbacks.onProfileReadyOrExists(user);
 			}
 
 			@Override
-			public void onError(String message) {
+			public void onError(@NonNull String message) {
 				callbacks.onProfileCreationError(message);
 			}
 		});

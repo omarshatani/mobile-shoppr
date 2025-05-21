@@ -1,10 +1,11 @@
-package com.shoppr.domain;
+package com.shoppr.data.usecase;
 
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 
-import com.shoppr.data.repository.AuthenticationRepository;
+import com.shoppr.domain.AuthenticationRepository;
+import com.shoppr.domain.ObserveAuthStateUseCase;
 import com.shoppr.model.User;
 
 import javax.inject.Inject;
