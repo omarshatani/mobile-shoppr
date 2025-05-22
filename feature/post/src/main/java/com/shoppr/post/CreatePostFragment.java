@@ -18,15 +18,19 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.appbar.MaterialToolbar;
-import com.shoppr.model.LocationData;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.carousel.CarouselLayoutManager;
+import com.google.android.material.carousel.CarouselSnapHelper;
 import com.shoppr.navigation.NavigationRoute;
 import com.shoppr.navigation.Navigator;
 import com.shoppr.post.databinding.FragmentCreatePostBinding;
 import com.shoppr.ui.BaseFragment;
+import com.shoppr.ui.adapter.SelectedImagesCarouselAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,23 +49,14 @@ public class CreatePostFragment extends BaseFragment {
     @Inject
     Navigator navigator;
 
-    private final List<Uri> currentSelectedImageUris = new ArrayList<>();
-    // private SelectedImagesAdapter selectedImagesAdapter; // Conceptual
+    // Adapter for the image carousel
+    private SelectedImagesCarouselAdapter selectedImagesAdapter;
 
     private ActivityResultLauncher<Intent> pickImagesLauncher;
-    // private ActivityResultLauncher<String> requestLocationPermissionLauncher; // Not used if location is assumed
-
-    // This will hold the location data derived from the user's profile for the post.
-    private LocationData postCreationLocation = null;
+    // postCreationLocation is now managed by observing ViewModel's postCreationLocation LiveData
 
 
-    public CreatePostFragment() {
-        // Required empty public constructor
-    }
-
-    public static CreatePostFragment newInstance() {
-        return new CreatePostFragment();
-    }
+    public CreatePostFragment() { /* Required empty public constructor */ }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -70,30 +65,40 @@ public class CreatePostFragment extends BaseFragment {
 
         pickImagesLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                currentSelectedImageUris.clear();
-                if (result.getData().getClipData() != null) {
+                List<Uri> newlySelectedUris = new ArrayList<>();
+                if (result.getData().getClipData() != null) { // Multiple images selected
                     int count = result.getData().getClipData().getItemCount();
                     for (int i = 0; i < count; i++) {
                         Uri imageUri = result.getData().getClipData().getItemAt(i).getUri();
                         if (imageUri != null) {
-                            currentSelectedImageUris.add(imageUri);
+                            newlySelectedUris.add(imageUri);
                         }
                     }
-                } else if (result.getData().getData() != null) {
+                } else if (result.getData().getData() != null) { // Single image selected
                     Uri imageUri = result.getData().getData();
                     if (imageUri != null) {
-                        currentSelectedImageUris.add(imageUri);
+                        newlySelectedUris.add(imageUri);
                     }
                 }
-                Log.d(TAG, "Selected " + currentSelectedImageUris.size() + " image(s).");
-                viewModel.onUserSelectedLocalImageUris(new ArrayList<>(currentSelectedImageUris));
-                Toast.makeText(getContext(), currentSelectedImageUris.size() + " image(s) selected.", Toast.LENGTH_SHORT).show();
+
+                // Append to existing or replace, based on desired behavior.
+                // ViewModel should handle combining/replacing logic.
+                List<Uri> currentUrisInVm = viewModel.selectedImageUris.getValue();
+                List<Uri> combinedUris = currentUrisInVm == null ? new ArrayList<>() : new ArrayList<>(currentUrisInVm);
+
+                for (Uri newUri : newlySelectedUris) {
+                    if (!combinedUris.contains(newUri)) {
+                        combinedUris.add(newUri);
+                    }
+                }
+                Log.d(TAG, "Selected " + newlySelectedUris.size() + " new image(s). Total now: " + combinedUris.size());
+                viewModel.onUserSelectedLocalImageUris(combinedUris); // Update ViewModel
+                Toast.makeText(getContext(), newlySelectedUris.size() + " image(s) added.", Toast.LENGTH_SHORT).show();
+                // Adapter will be updated by observing viewModel.selectedImageUris
             } else {
                 Log.d(TAG, "Image selection cancelled or failed.");
             }
         });
-
-        // requestLocationPermissionLauncher is not needed if we don't have a button to fetch current location here
     }
 
     @Override
@@ -108,21 +113,41 @@ public class CreatePostFragment extends BaseFragment {
         super.onViewCreated(view, savedInstanceState);
 
         MaterialToolbar toolbar = binding.toolbarCreatePost;
-        NavigationUI.setupWithNavController(toolbar, NavHostFragment.findNavController(this));
+        NavController navController = NavHostFragment.findNavController(this);
+        NavigationUI.setupWithNavController(toolbar, navController);
 
-//        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> { // Changed view to toolbar
-//            v.setPadding(v.getPaddingLeft(), InsetUtils.getTopInset(insets) + v.getPaddingTop(), v.getPaddingRight(), v.getPaddingBottom());
-//            return insets;
-//        });
-
+        setupCarousel();
         setupCurrencySpinner();
         setupInputListeners();
         setupButtonListeners();
         observeViewModel();
     }
 
-    private void setupCurrencySpinner() {
+    private void setupCarousel() {
+        if (getContext() == null || binding == null) return;
+        // Initialize with an empty list; adapter will be updated by LiveData from ViewModel
+        selectedImagesAdapter = new SelectedImagesCarouselAdapter(getContext(), new ArrayList<>(), uri -> {
+            // Handle image removal by telling the ViewModel
+            viewModel.removeSelectedImageUri(uri); // ViewModel updates its LiveData
+            Toast.makeText(getContext(), "Image removed", Toast.LENGTH_SHORT).show();
+            // Visibility update will happen via LiveData observation
+        });
+        binding.carouselSelectedImages.setLayoutManager(new CarouselLayoutManager());
+        CarouselSnapHelper snapHelper = new CarouselSnapHelper();
+        snapHelper.attachToRecyclerView(binding.carouselSelectedImages);
+        binding.carouselSelectedImages.setAdapter(selectedImagesAdapter);
+        updateCarouselVisibility(viewModel.selectedImageUris.getValue()); // Initial visibility
+    }
+
+    private void updateCarouselVisibility(@Nullable List<Uri> uris) {
         if (binding == null) return;
+        boolean isEmpty = uris == null || uris.isEmpty();
+        binding.carouselSelectedImages.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+        binding.labelImagesCarousel.setText(isEmpty ? "Add Photos (Optional)" : "Selected Photos (" + (uris != null ? uris.size() : 0) + ") Tap photo to remove");
+    }
+
+    private void setupCurrencySpinner() {
+        if (binding == null || getContext() == null) return;
         String[] currencies = new String[]{"USD", "EUR", "CHF", "GBP", "JPY", "CAD"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 requireContext(),
@@ -142,7 +167,6 @@ public class CreatePostFragment extends BaseFragment {
         binding.editTextRawText.addTextChangedListener(createTextWatcher(viewModel::onRawTextChanged));
         binding.editTextBaseOffer.addTextChangedListener(createTextWatcher(viewModel::onBaseOfferPriceChanged));
         binding.autocompleteCurrency.addTextChangedListener(createTextWatcher(viewModel::onBaseOfferCurrencyChanged));
-        // No listeners for editTextLocation as it's removed
     }
 
     private TextWatcher createTextWatcher(TextChangeCallback callback) {
@@ -169,39 +193,42 @@ public class CreatePostFragment extends BaseFragment {
 
     private void setupButtonListeners() {
         if (binding == null) return;
-        binding.buttonAddImage.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-            intent.setType("image/*");
-            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-            pickImagesLauncher.launch(Intent.createChooser(intent, "Select Pictures"));
-        });
 
-        // No listener for location icon as it's removed from layout
+        MaterialButton addPhotoButton = binding.bottomActionBar.findViewById(R.id.button_toolbar_add_photo);
+        if (addPhotoButton != null) {
+            addPhotoButton.setOnClickListener(v -> {
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("image/*");
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                pickImagesLauncher.launch(Intent.createChooser(intent, "Select Pictures"));
+            });
+        }
 
-        binding.buttonCreatePostSubmit.setOnClickListener(v -> {
-            Log.d(TAG, "Create Post button clicked.");
-            if (postCreationLocation == null) { // Check the fragment's stored location
-                Toast.makeText(getContext(), "User location not yet available. Please ensure it's set from your profile.", Toast.LENGTH_LONG).show();
-                Log.e(TAG, "Cannot create post: postCreationLocation is null.");
-                return;
-            }
-            viewModel.onCreatePostClicked(postCreationLocation, new ArrayList<>(currentSelectedImageUris));
-        });
+        MaterialButton createPostSubmitButton = binding.bottomActionBar.findViewById(R.id.button_toolbar_create_post);
+        if (createPostSubmitButton != null) {
+            createPostSubmitButton.setOnClickListener(v -> {
+                Log.d(TAG, "Toolbar Create Post button clicked.");
+                // ViewModel now holds all necessary data (including location derived from lister, and image URIs)
+                viewModel.onCreatePostClicked();
+            });
+        }
     }
 
     private void observeViewModel() {
-        if (binding == null) return;
+        if (binding == null || getViewLifecycleOwner() == null) return;
 
         viewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
             if (binding == null) return;
             binding.progressBarCreatePost.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-            binding.buttonCreatePostSubmit.setEnabled(!isLoading);
+            View addPhotoButton = binding.bottomActionBar.findViewById(R.id.button_toolbar_add_photo);
+            View createPostButton = binding.bottomActionBar.findViewById(R.id.button_toolbar_create_post);
+            if (addPhotoButton != null) addPhotoButton.setEnabled(!isLoading);
+            if (createPostButton != null) createPostButton.setEnabled(!isLoading);
         });
 
         viewModel.operationError.observe(getViewLifecycleOwner(), event -> {
             if (binding == null) return;
-            if (event == null) return;
-            String errorMessage = event.peekContent();
+            String errorMessage = event.getContentIfNotHandled();
             if (errorMessage != null) {
                 Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
             }
@@ -209,8 +236,7 @@ public class CreatePostFragment extends BaseFragment {
 
         viewModel.successMessage.observe(getViewLifecycleOwner(), event -> {
             if (binding == null) return;
-            if (event == null) return;
-            String message = event.peekContent();
+            String message = event.getContentIfNotHandled();
             if (message != null) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
             }
@@ -218,8 +244,7 @@ public class CreatePostFragment extends BaseFragment {
 
         viewModel.navigationCommand.observe(getViewLifecycleOwner(), event -> {
             if (binding == null) return;
-            if (event == null) return;
-            NavigationRoute route = event.peekContent();
+            NavigationRoute route = event.getContentIfNotHandled();
             if (route != null) {
                 Log.d(TAG, "Navigation command received: " + route.getClass().getSimpleName());
                 if (route instanceof NavigationRoute.Map || route.getClass().getSimpleName().contains("Map")) {
@@ -230,39 +255,43 @@ public class CreatePostFragment extends BaseFragment {
             }
         });
 
+        // Observe currentListerLiveData to enable/disable create button and get default location
         viewModel.currentListerLiveData.observe(getViewLifecycleOwner(), lister -> {
             if (binding == null) return;
-            if (lister != null) {
-                Log.d(TAG, "Current lister profile loaded: " + lister.getName());
-                if (lister.getLastLatitude() != null && lister.getLastLongitude() != null) {
-                    // Set the location to be used for the post
-                    postCreationLocation = new LocationData(
-                            lister.getLastLatitude(),
-                            lister.getLastLongitude(),
-                            lister.getLastLocationAddress()
-                    );
-                    Log.d(TAG, "Post location set from user profile: " + postCreationLocation.toString());
-                    // No UI to update for location display in this simplified version
-                } else {
-                    postCreationLocation = null; // Ensure it's null if not available
-                    Log.w(TAG, "Lister profile loaded, but no last known location available. Post creation might be blocked.");
-                    Toast.makeText(getContext(), "Your default location isn't set. Please visit the map screen to set it.", Toast.LENGTH_LONG).show();
-                }
-                binding.buttonCreatePostSubmit.setEnabled(postCreationLocation != null); // Enable button only if location is available
-            } else {
-                Log.w(TAG, "Lister is null. User needs to be logged in to create a post.");
-                postCreationLocation = null;
-                binding.buttonCreatePostSubmit.setEnabled(false);
+            MaterialButton createPostButton = binding.bottomActionBar.findViewById(R.id.button_toolbar_create_post);
+            if (lister == null) {
+                Log.w(TAG, "Lister is null. Disabling create post button.");
+                if (createPostButton != null) createPostButton.setEnabled(false);
                 Toast.makeText(getContext(), "Please log in to create a post.", Toast.LENGTH_LONG).show();
+            }
+            // Further enabling based on location is handled by observing postCreationLocation
+        });
+
+        // Observe the derived postCreationLocation from ViewModel
+        viewModel.postCreationLocation.observe(getViewLifecycleOwner(), locationData -> {
+            if (binding == null) return;
+            MaterialButton createPostButton = binding.bottomActionBar.findViewById(R.id.button_toolbar_create_post);
+            if (locationData != null && locationData.latitude != null && locationData.longitude != null) {
+                Log.d(TAG, "ViewModel provided postCreationLocation: " + locationData.toString());
+                if (createPostButton != null && viewModel.currentListerLiveData.getValue() != null) {
+                    createPostButton.setEnabled(true);
+                }
+            } else {
+                Log.w(TAG, "ViewModel provided null or invalid postCreationLocation.");
+                if (createPostButton != null) createPostButton.setEnabled(false);
+                if (viewModel.currentListerLiveData.getValue() != null) {
+                    Toast.makeText(getContext(), "Your default location isn't set. Please visit the map screen.", Toast.LENGTH_LONG).show();
+                }
             }
         });
 
+        // Observe selectedImageUris from ViewModel to update the carousel adapter
         viewModel.selectedImageUris.observe(getViewLifecycleOwner(), uris -> {
-            Log.d(TAG, "Observed selectedImageUris in Fragment (from VM), count: " + (uris != null ? uris.size() : 0));
-            // Update your RecyclerView adapter here if it's implemented
-            // if (selectedImagesAdapter != null && uris != null) {
-            //    selectedImagesAdapter.updateUris(uris);
-            // }
+            if (selectedImagesAdapter != null) {
+                Log.d(TAG, "Updating carousel adapter with URIs from ViewModel, count: " + (uris != null ? uris.size() : 0));
+                selectedImagesAdapter.updateUris(uris != null ? uris : new ArrayList<>());
+                updateCarouselVisibility(uris);
+            }
         });
     }
 

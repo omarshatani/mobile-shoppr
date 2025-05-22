@@ -5,7 +5,6 @@ import android.net.Uri;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -24,6 +23,7 @@ import com.shoppr.navigation.NavigationRoute;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.inject.Inject;
 
@@ -36,11 +36,15 @@ public class CreatePostViewModel extends AndroidViewModel {
     private final AnalyzePostTextUseCase analyzePostTextUseCase;
     private final SavePostUseCase savePostUseCase;
     private final GetCurrentUserUseCase getCurrentUserUseCase;
-    // GetCurrentDeviceLocationUseCase might not be directly used by this VM anymore
-    // if location is always sourced from User profile for post creation.
-    // private final GetCurrentDeviceLocationUseCase getCurrentDeviceLocationUseCase;
 
+    // LiveData for the currently authenticated user (with full profile)
     public final LiveData<User> currentListerLiveData;
+    public final LiveData<Event<String>> currentUserErrorEvents;
+
+    // Derived location from the current lister's profile
+    private final MutableLiveData<LocationData> _postCreationLocation = new MutableLiveData<>();
+    public LiveData<LocationData> postCreationLocation = _postCreationLocation;
+
 
     // --- LiveData for UI State & LLM Interaction ---
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false);
@@ -66,40 +70,54 @@ public class CreatePostViewModel extends AndroidViewModel {
     public final MutableLiveData<ListingType> postListingType = new MutableLiveData<>();
     public final MutableLiveData<String> postCategory = new MutableLiveData<>("");
 
+    // ViewModel is the source of truth for selected image URIs
     private final MutableLiveData<List<Uri>> _selectedImageUris = new MutableLiveData<>(new ArrayList<>());
     public LiveData<List<Uri>> selectedImageUris = _selectedImageUris;
-
-    // Removed _currentPostLocation LiveData as Fragment will derive it from currentListerLiveData
 
 
     @Inject
     public CreatePostViewModel(@NonNull Application application,
                                AnalyzePostTextUseCase analyzePostTextUseCase,
                                SavePostUseCase savePostUseCase,
-                               GetCurrentUserUseCase getCurrentUserUseCase
-            /*, GetCurrentDeviceLocationUseCase getCurrentDeviceLocationUseCase */) {
+                               GetCurrentUserUseCase getCurrentUserUseCase) {
         super(application);
         this.analyzePostTextUseCase = analyzePostTextUseCase;
         this.savePostUseCase = savePostUseCase;
         this.getCurrentUserUseCase = getCurrentUserUseCase;
-        // this.getCurrentDeviceLocationUseCase = getCurrentDeviceLocationUseCase;
 
         this.currentListerLiveData = this.getCurrentUserUseCase.getFullUserProfile();
+        this.currentUserErrorEvents = this.getCurrentUserUseCase.getProfileErrorEvents();
+
+        // Observe currentListerLiveData to derive postCreationLocation
+        this.currentListerLiveData.observeForever(user -> { // Use observeForever carefully
+            if (user != null && user.getLastLatitude() != null && user.getLastLongitude() != null) {
+                LocationData newLocation = new LocationData(
+                        user.getLastLatitude(),
+                        user.getLastLongitude(),
+                        user.getLastLocationAddress()
+                );
+                // Only update if it's different to avoid unnecessary emissions
+                if (!Objects.equals(_postCreationLocation.getValue(), newLocation)) { // Custom equals for LocationData might be needed
+                    _postCreationLocation.postValue(newLocation);
+                }
+            } else {
+                if (_postCreationLocation.getValue() != null) {
+                    _postCreationLocation.postValue(null); // Lister or their location is gone
+                }
+            }
+        });
         this.getCurrentUserUseCase.startObserving();
     }
-
-    // fetchCurrentDeviceLocation is removed as Fragment won't directly trigger this for post location.
-    // Location for post is assumed to be from User's profile.
 
     private void triggerLLMAnalysisAndPostCreation(
             String currentRawText,
             String currentBaseOfferPrice,
             String currentBaseOfferCurrency,
             final User lister,
-            final List<Uri> localImageUris,
-            final LocationData postCreationLocation) { // Location is passed in
+            final List<Uri> localImageUris, // These come from _selectedImageUris.getValue()
+            final LocationData creationLocation) { // This comes from _postCreationLocation.getValue()
 
-        Log.d(TAG, "triggerLLMAnalysisAndPostCreation called. Text: " + currentRawText + ", Location: " + postCreationLocation);
+        Log.d(TAG, "triggerLLMAnalysisAndPostCreation called. Text: " + currentRawText + ", Location: " + creationLocation);
         _isLoading.setValue(true);
         _operationError.setValue(null);
 
@@ -107,7 +125,7 @@ public class CreatePostViewModel extends AndroidViewModel {
             @Override
             public void onSuccess(@NonNull SuggestedPostDetails suggestions) {
                 Log.d(TAG, "LLM Analysis Success: " + suggestions.toString());
-                constructAndSavePost(suggestions, currentBaseOfferPrice, lister, localImageUris, postCreationLocation);
+                constructAndSavePost(suggestions, currentBaseOfferPrice, lister, localImageUris, creationLocation);
             }
 
             @Override
@@ -121,14 +139,15 @@ public class CreatePostViewModel extends AndroidViewModel {
 
     /**
      * Called when the user clicks the final "Create Post" button.
-     * The Fragment is responsible for providing the user's current/default location.
+     * Fragment no longer passes location and image URIs; ViewModel uses its own state.
      */
-    public void onCreatePostClicked(@NonNull LocationData postLocation, @Nullable List<Uri> currentSelectedImageUris) {
+    public void onCreatePostClicked() {
         User currentLister = currentListerLiveData.getValue();
+        LocationData currentPostLoc = _postCreationLocation.getValue(); // Use LiveData value
+        List<Uri> currentUris = _selectedImageUris.getValue();
 
         if (currentLister == null) {
             _operationError.setValue(new Event<>("User not authenticated. Please log in."));
-            Log.e(TAG, "onCreatePostClicked: Lister is null. Cannot create post.");
             return;
         }
 
@@ -138,17 +157,16 @@ public class CreatePostViewModel extends AndroidViewModel {
             return;
         }
 
-        // Location is now a required parameter passed by the Fragment
-        if (postLocation.latitude == null || postLocation.longitude == null) {
-            _operationError.setValue(new Event<>("Location is missing for the post."));
+        if (currentPostLoc == null || currentPostLoc.latitude == null || currentPostLoc.longitude == null) {
+            _operationError.setValue(new Event<>("Your location is not set. Please visit the map to update it."));
             return;
         }
 
         String price = baseOfferPrice.getValue();
         String currency = baseOfferCurrency.getValue();
-        List<Uri> imageUris = currentSelectedImageUris != null ? currentSelectedImageUris : new ArrayList<>();
+        List<Uri> imageUrisForPost = currentUris != null ? currentUris : new ArrayList<>();
 
-        triggerLLMAnalysisAndPostCreation(currentRawText, price, currency, currentLister, imageUris, postLocation);
+        triggerLLMAnalysisAndPostCreation(currentRawText, price, currency, currentLister, imageUrisForPost, currentPostLoc);
     }
 
 
@@ -156,21 +174,19 @@ public class CreatePostViewModel extends AndroidViewModel {
             SuggestedPostDetails suggestions,
             String userEnteredPrice,
             User lister,
-            List<Uri> localImageUris,
-            LocationData locationData
+            List<Uri> localImageUris, // From ViewModel's _selectedImageUris
+            LocationData locationData  // From ViewModel's _postCreationLocation
     ) {
         Log.d(TAG, "Constructing Post object with LLM suggestions and user inputs.");
-
         Post.Builder postBuilder = new Post.Builder();
-
         postBuilder.title(suggestions.getSuggestedTitle());
         postBuilder.description(suggestions.getSuggestedDescription());
         postBuilder.type(suggestions.getListingType());
         if (suggestions.getSuggestedCategory() != null) {
             postBuilder.category(suggestions.getSuggestedCategory());
         }
-
         postBuilder.price(userEnteredPrice);
+
         if (localImageUris != null && !localImageUris.isEmpty()) {
             String[] imageUriStrings = new String[localImageUris.size()];
             for (int i = 0; i < localImageUris.size(); i++) {
@@ -187,36 +203,29 @@ public class CreatePostViewModel extends AndroidViewModel {
 
         Log.d(TAG, "Location to be added to post: " + locationData.toString());
         // TODO: Update your Post.Builder and Post model to accept and store locationData
-        // Example:
-        // postBuilder.latitude(locationData.latitude);
-        // postBuilder.longitude(locationData.longitude);
-        // if (locationData.addressString != null) {
-        //     postBuilder.address(locationData.addressString);
-        // }
+        // e.g., postBuilder.location(new GeoPoint(locationData.latitude, locationData.longitude));
+        //      postBuilder.address(locationData.addressString);
 
         Post newPostToSave = postBuilder.build();
-
         Log.d(TAG, "Attempting to save post: " + newPostToSave.getTitle());
-        _isLoading.setValue(true);
+        // _isLoading is already true
 
         savePostUseCase.execute(newPostToSave, new SavePostUseCase.SavePostCallbacks() {
             @Override
             public void onSaveSuccess() {
                 _isLoading.postValue(false);
-                Log.i(TAG, "Post saved successfully! Title: " + newPostToSave.getTitle());
                 _successMessage.postValue(new Event<>("Post created successfully!"));
                 // _navigationCommand.postValue(new Event<>(new NavigationRoute.Map()));
             }
-
             @Override
             public void onSaveError(@NonNull String message) {
                 _isLoading.postValue(false);
-                Log.e(TAG, "Failed to save post: " + message);
                 _operationError.postValue(new Event<>("Failed to save post: " + message));
             }
         });
     }
 
+    // Methods for Fragment to update LiveData values
     public void onRawTextChanged(String text) {
         rawUserInputText.setValue(text);
     }
@@ -229,16 +238,27 @@ public class CreatePostViewModel extends AndroidViewModel {
         baseOfferCurrency.setValue(currency);
     }
 
+    // Called by Fragment when user selects/deselects images
     public void onUserSelectedLocalImageUris(List<Uri> uris) {
         _selectedImageUris.setValue(uris);
     }
-    // Removed onUserSelectedLocation as Fragment will pass location directly to onCreatePostClicked
 
+    public void removeSelectedImageUri(Uri uri) {
+        List<Uri> currentUris = _selectedImageUris.getValue();
+        if (currentUris != null) {
+            List<Uri> updatedUris = new ArrayList<>(currentUris);
+            if (updatedUris.remove(uri)) {
+                _selectedImageUris.setValue(updatedUris);
+            }
+        }
+    }
 
     @Override
     protected void onCleared() {
         super.onCleared();
         Log.d(TAG, "CreatePostViewModel onCleared. Stopping user observation.");
+        currentListerLiveData.removeObserver(user -> {
+        }); // Clean up observeForever if any; specific observer instance is better
         getCurrentUserUseCase.stopObserving();
     }
 }
