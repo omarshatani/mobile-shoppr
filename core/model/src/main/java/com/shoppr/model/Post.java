@@ -1,27 +1,39 @@
 package com.shoppr.model;
 
-public class Listing {
+public class Post {
+	private String id;
 	private String title;
 	private String description;
 	private String price;
 	private ListingState state;
 	private ListingType type;
 	private String[] imageUrl;
+	private String category;
 	private User lister;
 	private String[] requests;
 
-	public Listing() {
+	public Post() {
 	}
 
-	private Listing(Builder builder) {
+	private Post(Builder builder) {
+		this.id = builder.id;
 		this.title = builder.title;
 		this.description = builder.description;
 		this.price = builder.price;
 		this.state = builder.state;
 		this.type = builder.type;
 		this.imageUrl = builder.imageUrl;
+		this.category = builder.category;
 		this.lister = builder.lister;
 		this.requests = builder.requests;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	public String getTitle() {
@@ -72,6 +84,14 @@ public class Listing {
 		this.imageUrl = imageUrl;
 	}
 
+	public String getCategory() {
+		return category;
+	}
+
+	public void setCategory(String category) {
+		this.category = category;
+	}
+
 	public User getLister() {
 		return lister;
 	}
@@ -88,15 +108,22 @@ public class Listing {
 		this.requests = requests;
 	}
 
-	static class Builder {
+	public static class Builder {
+		private String id;
 		private String title;
 		private String description;
 		private String price;
 		private ListingState state;
 		private ListingType type;
 		private String[] imageUrl;
+		private String category;
 		private User lister;
 		private String[] requests;
+
+		public Builder id(String id) {
+			this.id = id;
+			return this;
+		}
 
 		public Builder title(String title) {
 			this.title = title;
@@ -118,7 +145,7 @@ public class Listing {
 			return this;
 		}
 
-		public Builder description(ListingType type) {
+		public Builder type(ListingType type) {
 			this.type = type;
 			return this;
 		}
@@ -128,7 +155,12 @@ public class Listing {
 			return this;
 		}
 
-		public Builder imageUrl(User lister) {
+		public Builder category(String category) {
+			this.category = category;
+			return this;
+		}
+
+		public Builder lister(User lister) {
 			this.lister = lister;
 			return this;
 		}
@@ -138,8 +170,8 @@ public class Listing {
 			return this;
 		}
 
-		public Listing build() {
-			return new Listing(this);
+		public Post build() {
+			return new Post(this);
 		}
 
 	}

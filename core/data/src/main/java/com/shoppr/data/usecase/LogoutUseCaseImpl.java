@@ -1,6 +1,7 @@
-package com.shoppr.domain;
+package com.shoppr.data.usecase;
 
-import com.shoppr.data.repository.AuthenticationRepository;
+import com.shoppr.domain.repository.AuthenticationRepository;
+import com.shoppr.domain.usecase.LogoutUseCase;
 
 import javax.inject.Inject;
 

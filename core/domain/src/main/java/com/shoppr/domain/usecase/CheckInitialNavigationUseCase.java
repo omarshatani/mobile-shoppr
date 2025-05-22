@@ -1,4 +1,4 @@
-package com.shoppr.domain;
+package com.shoppr.domain.usecase;
 
 import com.shoppr.navigation.InitialTarget;
 

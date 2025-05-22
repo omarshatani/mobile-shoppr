@@ -91,6 +91,18 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	}
 
 	@Override
+	public void onStart() {
+		super.onStart();
+		viewModel.onMapFragmentStarted();
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+		viewModel.onMapFragmentStopped();
+	}
+
+	@Override
 	public void onMapReady(@NonNull GoogleMap googleMap) {
 		this.googleMap = googleMap;
 		Log.d(TAG, "onMapReady called. Map is ready.");
@@ -115,6 +127,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		googleMap = null;
 		mapFragment = null;
 		binding = null;
+		viewModel.onMapFragmentStopped();
 		Log.d(TAG, "onDestroyView called, binding set to null");
 	}
 
@@ -131,7 +144,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		viewModel.moveToLocationEvent.observe(getViewLifecycleOwner(), new Event.EventObserver<>(latLng -> {
 			Log.d(TAG, "Received moveToLocationEvent: " + latLng);
 			if (googleMap != null && latLng != null) {
-				googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f));
+				googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f));
 			}
 		}));
 
@@ -196,5 +209,4 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		});
 		ViewCompat.requestApplyInsets(view);
 	}
-
 }

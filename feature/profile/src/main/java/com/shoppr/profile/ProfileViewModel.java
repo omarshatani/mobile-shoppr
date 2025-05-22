@@ -6,7 +6,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.shoppr.domain.LogoutUseCase;
+import com.shoppr.domain.usecase.LogoutUseCase;
 import com.shoppr.model.Event;
 import com.shoppr.navigation.NavigationRoute;
 

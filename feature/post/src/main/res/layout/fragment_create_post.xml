@@ -1,153 +1,190 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/colorSurfaceContainerLowest"
-    android:fitsSystemWindows="true"
-    android:paddingBottom="16dp"
+    android:fitsSystemWindows="false"
     tools:context=".CreatePostFragment">
 
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
-        android:id="@+id/toolbar_coordinator_layout"
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/app_bar_layout_create_post"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/post_scrollview"
-        >
-        <com.google.android.material.appbar.AppBarLayout
+        android:fitsSystemWindows="true"
+        android:paddingTop="16dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar_create_post"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content"
+            android:minHeight="?attr/actionBarSize"
+            app:navigationIcon="@drawable/ic_arrow_back"
+            app:title="Create New Post" />
+    </com.google.android.material.appbar.AppBarLayout>
 
-        </com.google.android.material.appbar.AppBarLayout>
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
-
-
-    <ScrollView
-        android:id="@+id/post_scrollview"
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nested_scroll_view_content"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:fillViewport="true"
-        android:paddingHorizontal="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar_create_post">
+        android:layout_height="match_parent"
+        android:paddingBottom="?attr/actionBarSize"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingBottom="16dp">
+            android:padding="16dp">
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/input_layout_post_description"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:id="@+id/text_input_layout_raw_text"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="What are you looking for or offering?"
-                app:helperText="Describe your item, service, or request (e.g., 'Selling my old guitar', 'Looking for a reliable plumber')"
+                android:hint="Describe what you want to post..."
+                app:helperText="e.g., 'Selling my old guitar', 'Looking for a plumber'"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edit_text_post_description"
+                    android:id="@+id/edit_text_raw_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="top"
                     android:inputType="textMultiLine"
-                    android:minLines="3"
-                    android:textAppearance="?attr/textAppearanceBodyLarge" />
+                    android:minLines="3" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <LinearLayout
+                android:id="@+id/layout_price_currency"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/text_input_layout_raw_text">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/text_input_layout_base_offer"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_weight="2"
+                    android:hint="Your Price / Offer (Optional)"
+                    app:prefixText="$">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/edit_text_base_offer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="numberDecimal" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/text_input_layout_currency"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Currency">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/autocomplete_currency"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none"
+                        android:text="USD" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+
             <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/label_photos"
+                android:id="@+id/label_images_carousel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="Add Photos (Optional)"
-                android:textAppearance="?attr/textAppearanceTitleMedium"
-                android:textColor="?attr/colorOnSurface"
+                android:text="Selected Photos (Tap photo to remove)"
+                android:textAppearance="?attr/textAppearanceLabelLarge"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/input_layout_post_description" />
+                app:layout_constraintTop_toBottomOf="@id/layout_price_currency" />
 
-            <FrameLayout
-                android:id="@+id/layout_photo_selector"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/carousel_selected_images"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="180dp"
                 android:layout_marginTop="8dp"
-                android:background="?attr/colorSurfaceVariant"
-                android:minHeight="100dp"
-                android:padding="8dp"
+                android:background="?attr/colorSurfaceContainerLowest"
+                android:clipToPadding="false"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/label_photos">
+                app:layout_constraintTop_toBottomOf="@id/label_images_carousel"
+                tools:listitem="@layout/list_item_carousel_image" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/button_add_photo"
-                    style="@style/Widget.Material3.Button.TextButton.Icon"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="Select Photos"
-                    app:icon="@drawable/ic_add_photo_alternate" />
-            </FrameLayout>
-
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/input_layout_base_price"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
+            <ProgressBar
+                android:id="@+id/progress_bar_create_post"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:hint="Base Price / Budget (Optional)"
-                app:helperText="Enter your asking price, offer, or budget."
+                android:layout_marginBottom="16dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/layout_photo_selector"
-                app:prefixText="$">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edit_text_base_price"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="numberDecimal"
-                    android:textAppearance="?attr/textAppearanceBodyLarge" />
-            </com.google.android.material.textfield.TextInputLayout>
+                app:layout_constraintTop_toBottomOf="@id/carousel_selected_images"
+                tools:visibility="visible" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/button_create_post"
-        android:layout_width="0dp"
+    <com.google.android.material.bottomappbar.BottomAppBar
+        android:id="@+id/bottom_action_bar"
+        style="?attr/bottomAppBarStyle"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="16dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp"
-        android:text="Create Post"
-        android:textAppearance="?attr/textAppearanceButton"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:layout_gravity="bottom"
+        android:backgroundTint="?attr/colorSurfaceContainer"
+        app:fabAlignmentMode="end">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar_create_post"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorSurface"
-        android:elevation="4dp"
-        android:minHeight="?attr/actionBarSize"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navigationIcon="@drawable/ic_arrow_back"
-        app:title="Create New Post"
-        app:titleTextColor="?attr/colorOnSurface" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="4dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="8dp">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_toolbar_add_photo"
+                style="@style/Widget.Material3.Button.TextButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Add Photo"
+                android:tooltipText="Add Photo"
+                app:icon="@drawable/ic_add_photo" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_toolbar_create_post"
+                style="@style/Widget.Material3.Button.UnelevatedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Create Post"
+                app:icon="@drawable/ic_send" />
+        </LinearLayout>
+    </com.google.android.material.bottomappbar.BottomAppBar>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
