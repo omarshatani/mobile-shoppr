@@ -31,6 +31,7 @@ module.exports = {
         "indent": "off", // or "indent": 0
         // Disable the max-len rule (ESLint's default, or if inherited from 'google' preset)
         "max-len": "off", // or "max-len": 0
+        "linebreak-style": "off",
         // If @typescript-eslint/indent is active (often it is if you extend @typescript-eslint/recommended),
         // you might also need to disable its version of indent:
         "@typescript-eslint/indent": "off", // or "@typescript-eslint/indent": 0

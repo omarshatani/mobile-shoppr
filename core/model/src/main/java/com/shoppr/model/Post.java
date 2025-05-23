@@ -1,5 +1,7 @@
 package com.shoppr.model;
 
+import androidx.annotation.Nullable;
+
 public class Post {
 	private String id;
 	private String title;
@@ -11,6 +13,14 @@ public class Post {
 	private String category;
 	private User lister;
 	private String[] requests;
+
+	// New location fields for the Post itself
+	@Nullable
+	private Double latitude;
+	@Nullable
+	private Double longitude;
+	@Nullable
+	private String postAddress; // Specific address for this post/item
 
 	public Post() {
 	}
@@ -108,6 +118,33 @@ public class Post {
 		this.requests = requests;
 	}
 
+	@Nullable
+	public Double getLatitude() {
+		return latitude;
+	}
+
+	public void setLatitude(@Nullable Double latitude) {
+		this.latitude = latitude;
+	}
+
+	@Nullable
+	public Double getLongitude() {
+		return longitude;
+	}
+
+	public void setLongitude(@Nullable Double longitude) {
+		this.longitude = longitude;
+	}
+
+	@Nullable
+	public String getPostAddress() {
+		return postAddress;
+	}
+
+	public void setPostAddress(@Nullable String postAddress) {
+		this.postAddress = postAddress;
+	}
+
 	public static class Builder {
 		private String id;
 		private String title;
@@ -119,6 +156,12 @@ public class Post {
 		private String category;
 		private User lister;
 		private String[] requests;
+		@Nullable
+		private Double latitude;
+		@Nullable
+		private Double longitude;
+		@Nullable
+		private String postAddress;
 
 		public Builder id(String id) {
 			this.id = id;
@@ -167,6 +210,21 @@ public class Post {
 
 		public Builder requests(String[] requests) {
 			this.requests = requests;
+			return this;
+		}
+
+		public Builder latitude(@Nullable Double latitude) {
+			this.latitude = latitude;
+			return this;
+		}
+
+		public Builder longitude(@Nullable Double longitude) {
+			this.longitude = longitude;
+			return this;
+		}
+
+		public Builder postAddress(@Nullable String postAddress) {
+			this.postAddress = postAddress;
 			return this;
 		}
 

@@ -41,263 +41,233 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class CreatePostFragment extends BaseFragment {
-    private static final String TAG = "CreatePostFragment";
+	private static final String TAG = "CreatePostFragment";
 
-    private CreatePostViewModel viewModel;
-    private FragmentCreatePostBinding binding;
+	private CreatePostViewModel viewModel;
+	private FragmentCreatePostBinding binding;
 
-    @Inject
-    Navigator navigator;
+	@Inject
+	Navigator navigator;
 
-    // Adapter for the image carousel
-    private SelectedImagesCarouselAdapter selectedImagesAdapter;
+	private SelectedImagesCarouselAdapter selectedImagesAdapter;
+	private ActivityResultLauncher<Intent> pickImagesLauncher;
+	// Removed local postCreationLocation, ViewModel's LiveData is the source of truth.
 
-    private ActivityResultLauncher<Intent> pickImagesLauncher;
-    // postCreationLocation is now managed by observing ViewModel's postCreationLocation LiveData
+	public CreatePostFragment() { /* Required empty public constructor */ }
 
+	@Override
+	public void onCreate(@Nullable Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		viewModel = new ViewModelProvider(this).get(CreatePostViewModel.class);
 
-    public CreatePostFragment() { /* Required empty public constructor */ }
+		pickImagesLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+			if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+				List<Uri> newlySelectedUris = new ArrayList<>();
+				if (result.getData().getClipData() != null) {
+					int count = result.getData().getClipData().getItemCount();
+					for (int i = 0; i < count; i++) {
+						Uri imageUri = result.getData().getClipData().getItemAt(i).getUri();
+						if (imageUri != null) {
+							newlySelectedUris.add(imageUri);
+						}
+					}
+				} else if (result.getData().getData() != null) {
+					Uri imageUri = result.getData().getData();
+					if (imageUri != null) {
+						newlySelectedUris.add(imageUri);
+					}
+				}
+				// ViewModel handles combining/updating its list
+				viewModel.onUserSelectedLocalImageUris(newlySelectedUris);
+				Toast.makeText(getContext(), newlySelectedUris.size() + " image(s) added.", Toast.LENGTH_SHORT).show();
+			} else {
+				Log.d(TAG, "Image selection cancelled or failed.");
+			}
+		});
+	}
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        viewModel = new ViewModelProvider(this).get(CreatePostViewModel.class);
+	@Override
+	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+													 Bundle savedInstanceState) {
+		binding = FragmentCreatePostBinding.inflate(inflater, container, false);
+		return binding.getRoot();
+	}
 
-        pickImagesLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-            if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                List<Uri> newlySelectedUris = new ArrayList<>();
-                if (result.getData().getClipData() != null) { // Multiple images selected
-                    int count = result.getData().getClipData().getItemCount();
-                    for (int i = 0; i < count; i++) {
-                        Uri imageUri = result.getData().getClipData().getItemAt(i).getUri();
-                        if (imageUri != null) {
-                            newlySelectedUris.add(imageUri);
-                        }
-                    }
-                } else if (result.getData().getData() != null) { // Single image selected
-                    Uri imageUri = result.getData().getData();
-                    if (imageUri != null) {
-                        newlySelectedUris.add(imageUri);
-                    }
-                }
+	@Override
+	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
 
-                // Append to existing or replace, based on desired behavior.
-                // ViewModel should handle combining/replacing logic.
-                List<Uri> currentUrisInVm = viewModel.selectedImageUris.getValue();
-                List<Uri> combinedUris = currentUrisInVm == null ? new ArrayList<>() : new ArrayList<>(currentUrisInVm);
+		MaterialToolbar toolbar = binding.toolbarCreatePost;
+		NavController navController = NavHostFragment.findNavController(this);
+		NavigationUI.setupWithNavController(toolbar, navController);
 
-                for (Uri newUri : newlySelectedUris) {
-                    if (!combinedUris.contains(newUri)) {
-                        combinedUris.add(newUri);
-                    }
-                }
-                Log.d(TAG, "Selected " + newlySelectedUris.size() + " new image(s). Total now: " + combinedUris.size());
-                viewModel.onUserSelectedLocalImageUris(combinedUris); // Update ViewModel
-                Toast.makeText(getContext(), newlySelectedUris.size() + " image(s) added.", Toast.LENGTH_SHORT).show();
-                // Adapter will be updated by observing viewModel.selectedImageUris
-            } else {
-                Log.d(TAG, "Image selection cancelled or failed.");
-            }
-        });
-    }
+		setupCarousel();
+		setupCurrencySpinner();
+		setupInputListeners();
+		setupButtonListeners();
+		observeViewModel();
+	}
 
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             Bundle savedInstanceState) {
-        binding = FragmentCreatePostBinding.inflate(inflater, container, false);
-        return binding.getRoot();
-    }
+	private void setupCarousel() {
+		if (getContext() == null || binding == null) return;
+		selectedImagesAdapter = new SelectedImagesCarouselAdapter(getContext(), new ArrayList<>(), uriToRemove -> {
+			viewModel.removeSelectedImageUri(uriToRemove); // Tell ViewModel to remove
+			Toast.makeText(getContext(), "Image removed", Toast.LENGTH_SHORT).show();
+		});
+		binding.carouselSelectedImages.setLayoutManager(new CarouselLayoutManager());
+		CarouselSnapHelper snapHelper = new CarouselSnapHelper();
+		snapHelper.attachToRecyclerView(binding.carouselSelectedImages);
+		binding.carouselSelectedImages.setAdapter(selectedImagesAdapter);
+		updateCarouselVisibility(viewModel.selectedImageUris.getValue());
+	}
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+	private void updateCarouselVisibility(@Nullable List<Uri> uris) {
+		if (binding == null) return;
+		boolean isEmpty = uris == null || uris.isEmpty();
+		binding.carouselSelectedImages.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+		binding.labelImagesCarousel.setText(isEmpty ? "Add Photos (Optional)" : "Selected Photos (" + (uris != null ? uris.size() : 0) + ") Tap photo to remove");
+	}
 
-        MaterialToolbar toolbar = binding.toolbarCreatePost;
-        NavController navController = NavHostFragment.findNavController(this);
-        NavigationUI.setupWithNavController(toolbar, navController);
+	private void setupCurrencySpinner() {
+		if (binding == null || getContext() == null) return;
+		String[] currencies = new String[]{"USD", "EUR", "CHF", "GBP", "JPY", "CAD"};
+		ArrayAdapter<String> adapter = new ArrayAdapter<>(
+				requireContext(),
+				android.R.layout.simple_dropdown_item_1line,
+				currencies
+		);
+		binding.autocompleteCurrency.setAdapter(adapter);
+		binding.autocompleteCurrency.setText(viewModel.baseOfferCurrency.getValue(), false);
+	}
 
-        setupCarousel();
-        setupCurrencySpinner();
-        setupInputListeners();
-        setupButtonListeners();
-        observeViewModel();
-    }
+	private void setupInputListeners() {
+		if (binding == null) return;
+		binding.editTextRawText.addTextChangedListener(createTextWatcher(viewModel::onRawTextChanged));
+		binding.editTextBaseOffer.addTextChangedListener(createTextWatcher(viewModel::onBaseOfferPriceChanged));
+		binding.autocompleteCurrency.addTextChangedListener(createTextWatcher(viewModel::onBaseOfferCurrencyChanged));
+	}
 
-    private void setupCarousel() {
-        if (getContext() == null || binding == null) return;
-        // Initialize with an empty list; adapter will be updated by LiveData from ViewModel
-        selectedImagesAdapter = new SelectedImagesCarouselAdapter(getContext(), new ArrayList<>(), uri -> {
-            // Handle image removal by telling the ViewModel
-            viewModel.removeSelectedImageUri(uri); // ViewModel updates its LiveData
-            Toast.makeText(getContext(), "Image removed", Toast.LENGTH_SHORT).show();
-            // Visibility update will happen via LiveData observation
-        });
-        binding.carouselSelectedImages.setLayoutManager(new CarouselLayoutManager());
-        CarouselSnapHelper snapHelper = new CarouselSnapHelper();
-        snapHelper.attachToRecyclerView(binding.carouselSelectedImages);
-        binding.carouselSelectedImages.setAdapter(selectedImagesAdapter);
-        updateCarouselVisibility(viewModel.selectedImageUris.getValue()); // Initial visibility
-    }
+	private TextWatcher createTextWatcher(TextChangeCallback callback) {
+		return new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+			}
 
-    private void updateCarouselVisibility(@Nullable List<Uri> uris) {
-        if (binding == null) return;
-        boolean isEmpty = uris == null || uris.isEmpty();
-        binding.carouselSelectedImages.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
-        binding.labelImagesCarousel.setText(isEmpty ? "Add Photos (Optional)" : "Selected Photos (" + (uris != null ? uris.size() : 0) + ") Tap photo to remove");
-    }
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				callback.onTextChanged(s.toString());
+			}
 
-    private void setupCurrencySpinner() {
-        if (binding == null || getContext() == null) return;
-        String[] currencies = new String[]{"USD", "EUR", "CHF", "GBP", "JPY", "CAD"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_dropdown_item_1line,
-                currencies
-        );
-        binding.autocompleteCurrency.setAdapter(adapter);
-        if (viewModel.baseOfferCurrency.getValue() != null) {
-            binding.autocompleteCurrency.setText(viewModel.baseOfferCurrency.getValue(), false);
-        } else {
-            binding.autocompleteCurrency.setText("USD", false);
-        }
-    }
+			@Override
+			public void afterTextChanged(Editable s) {
+			}
+		};
+	}
 
-    private void setupInputListeners() {
-        if (binding == null) return;
-        binding.editTextRawText.addTextChangedListener(createTextWatcher(viewModel::onRawTextChanged));
-        binding.editTextBaseOffer.addTextChangedListener(createTextWatcher(viewModel::onBaseOfferPriceChanged));
-        binding.autocompleteCurrency.addTextChangedListener(createTextWatcher(viewModel::onBaseOfferCurrencyChanged));
-    }
-
-    private TextWatcher createTextWatcher(TextChangeCallback callback) {
-        return new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                callback.onTextChanged(s.toString());
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-        };
-    }
-
-    interface TextChangeCallback {
-        void onTextChanged(String text);
-    }
+	interface TextChangeCallback {
+		void onTextChanged(String text);
+	}
 
 
-    private void setupButtonListeners() {
-        if (binding == null) return;
+	private void setupButtonListeners() {
+		if (binding == null) return;
 
-        MaterialButton addPhotoButton = binding.bottomActionBar.findViewById(R.id.button_toolbar_add_photo);
-        if (addPhotoButton != null) {
-            addPhotoButton.setOnClickListener(v -> {
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                intent.setType("image/*");
-                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                pickImagesLauncher.launch(Intent.createChooser(intent, "Select Pictures"));
-            });
-        }
+		binding.buttonToolbarAddPhoto.setOnClickListener(v -> {
+			Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+			intent.setType("image/*");
+			intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+			pickImagesLauncher.launch(Intent.createChooser(intent, "Select Pictures"));
+		});
 
-        MaterialButton createPostSubmitButton = binding.bottomActionBar.findViewById(R.id.button_toolbar_create_post);
-        if (createPostSubmitButton != null) {
-            createPostSubmitButton.setOnClickListener(v -> {
-                Log.d(TAG, "Toolbar Create Post button clicked.");
-                // ViewModel now holds all necessary data (including location derived from lister, and image URIs)
-                viewModel.onCreatePostClicked();
-            });
-        }
-    }
+		binding.buttonToolbarCreatePost.setOnClickListener(v -> {
+			Log.d(TAG, "Toolbar Create Post button clicked.");
+			// ViewModel now uses its internal state for location and image URIs
+			viewModel.onCreatePostClicked();
+		});
+	}
 
-    private void observeViewModel() {
-        if (binding == null || getViewLifecycleOwner() == null) return;
+	private void observeViewModel() {
+		if (binding == null || getViewLifecycleOwner() == null) return;
 
-        viewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
-            if (binding == null) return;
-            binding.progressBarCreatePost.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-            View addPhotoButton = binding.bottomActionBar.findViewById(R.id.button_toolbar_add_photo);
-            View createPostButton = binding.bottomActionBar.findViewById(R.id.button_toolbar_create_post);
-            if (addPhotoButton != null) addPhotoButton.setEnabled(!isLoading);
-            if (createPostButton != null) createPostButton.setEnabled(!isLoading);
-        });
+		viewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
+			if (binding == null) return;
+			binding.progressBarCreatePost.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+			binding.buttonToolbarAddPhoto.setEnabled(!isLoading);
+			binding.buttonToolbarCreatePost.setEnabled(!isLoading);
+		});
 
-        viewModel.operationError.observe(getViewLifecycleOwner(), event -> {
-            if (binding == null) return;
-            String errorMessage = event.getContentIfNotHandled();
-            if (errorMessage != null) {
-                Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
-            }
-        });
+		viewModel.operationError.observe(getViewLifecycleOwner(), event -> {
+			if (binding == null || event == null) return;
+			String errorMessage = event.getContentIfNotHandled();
+			if (errorMessage != null) {
+				Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+			}
+		});
 
-        viewModel.successMessage.observe(getViewLifecycleOwner(), event -> {
-            if (binding == null) return;
-            String message = event.getContentIfNotHandled();
-            if (message != null) {
-                Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
-            }
-        });
+		viewModel.successMessage.observe(getViewLifecycleOwner(), event -> {
+			if (binding == null || event == null) return;
+			String message = event.getContentIfNotHandled();
+			if (message != null) {
+				Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+			}
+		});
 
-        viewModel.navigationCommand.observe(getViewLifecycleOwner(), event -> {
-            if (binding == null) return;
-            NavigationRoute route = event.getContentIfNotHandled();
-            if (route != null) {
-                Log.d(TAG, "Navigation command received: " + route.getClass().getSimpleName());
-                if (route instanceof NavigationRoute.Map || route.getClass().getSimpleName().contains("Map")) {
-                    NavHostFragment.findNavController(this).popBackStack();
-                } else {
-                    navigator.navigate(route);
-                }
-            }
-        });
+		viewModel.navigationCommand.observe(getViewLifecycleOwner(), event -> {
+			if (binding == null || event == null) return;
+			NavigationRoute route = event.getContentIfNotHandled();
+			if (route != null) {
+				Log.d(TAG, "Navigation command received: " + route.getClass().getSimpleName());
+				if (route instanceof NavigationRoute.Map || route.getClass().getSimpleName().contains("Map")) {
+					NavHostFragment.findNavController(this).popBackStack();
+				} else {
+					navigator.navigate(route);
+				}
+			}
+		});
 
-        // Observe currentListerLiveData to enable/disable create button and get default location
-        viewModel.currentListerLiveData.observe(getViewLifecycleOwner(), lister -> {
-            if (binding == null) return;
-            MaterialButton createPostButton = binding.bottomActionBar.findViewById(R.id.button_toolbar_create_post);
-            if (lister == null) {
-                Log.w(TAG, "Lister is null. Disabling create post button.");
-                if (createPostButton != null) createPostButton.setEnabled(false);
-                Toast.makeText(getContext(), "Please log in to create a post.", Toast.LENGTH_LONG).show();
-            }
-            // Further enabling based on location is handled by observing postCreationLocation
-        });
+		// Observe currentListerLiveData to know if user is logged in and if their location is available
+		viewModel.currentListerLiveData.observe(getViewLifecycleOwner(), lister -> {
+			if (binding == null) return;
+			MaterialButton createPostButton = binding.buttonToolbarCreatePost;
+			if (lister == null) {
+				Log.w(TAG, "Lister is null. User needs to be logged in.");
+				createPostButton.setEnabled(false);
+				Toast.makeText(getContext(), "Please log in to create a post.", Toast.LENGTH_LONG).show();
+			}
+			// Further enabling/disabling based on location is handled by observing postCreationLocation
+		});
 
-        // Observe the derived postCreationLocation from ViewModel
-        viewModel.postCreationLocation.observe(getViewLifecycleOwner(), locationData -> {
-            if (binding == null) return;
-            MaterialButton createPostButton = binding.bottomActionBar.findViewById(R.id.button_toolbar_create_post);
-            if (locationData != null && locationData.latitude != null && locationData.longitude != null) {
-                Log.d(TAG, "ViewModel provided postCreationLocation: " + locationData.toString());
-                if (createPostButton != null && viewModel.currentListerLiveData.getValue() != null) {
-                    createPostButton.setEnabled(true);
-                }
-            } else {
-                Log.w(TAG, "ViewModel provided null or invalid postCreationLocation.");
-                if (createPostButton != null) createPostButton.setEnabled(false);
-                if (viewModel.currentListerLiveData.getValue() != null) {
-                    Toast.makeText(getContext(), "Your default location isn't set. Please visit the map screen.", Toast.LENGTH_LONG).show();
-                }
-            }
-        });
+		// Observe the derived postCreationLocation from ViewModel
+		viewModel.postCreationLocation.observe(getViewLifecycleOwner(), locationData -> {
+			if (binding == null) return;
+			MaterialButton createPostButton = binding.buttonToolbarCreatePost;
+			if (locationData != null && locationData.latitude != null && locationData.longitude != null) {
+				Log.d(TAG, "ViewModel provided postCreationLocation: " + locationData.toString());
+				if (viewModel.currentListerLiveData.getValue() != null) {
+					createPostButton.setEnabled(true);
+				}
+			} else {
+				Log.w(TAG, "ViewModel provided null or invalid postCreationLocation.");
+				createPostButton.setEnabled(false);
+				if (viewModel.currentListerLiveData.getValue() != null) { // Only show if user is logged in but location is missing
+					Toast.makeText(getContext(), "Your default location isn't set. Please visit the map screen.", Toast.LENGTH_LONG).show();
+				}
+			}
+		});
 
-        // Observe selectedImageUris from ViewModel to update the carousel adapter
-        viewModel.selectedImageUris.observe(getViewLifecycleOwner(), uris -> {
-            if (selectedImagesAdapter != null) {
-                Log.d(TAG, "Updating carousel adapter with URIs from ViewModel, count: " + (uris != null ? uris.size() : 0));
-                selectedImagesAdapter.updateUris(uris != null ? uris : new ArrayList<>());
-                updateCarouselVisibility(uris);
-            }
-        });
-    }
+		// Observe selectedImageUris from ViewModel to update the carousel adapter
+		viewModel.selectedImageUris.observe(getViewLifecycleOwner(), uris -> {
+			if (selectedImagesAdapter != null) {
+				Log.d(TAG, "Updating carousel adapter with URIs from ViewModel, count: " + (uris != null ? uris.size() : 0));
+				selectedImagesAdapter.updateUris(uris != null ? uris : new ArrayList<>());
+				updateCarouselVisibility(uris);
+			}
+		});
+	}
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
-    }
+	@Override
+	public void onDestroyView() {
+		super.onDestroyView();
+		binding = null;
+	}
 }
