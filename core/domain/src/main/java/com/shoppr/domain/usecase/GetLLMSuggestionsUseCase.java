@@ -7,7 +7,7 @@ import com.shoppr.model.SuggestedPostDetails;
 
 import java.util.List;
 
-public interface AnalyzePostTextUseCase {
+public interface GetLLMSuggestionsUseCase {
 
 	interface AnalysisCallbacks {
 		void onSuccess(@NonNull SuggestedPostDetails suggestions);

@@ -6,19 +6,19 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.shoppr.domain.repository.LLMRepository;
-import com.shoppr.domain.usecase.AnalyzePostTextUseCase;
+import com.shoppr.domain.usecase.GetLLMSuggestionsUseCase;
 import com.shoppr.model.SuggestedPostDetails;
 
 import java.util.List;
 
 import javax.inject.Inject;
 
-public class AnalyzePostTextUseCaseImpl implements AnalyzePostTextUseCase {
+public class GetLLMSuggestionsUseCaseImpl implements GetLLMSuggestionsUseCase {
 	private static final String TAG = "AnalyzePostTextUCImpl";
 	private final LLMRepository llmRepository; // Depends on the repository interface
 
 	@Inject
-	public AnalyzePostTextUseCaseImpl(LLMRepository llmRepository) {
+	public GetLLMSuggestionsUseCaseImpl(LLMRepository llmRepository) {
 		this.llmRepository = llmRepository;
 	}
 

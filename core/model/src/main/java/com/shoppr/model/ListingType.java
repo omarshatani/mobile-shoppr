@@ -4,7 +4,8 @@ public enum ListingType {
 	WANTING_TO_BUY_ITEM("buy"),
 	SELLING_ITEM("sell"),
 	OFFERING_SERVICE("service"),
-	REQUESTING_SERVICE("request");
+	REQUESTING_SERVICE("request"),
+	UNKNOWN("unknown");
 
 	final String label;
 

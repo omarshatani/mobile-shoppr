@@ -13,8 +13,7 @@ import {
   GenerationConfig,
   SafetySetting,
   GenerateContentRequest,
-  GenerateContentResult, // Corrected: This is what generateContent returns
-  GenerateContentResponse, // This is the type of result.response
+  GenerateContentResult,
   Part,
 } from "@google/generative-ai";
 // For typed environment variables (recommended)
@@ -22,8 +21,11 @@ import {defineString} from "firebase-functions/params";
 
 
 // --- IMPORTANT: Configuration ---
-const geminiApiKeyParam = defineString("GEMINI_KEY");
-const MODEL_NAME = "gemini-1.0-pro-latest";
+const geminiApiKeyParam = defineString("SECRETS_GEMINI_API_KEY"); // Expects env var SECRETS_GEMINI_API_KEY
+
+// Updated Model Name based on your ListModels output
+const MODEL_NAME = "gemini-1.5-pro-latest"; // Using a model available to you that supports generateContent
+// Alternative: const MODEL_NAME = "gemini-1.5-pro-latest";
 
 // Define interfaces for expected data structures
 interface RequestData {
@@ -34,14 +36,11 @@ type ListingType =
   | "SELLING_ITEM"
   | "WANTING_TO_BUY_ITEM"
   | "OFFERING_SERVICE"
-  | "REQUESTING_SERVICE";
+  | "REQUESTING_SERVICE"
+  | "UNKNOWN";
 
-// This interface should match the keys your prompt asks Gemini to return
 interface SuggestedPostDetails {
   listingType: ListingType;
-  // Renamed to match common LLM output pattern if it generates "suggested..."
-  // If your prompt asks for "title", then this should be "title".
-  // For consistency with the prompt in the previous version, let's assume these are the keys Gemini returns.
   suggestedTitle: string;
   suggestedDescription: string;
   extractedItemName: string;
@@ -52,22 +51,22 @@ interface SuggestedPostDetails {
 
 interface SuccessResponse {
   success: true;
-  data: SuggestedPostDetails; // This will be the 'suggestions' object for the client
+  data: SuggestedPostDetails;
 }
 
 let genAI: GoogleGenerativeAI | undefined;
-const apiKeyFromEnv = process.env.GEMINI_API_KEY;
+const apiKeyFromEnv = process.env.SECRETS_GEMINI_API_KEY; // Check if set directly for global init
 
 if (apiKeyFromEnv) {
   try {
     genAI = new GoogleGenerativeAI(apiKeyFromEnv);
-    logger.info("GoogleGenerativeAI client initialized globally using GEMINI_API_KEY env var.");
+    logger.info("GoogleGenerativeAI client initialized globally using SECRETS_GEMINI_API_KEY env var.");
   } catch (e: any) {
     logger.error("Error initializing GoogleGenerativeAI globally:", e.message);
   }
 } else {
   logger.warn(
-    "GEMINI_API_KEY environment variable not found for global initialization. " +
+    "SECRETS_GEMINI_API_KEY environment variable not found for global initialization. " +
     "Client will be initialized on first function call using defined param."
   );
 }
@@ -76,7 +75,6 @@ if (apiKeyFromEnv) {
  * Analyzes user text with Gemini to extract post details.
  * The prompt is dynamically generated based on inputs.
  * @param {RequestData} request - The data sent from the client.
- * @property {string} request.data.text - The user's raw text input.
  * @return {Promise<SuccessResponse>} A promise that resolves with structured post details.
  * @throws {HttpsError} Throws HttpsError on failure.
  */
@@ -89,7 +87,7 @@ export const generatePostSuggestions = onCall<
   if (!genAI) {
     const currentApiKey = geminiApiKeyParam.value();
     if (currentApiKey) {
-      logger.info("Initializing genAI client within onCall with GEMINI_KEY param.");
+      logger.info("Initializing genAI client within onCall with SECRETS_GEMINI_API_KEY param.");
       try {
         genAI = new GoogleGenerativeAI(currentApiKey);
       } catch (e: any) {
@@ -98,11 +96,11 @@ export const generatePostSuggestions = onCall<
       }
     } else {
       logger.error(
-        "Gemini API Key is not configured via param GEMINI_KEY or env var GEMINI_API_KEY."
+        "Gemini API Key (SECRETS_GEMINI_API_KEY) not resolved from function parameters/config."
       );
       throw new HttpsError(
         "internal",
-        "Gemini AI service is not configured."
+        "Gemini AI service API key not configured."
       );
     }
   }
@@ -127,13 +125,13 @@ Analyze the following user request to create a classifieds-style post.${dynamicP
 Extract the following information and return it as a VALID JSON object.
 Do not include any explanatory text, comments, or markdown formatting like \`\`\`json before or after the JSON object.
 The JSON object MUST have these keys:
-- "listingType": (string) Choose ONE from: "SELLING_ITEM", "WANTING_TO_BUY_ITEM", "OFFERING_SERVICE", "REQUESTING_SERVICE".
+- "listingType": (string) Choose ONE from: "SELLING_ITEM", "WANTING_TO_BUY_ITEM", "OFFERING_SERVICE", "REQUESTING_SERVICE". If unsure, use "UNKNOWN".
 - "suggestedTitle": (string) A concise title for the post (max 10 words).
 - "suggestedDescription": (string) A short suggested description for the post (1-2 sentences).
 - "extractedItemName": (string) The primary item or service being discussed.
 - "price": (number or null) If a price or budget is clearly mentioned in the user's text, extract it as a number. If not mentioned, use null.
-- "currency": (string or null) If a currency (e.g., "USD", "EUR", "CHF", "$", "£") is mentioned with a price, extract it. If no currency or price, use null.
-- "suggestedCategory": (string or null) A suggested category (e.g., "Electronics", "Vehicles", "Home Services", "Furniture"). If unsure, use null.
+- "currency": (string or null) If a currency symbol (e.g., $, £, EUR) or code (e.g., USD, CHF) is mentioned with a price, extract the currency code (e.g., USD, EUR, CHF). Otherwise, use null.
+- "suggestedCategory": (string or null) Suggest a relevant category from this list: "Electronics", "Vehicles", "Home Goods", "Furniture", "Apparel", "Books", "Services-General", "Services-HomeRepair", "Services-Tutoring", "Jobs", "Community", "Other". If unsure, use null.
 
 User Request: "${userText}"
 
@@ -142,7 +140,7 @@ JSON Output:
 
   try {
     logger.info("Sending request to Gemini API with model:", MODEL_NAME);
-    logger.info("Prompt being sent:", prompt);
+    // logger.info("Full prompt being sent:", prompt); // Be cautious logging full prompts if they contain PII
 
     const model = genAI.getGenerativeModel({model: MODEL_NAME});
 
@@ -164,14 +162,12 @@ JSON Output:
       safetySettings,
     };
 
-    // Corrected: generateContent returns GenerateContentResult
     const result: GenerateContentResult =
       await model.generateContent(generateContentRequest);
 
-    // Corrected: Access the response property of GenerateContentResult
-    const response: GenerateContentResponse = result.response;
+    const response = result.response;
     const candidate = response?.candidates?.[0];
-    const responseText: string | undefined = candidate?.content?.parts?.[0]?.text;
+    const responseText = candidate?.content?.parts?.[0]?.text;
 
     if (!responseText) {
       logger.error("Gemini API response candidate is missing content or text part.", JSON.stringify(candidate));
@@ -189,7 +185,7 @@ JSON Output:
       structuredData = JSON.parse(responseText.trim()) as SuggestedPostDetails;
       logger.info("Successfully parsed JSON from Gemini:", structuredData);
     } catch (error: any) {
-      logger.error("Error parsing JSON from Gemini response. Raw text was:", responseText, "Error:", error);
+      logger.warn("Direct JSON.parse failed. Attempting to extract from markdown. Error:", error.message);
       const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```|({[\s\S]*})/);
       let extractedJsonText: string | null = null;
       if (jsonMatch) {
@@ -211,38 +207,35 @@ JSON Output:
       } else {
         throw new HttpsError(
           "internal",
-          "Failed to parse the response from the AI service (no JSON block found). Raw response: " + responseText
+          "Failed to parse the response from the AI service (no JSON block found and direct parse failed). Raw response: " + responseText
         );
       }
     }
 
-    // Corrected: Keys in requiredKeys must match SuggestedPostDetails interface
     const requiredKeys: Array<keyof SuggestedPostDetails> = ["listingType", "suggestedTitle", "suggestedDescription", "extractedItemName"];
     for (const key of requiredKeys) {
-      // Corrected: Check against actual keys of SuggestedPostDetails for null allowance
       if (!(key in structuredData) || (structuredData[key] === null && key !== "price" && key !== "currency" && key !== "suggestedCategory")) {
         logger.error(`Missing or null required key '${key}' in parsed JSON.`, structuredData);
         throw new HttpsError("internal", `AI service response missing or invalid key: ${key}`);
       }
     }
 
-    const validListingTypes: ListingType[] = ["SELLING_ITEM", "WANTING_TO_BUY_ITEM", "OFFERING_SERVICE", "REQUESTING_SERVICE"];
+    const validListingTypes: ListingType[] = ["SELLING_ITEM", "WANTING_TO_BUY_ITEM", "OFFERING_SERVICE", "REQUESTING_SERVICE", "UNKNOWN"];
     if (!validListingTypes.includes(structuredData.listingType)) {
-      logger.error(`Invalid listingType '${structuredData.listingType}' in parsed JSON.`, structuredData);
-      throw new HttpsError("internal", `AI service returned invalid listingType: ${structuredData.listingType}`);
+      logger.warn(`Invalid listingType '${structuredData.listingType}' from LLM, defaulting to UNKNOWN.`);
+      structuredData.listingType = "UNKNOWN";
     }
     if (structuredData.price !== null && typeof structuredData.price !== "number") {
         logger.warn(`Price from LLM is not a number: ${structuredData.price}. Setting to null.`);
         structuredData.price = null;
     }
 
-
     return {
       success: true,
       data: structuredData,
     };
   } catch (error: any) {
-    logger.error("Error calling Gemini API or processing response:", error.message, error.stack, error.cause);
+    logger.error("Error in generatePostSuggestions function:", error.message, error.stack, error.details ? JSON.stringify(error.details) : "");
     if (error instanceof HttpsError) {
       throw error;
     }
@@ -252,3 +245,4 @@ JSON Output:
     );
   }
 });
+

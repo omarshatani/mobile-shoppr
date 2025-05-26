@@ -9,8 +9,8 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.shoppr.domain.usecase.AnalyzePostTextUseCase;
 import com.shoppr.domain.usecase.GetCurrentUserUseCase;
+import com.shoppr.domain.usecase.GetLLMSuggestionsUseCase;
 import com.shoppr.domain.usecase.SavePostUseCase;
 import com.shoppr.model.Event;
 import com.shoppr.model.ListingState;
@@ -22,6 +22,8 @@ import com.shoppr.model.User;
 import com.shoppr.navigation.NavigationRoute;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -33,7 +35,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class CreatePostViewModel extends AndroidViewModel {
 	private static final String TAG = "CreatePostViewModel";
 
-	private final AnalyzePostTextUseCase analyzePostTextUseCase;
+	private final GetLLMSuggestionsUseCase getLLMSuggestionsUseCase;
 	private final SavePostUseCase savePostUseCase;
 	private final GetCurrentUserUseCase getCurrentUserUseCase;
 
@@ -75,11 +77,11 @@ public class CreatePostViewModel extends AndroidViewModel {
 
 	@Inject
 	public CreatePostViewModel(@NonNull Application application,
-														 AnalyzePostTextUseCase analyzePostTextUseCase,
+							   GetLLMSuggestionsUseCase getLLMSuggestionsUseCase,
 														 SavePostUseCase savePostUseCase,
 														 GetCurrentUserUseCase getCurrentUserUseCase) {
 		super(application);
-		this.analyzePostTextUseCase = analyzePostTextUseCase;
+		this.getLLMSuggestionsUseCase = getLLMSuggestionsUseCase;
 		this.savePostUseCase = savePostUseCase;
 		this.getCurrentUserUseCase = getCurrentUserUseCase;
 
@@ -129,7 +131,7 @@ public class CreatePostViewModel extends AndroidViewModel {
 		_isLoading.setValue(true);
 		_operationError.setValue(null);
 
-		analyzePostTextUseCase.execute(currentRawText, null, currentBaseOfferPrice, currentBaseOfferCurrency, new AnalyzePostTextUseCase.AnalysisCallbacks() {
+		getLLMSuggestionsUseCase.execute(currentRawText, null, currentBaseOfferPrice, currentBaseOfferCurrency, new GetLLMSuggestionsUseCase.AnalysisCallbacks() {
 			@Override
 			public void onSuccess(@NonNull SuggestedPostDetails suggestions) {
 				Log.d(TAG, "LLM Analysis Success: " + suggestions);
@@ -200,14 +202,14 @@ public class CreatePostViewModel extends AndroidViewModel {
 			for (int i = 0; i < localImageUris.size(); i++) {
 				imageUriStrings[i] = localImageUris.get(i).toString();
 			}
-			postBuilder.imageUrl(imageUriStrings); // Storing local URIs as strings for now
+			postBuilder.imageUrl(Arrays.asList(imageUriStrings)); // Storing local URIs as strings for now
 		} else {
-			postBuilder.imageUrl(new String[0]);
+			postBuilder.imageUrl(Collections.emptyList());
 		}
 
 		postBuilder.lister(lister);
 		postBuilder.state(ListingState.NEW); // Default state
-		postBuilder.requests(new String[0]);   // Initialize empty
+		postBuilder.requests(Collections.emptyList());   // Initialize empty
 
 		// Set location fields using the Post.Builder methods
 		if (locationData.latitude != null) {

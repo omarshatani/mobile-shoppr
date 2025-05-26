@@ -2,6 +2,9 @@ package com.shoppr.model;
 
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Post {
 	private String id;
 	private String title;
@@ -9,20 +12,23 @@ public class Post {
 	private String price;
 	private ListingState state;
 	private ListingType type;
-	private String[] imageUrl;
+	private List<String> imageUrl; // Changed from String[] to List<String>
 	private String category;
 	private User lister;
-	private String[] requests;
+	private List<String> requests; // Changed from String[] to List<String>
 
-	// New location fields for the Post itself
+	// Location fields
 	@Nullable
 	private Double latitude;
 	@Nullable
 	private Double longitude;
 	@Nullable
-	private String postAddress; // Specific address for this post/item
+	private String postAddress;
 
 	public Post() {
+		// Required empty public constructor for Firestore deserialization
+		this.imageUrl = new ArrayList<>(); // Initialize lists
+		this.requests = new ArrayList<>(); // Initialize lists
 	}
 
 	private Post(Builder builder) {
@@ -32,17 +38,22 @@ public class Post {
 		this.price = builder.price;
 		this.state = builder.state;
 		this.type = builder.type;
-		this.imageUrl = builder.imageUrl;
+		this.imageUrl = builder.imageUrl != null ? new ArrayList<>(builder.imageUrl) : new ArrayList<>(); // Ensure new list
 		this.category = builder.category;
 		this.lister = builder.lister;
-		this.requests = builder.requests;
+		this.requests = builder.requests != null ? new ArrayList<>(builder.requests) : new ArrayList<>(); // Ensure new list
+		this.latitude = builder.latitude;
+		this.longitude = builder.longitude;
+		this.postAddress = builder.postAddress;
 	}
 
+	// Getters and Setters
+	@Nullable
 	public String getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(@Nullable String id) {
 		this.id = id;
 	}
 
@@ -86,13 +97,13 @@ public class Post {
 		this.type = type;
 	}
 
-	public String[] getImageUrl() {
+	public List<String> getImageUrl() {
 		return imageUrl;
-	}
+	} // Return type changed
 
-	public void setImageUrl(String[] imageUrl) {
+	public void setImageUrl(List<String> imageUrl) {
 		this.imageUrl = imageUrl;
-	}
+	} // Parameter type changed
 
 	public String getCategory() {
 		return category;
@@ -110,13 +121,13 @@ public class Post {
 		this.lister = lister;
 	}
 
-	public String[] getRequests() {
+	public List<String> getRequests() {
 		return requests;
-	}
+	} // Return type changed
 
-	public void setRequests(String[] requests) {
+	public void setRequests(List<String> requests) {
 		this.requests = requests;
-	}
+	} // Parameter type changed
 
 	@Nullable
 	public Double getLatitude() {
@@ -145,17 +156,19 @@ public class Post {
 		this.postAddress = postAddress;
 	}
 
+
 	public static class Builder {
+		@Nullable
 		private String id;
 		private String title;
 		private String description;
 		private String price;
 		private ListingState state;
 		private ListingType type;
-		private String[] imageUrl;
+		private List<String> imageUrl = new ArrayList<>(); // Changed to List, initialized
 		private String category;
 		private User lister;
-		private String[] requests;
+		private List<String> requests = new ArrayList<>(); // Changed to List, initialized
 		@Nullable
 		private Double latitude;
 		@Nullable
@@ -163,7 +176,7 @@ public class Post {
 		@Nullable
 		private String postAddress;
 
-		public Builder id(String id) {
+		public Builder id(@Nullable String id) {
 			this.id = id;
 			return this;
 		}
@@ -193,10 +206,10 @@ public class Post {
 			return this;
 		}
 
-		public Builder imageUrl(String[] imageUrl) {
+		public Builder imageUrl(List<String> imageUrl) {
 			this.imageUrl = imageUrl;
 			return this;
-		}
+		} // Parameter type changed
 
 		public Builder category(String category) {
 			this.category = category;
@@ -208,10 +221,10 @@ public class Post {
 			return this;
 		}
 
-		public Builder requests(String[] requests) {
+		public Builder requests(List<String> requests) {
 			this.requests = requests;
 			return this;
-		}
+		} // Parameter type changed
 
 		public Builder latitude(@Nullable Double latitude) {
 			this.latitude = latitude;
@@ -228,10 +241,9 @@ public class Post {
 			return this;
 		}
 
+
 		public Post build() {
 			return new Post(this);
 		}
-
 	}
-
 }
