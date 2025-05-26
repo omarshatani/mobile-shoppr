@@ -1,7 +1,8 @@
-package com.shoppr.data.di;
+package com.shoppr.di;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.functions.FirebaseFunctions;
 
 import javax.inject.Singleton;
 
@@ -24,4 +25,10 @@ public class FirebaseModule {
     public FirebaseFirestore provideFirebaseFirestore() {
         return FirebaseFirestore.getInstance();
     }
+
+    @Provides
+    @Singleton
+    public FirebaseFunctions provideFirebaseFunctions() {
+			return FirebaseFunctions.getInstance();
+		}
 }

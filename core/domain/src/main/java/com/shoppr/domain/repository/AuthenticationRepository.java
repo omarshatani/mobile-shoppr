@@ -1,4 +1,4 @@
-package com.shoppr.data.repository;
+package com.shoppr.domain.repository;
 
 import androidx.lifecycle.LiveData;
 
