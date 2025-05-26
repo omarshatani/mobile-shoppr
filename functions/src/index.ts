@@ -1,11 +1,7 @@
-// functions/src/index.ts (or your main Cloud Functions TypeScript file)
+// functions/src/index.ts
 
-// Firebase Functions SDK for defining Cloud Functions.
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
-
-// Google AI SDK for Gemini (Node.js)
-// Make sure to install this: npm install @google/generative-ai
 import {
   GoogleGenerativeAI,
   HarmCategory,
@@ -16,20 +12,17 @@ import {
   GenerateContentResult,
   Part,
 } from "@google/generative-ai";
-// For typed environment variables (recommended)
 import {defineString} from "firebase-functions/params";
 
+const geminiApiKeyParam = defineString("SECRETS_GEMINI_API_KEY");
+const META_PROMPT_MODEL_NAME = "gemini-1.5-flash-latest";
+const SUGGESTION_MODEL_NAME = "gemini-1.5-flash-latest";
 
-// --- IMPORTANT: Configuration ---
-const geminiApiKeyParam = defineString("SECRETS_GEMINI_API_KEY"); // Expects env var SECRETS_GEMINI_API_KEY
-
-// Updated Model Name based on your ListModels output
-const MODEL_NAME = "gemini-1.5-pro-latest"; // Using a model available to you that supports generateContent
-// Alternative: const MODEL_NAME = "gemini-1.5-pro-latest";
-
-// Define interfaces for expected data structures
-interface RequestData {
+interface ClientRequestData {
   text?: string;
+  imageUrls?: string[];
+  baseOfferPrice?: string;
+  baseOfferCurrency?: string;
 }
 
 type ListingType =
@@ -39,7 +32,7 @@ type ListingType =
   | "REQUESTING_SERVICE"
   | "UNKNOWN";
 
-interface SuggestedPostDetails {
+interface LLMSuggestions {
   listingType: ListingType;
   suggestedTitle: string;
   suggestedDescription: string;
@@ -49,170 +42,167 @@ interface SuggestedPostDetails {
   suggestedCategory: string | null;
 }
 
-interface SuccessResponse {
+interface CloudFunctionSuccessResponse {
   success: true;
-  data: SuggestedPostDetails;
+  data: LLMSuggestions;
 }
 
 let genAI: GoogleGenerativeAI | undefined;
-const apiKeyFromEnv = process.env.SECRETS_GEMINI_API_KEY; // Check if set directly for global init
 
-if (apiKeyFromEnv) {
-  try {
-    genAI = new GoogleGenerativeAI(apiKeyFromEnv);
-    logger.info("GoogleGenerativeAI client initialized globally using SECRETS_GEMINI_API_KEY env var.");
-  } catch (e: any) {
-    logger.error("Error initializing GoogleGenerativeAI globally:", e.message);
+const initializeGenAI = (): GoogleGenerativeAI => {
+  if (genAI) {
+    return genAI;
   }
-} else {
-  logger.warn(
-    "SECRETS_GEMINI_API_KEY environment variable not found for global initialization. " +
-    "Client will be initialized on first function call using defined param."
-  );
-}
+  const apiKey = geminiApiKeyParam.value() || process.env.SECRETS_GEMINI_API_KEY;
+  if (apiKey) {
+    logger.info("Initializing GoogleGenerativeAI client.");
+    genAI = new GoogleGenerativeAI(apiKey);
+    return genAI;
+  } else {
+    logger.error("Gemini API Key not found in Firebase config or env for SECRETS_GEMINI_API_KEY.");
+    throw new HttpsError("internal", "AI service API key not configured.");
+  }
+};
 
 /**
- * Analyzes user text with Gemini to extract post details.
- * The prompt is dynamically generated based on inputs.
- * @param {RequestData} request - The data sent from the client.
- * @return {Promise<SuccessResponse>} A promise that resolves with structured post details.
- * @throws {HttpsError} Throws HttpsError on failure.
+ * Generates a dynamic prompt for the main LLM call.
+ * @param {ClientRequestData} clientData The data from the client.
+ * @return {Promise<string>} The dynamically generated prompt.
  */
+async function generateDynamicPromptForSuggestions(clientData: ClientRequestData): Promise<string> {
+  const localGenAI = initializeGenAI();
+  const model = localGenAI.getGenerativeModel({model: META_PROMPT_MODEL_NAME});
+
+  let metaContext = `User text: "${clientData.text}"\n`;
+  if (clientData.imageUrls && clientData.imageUrls.length > 0) {
+    metaContext += `User has provided ${clientData.imageUrls.length} image(s).\n`;
+  }
+  if (clientData.baseOfferPrice) {
+    metaContext += `User has indicated a base offer/price of ${clientData.baseOfferPrice} ${clientData.baseOfferCurrency || ""}.\n`;
+  }
+
+  const metaPrompt = `
+You are an expert prompt engineer. A user wants to create a classifieds post.
+User's initial input context:
+${metaContext}
+
+Based on this input, create an optimized and detailed prompt for another AI assistant. This optimized prompt must instruct the second AI to:
+1. Analyze the original user request text.
+2. Determine the "listingType" from: "SELLING_ITEM", "WANTING_TO_BUY_ITEM", "OFFERING_SERVICE", "REQUESTING_SERVICE", or "UNKNOWN".
+3. Generate a "suggestedTitle" (5-10 words, concise and appealing).
+4. Generate a "suggestedDescription" (1-3 informative sentences).
+5. Extract the "extractedItemName" (the primary item or service).
+6. Extract a "price" (as a number, or null if not explicitly stated in the user's text).
+7. Extract a "currency" (e.g., "USD", "EUR", "CHF", or null if no price/currency is stated in the user's text).
+8. Suggest a "suggestedCategory" from this list: ["Electronics", "Vehicles", "Home Goods", "Furniture", "Apparel", "Books", "Services-General", "Services-HomeRepair", "Services-Tutoring", "Jobs", "Community", "Other"], or null if unsure.
+9. The second AI MUST return its findings as a VALID JSON object with exactly these keys and no other text, comments, or markdown formatting like \`\`\`json.
+
+Return ONLY the text of the optimized prompt for the second AI. Do not include any explanations or conversational text in your own response.
+Optimized Prompt for Second AI:
+  `;
+
+  logger.info("Meta-Prompting - Sending request to Gemini to generate main prompt. Meta-context:", metaContext);
+
+  try {
+    const result = await model.generateContent(metaPrompt);
+    const response = result.response;
+    const generatedPromptText = response?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!generatedPromptText || generatedPromptText.trim() === "") {
+      logger.error("Meta-Prompting - Gemini returned empty or invalid prompt text.");
+      throw new Error("Failed to generate dynamic prompt from meta-LLM call.");
+    }
+    logger.info("Meta-Prompting - Successfully generated dynamic prompt:", generatedPromptText);
+    return generatedPromptText.trim();
+  } catch (error: any) {
+    logger.error("Meta-Prompting - Error calling Gemini to generate prompt:", error.message, error.stack);
+    throw new HttpsError("internal", "Failed to generate dynamic prompt for AI: " + error.message);
+  }
+}
+
+
 export const generatePostSuggestions = onCall<
-  RequestData,
-  Promise<SuccessResponse>
+  ClientRequestData,
+  Promise<CloudFunctionSuccessResponse>
 >(async (request) => {
   logger.info("generatePostSuggestions function called. Data received:", request.data);
-
-  if (!genAI) {
-    const currentApiKey = geminiApiKeyParam.value();
-    if (currentApiKey) {
-      logger.info("Initializing genAI client within onCall with SECRETS_GEMINI_API_KEY param.");
-      try {
-        genAI = new GoogleGenerativeAI(currentApiKey);
-      } catch (e: any) {
-        logger.error("Error initializing GoogleGenerativeAI in onCall:", e.message);
-        throw new HttpsError("internal", "Gemini AI service could not be initialized due to API key issue.");
-      }
-    } else {
-      logger.error(
-        "Gemini API Key (SECRETS_GEMINI_API_KEY) not resolved from function parameters/config."
-      );
-      throw new HttpsError(
-        "internal",
-        "Gemini AI service API key not configured."
-      );
-    }
-  }
+  const localGenAI = initializeGenAI();
 
   const userText = request.data.text;
-
   if (!userText || typeof userText !== "string" || userText.trim() === "") {
     logger.error("Invalid input: 'text' field is missing or empty.");
-    throw new HttpsError(
-      "invalid-argument",
-      "The function must be called with a 'text' argument containing the user's input."
-    );
+    throw new HttpsError("invalid-argument", "Input 'text' is required.");
   }
 
-  let dynamicPromptPart = "";
-  if (userText.length < 20) {
-    dynamicPromptPart += " The user's description is very short, please try to elaborate slightly while staying true to their intent.";
-  }
+  try {
+    const dynamicPromptContent = await generateDynamicPromptForSuggestions(request.data);
 
-  const prompt = `
-Analyze the following user request to create a classifieds-style post.${dynamicPromptPart}
-Extract the following information and return it as a VALID JSON object.
-Do not include any explanatory text, comments, or markdown formatting like \`\`\`json before or after the JSON object.
-The JSON object MUST have these keys:
-- "listingType": (string) Choose ONE from: "SELLING_ITEM", "WANTING_TO_BUY_ITEM", "OFFERING_SERVICE", "REQUESTING_SERVICE". If unsure, use "UNKNOWN".
-- "suggestedTitle": (string) A concise title for the post (max 10 words).
-- "suggestedDescription": (string) A short suggested description for the post (1-2 sentences).
-- "extractedItemName": (string) The primary item or service being discussed.
-- "price": (number or null) If a price or budget is clearly mentioned in the user's text, extract it as a number. If not mentioned, use null.
-- "currency": (string or null) If a currency symbol (e.g., $, £, EUR) or code (e.g., USD, CHF) is mentioned with a price, extract the currency code (e.g., USD, EUR, CHF). Otherwise, use null.
-- "suggestedCategory": (string or null) Suggest a relevant category from this list: "Electronics", "Vehicles", "Home Goods", "Furniture", "Apparel", "Books", "Services-General", "Services-HomeRepair", "Services-Tutoring", "Jobs", "Community", "Other". If unsure, use null.
+    const finalPromptForGemini = `
+${dynamicPromptContent}
 
 User Request: "${userText}"
 
 JSON Output:
     `;
+    logger.info("Main Suggestion - Sending request to Gemini API. Model:", SUGGESTION_MODEL_NAME);
+    logger.info("Main Suggestion - Final prompt being sent:", finalPromptForGemini);
 
-  try {
-    logger.info("Sending request to Gemini API with model:", MODEL_NAME);
-    // logger.info("Full prompt being sent:", prompt); // Be cautious logging full prompts if they contain PII
-
-    const model = genAI.getGenerativeModel({model: MODEL_NAME});
-
+    const model = localGenAI.getGenerativeModel({model: SUGGESTION_MODEL_NAME});
     const safetySettings: SafetySetting[] = [
       {category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE},
       {category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE},
       {category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE},
       {category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE},
     ];
-
-    const generationConfig: GenerationConfig = {
-      responseMimeType: "application/json",
-    };
-
-    const contentPart: Part = {text: prompt};
+    const generationConfig: GenerationConfig = {responseMimeType: "application/json"};
+    const contentPart: Part = {text: finalPromptForGemini};
     const generateContentRequest: GenerateContentRequest = {
       contents: [{role: "user", parts: [contentPart]}],
       generationConfig,
       safetySettings,
     };
 
-    const result: GenerateContentResult =
-      await model.generateContent(generateContentRequest);
-
+    const result: GenerateContentResult = await model.generateContent(generateContentRequest);
     const response = result.response;
     const candidate = response?.candidates?.[0];
     const responseText = candidate?.content?.parts?.[0]?.text;
 
     if (!responseText) {
-      logger.error("Gemini API response candidate is missing content or text part.", JSON.stringify(candidate));
+      logger.error("Main Suggestion - Gemini API response candidate is missing content.", JSON.stringify(candidate));
       if (candidate?.finishReason && candidate.finishReason !== "STOP") {
-        logger.warn("Gemini generation finished due to: " + candidate.finishReason, JSON.stringify(candidate.safetyRatings));
-        throw new HttpsError("internal", `Content generation stopped: ${candidate.finishReason}. Check safety ratings.`);
+        throw new HttpsError("internal", `Content generation stopped: ${candidate.finishReason}.`);
       }
-      throw new HttpsError("internal", "Gemini API response content is invalid.");
+      throw new HttpsError("internal", "AI service response content is invalid.");
     }
+    logger.info("Main Suggestion - Raw JSON response text from Gemini:", responseText);
 
-    logger.info("Raw response text from Gemini (expected JSON):", responseText);
-
-    let structuredData: SuggestedPostDetails;
+    let structuredData: LLMSuggestions;
     try {
-      structuredData = JSON.parse(responseText.trim()) as SuggestedPostDetails;
-      logger.info("Successfully parsed JSON from Gemini:", structuredData);
+      structuredData = JSON.parse(responseText.trim()) as LLMSuggestions;
+      logger.info("Main Suggestion - Successfully parsed JSON from Gemini:", structuredData);
     } catch (error: any) {
-      logger.warn("Direct JSON.parse failed. Attempting to extract from markdown. Error:", error.message);
+      logger.error("Main Suggestion - Error parsing JSON. Raw text:", responseText, "Error:", error);
       const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```|({[\s\S]*})/);
       let extractedJsonText: string | null = null;
       if (jsonMatch) {
         extractedJsonText = jsonMatch[1] || jsonMatch[2];
         try {
           if (extractedJsonText) {
-            structuredData = JSON.parse(extractedJsonText.trim()) as SuggestedPostDetails;
-            logger.info("Successfully parsed JSON after extraction:", structuredData);
+            structuredData = JSON.parse(extractedJsonText.trim()) as LLMSuggestions;
+            logger.info("Main Suggestion - Successfully parsed JSON after extraction:", structuredData);
           } else {
-            throw new Error("JSON match found but extracted text is null.");
+            throw new Error("JSON match found but extracted text is null during fallback.");
           }
         } catch (innerError: any) {
-          logger.error("Error parsing extracted JSON:", extractedJsonText, innerError);
-          throw new HttpsError(
-            "internal",
-            "Failed to parse the response from the AI service (after extraction attempt). Raw response: " + responseText
-          );
+          logger.error("Main Suggestion - Error parsing extracted JSON during fallback:", extractedJsonText, innerError);
+          throw new HttpsError("internal", "Failed to parse response from AI (fallback). Raw: " + responseText);
         }
       } else {
-        throw new HttpsError(
-          "internal",
-          "Failed to parse the response from the AI service (no JSON block found and direct parse failed). Raw response: " + responseText
-        );
+        throw new HttpsError("internal", "Failed to parse response from AI (no JSON block). Raw: " + responseText);
       }
     }
 
-    const requiredKeys: Array<keyof SuggestedPostDetails> = ["listingType", "suggestedTitle", "suggestedDescription", "extractedItemName"];
+    const requiredKeys: Array<keyof LLMSuggestions> = ["listingType", "suggestedTitle", "suggestedDescription", "extractedItemName"];
     for (const key of requiredKeys) {
       if (!(key in structuredData) || (structuredData[key] === null && key !== "price" && key !== "currency" && key !== "suggestedCategory")) {
         logger.error(`Missing or null required key '${key}' in parsed JSON.`, structuredData);
@@ -239,10 +229,6 @@ JSON Output:
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError(
-      "internal",
-      "An unexpected error occurred with the AI service: " + error.message
-    );
+    throw new HttpsError("internal", "Unexpected error with AI service: " + error.message);
   }
 });
-
