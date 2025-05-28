@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 
 import com.shoppr.domain.usecase.GetCurrentUserUseCase;
 import com.shoppr.domain.usecase.GetLLMSuggestionsUseCase;
@@ -42,7 +43,6 @@ public class CreatePostViewModel extends AndroidViewModel {
 	public final LiveData<User> currentListerLiveData;
 	public final LiveData<Event<String>> currentUserErrorEvents;
 
-	// Derived location from the current lister's profile
 	private final MutableLiveData<LocationData> _postCreationLocation = new MutableLiveData<>();
 	public LiveData<LocationData> postCreationLocation = _postCreationLocation;
 
@@ -66,6 +66,7 @@ public class CreatePostViewModel extends AndroidViewModel {
 	public final MutableLiveData<String> baseOfferPrice = new MutableLiveData<>("");
 	public final MutableLiveData<String> baseOfferCurrency = new MutableLiveData<>("USD");
 
+	// These LiveData fields will be populated by the ViewModel after LLM analysis
 	public final MutableLiveData<String> postTitle = new MutableLiveData<>("");
 	public final MutableLiveData<String> postDescription = new MutableLiveData<>("");
 	public final MutableLiveData<ListingType> postListingType = new MutableLiveData<>();
@@ -74,10 +75,12 @@ public class CreatePostViewModel extends AndroidViewModel {
 	private final MutableLiveData<List<Uri>> _selectedImageUris = new MutableLiveData<>(new ArrayList<>());
 	public LiveData<List<Uri>> selectedImageUris = _selectedImageUris;
 
+	private final Observer<User> listerObserver;
+
 
 	@Inject
 	public CreatePostViewModel(@NonNull Application application,
-							   GetLLMSuggestionsUseCase getLLMSuggestionsUseCase,
+														 GetLLMSuggestionsUseCase getLLMSuggestionsUseCase,
 														 SavePostUseCase savePostUseCase,
 														 GetCurrentUserUseCase getCurrentUserUseCase) {
 		super(application);
@@ -88,41 +91,41 @@ public class CreatePostViewModel extends AndroidViewModel {
 		this.currentListerLiveData = this.getCurrentUserUseCase.getFullUserProfile();
 		this.currentUserErrorEvents = this.getCurrentUserUseCase.getProfileErrorEvents();
 
-		// Observe currentListerLiveData to derive postCreationLocation
-		// Using observeForever here needs careful handling in onCleared if ViewModel can outlive observer's lifecycle owner.
-		// However, for AndroidViewModel, it's tied to Application lifecycle, so less risky.
-		// Alternatively, use Transformations.map if you prefer.
-		this.currentListerLiveData.observeForever(this::getLocationFromLoggedUser);
+		listerObserver = user -> {
+			if (user != null && user.getLastLatitude() != null && user.getLastLongitude() != null) {
+				LocationData newLocation = new LocationData(
+						user.getLastLatitude(),
+						user.getLastLongitude(),
+						user.getLastLocationAddress()
+				);
+				LocationData currentLocation = _postCreationLocation.getValue();
+				boolean changed = false;
+				if (currentLocation == null) {
+					changed = true;
+				} else {
+					if (!Objects.equals(currentLocation.latitude, newLocation.latitude)) changed = true;
+					if (!Objects.equals(currentLocation.longitude, newLocation.longitude)) changed = true;
+					if (!Objects.equals(currentLocation.addressString, newLocation.addressString))
+						changed = true;
+				}
+				if (changed) {
+					_postCreationLocation.postValue(newLocation);
+				}
+			} else {
+				if (_postCreationLocation.getValue() != null) {
+					_postCreationLocation.postValue(null);
+				}
+			}
+		};
+		this.currentListerLiveData.observeForever(listerObserver);
 		this.getCurrentUserUseCase.startObserving();
 	}
 
-	private void getLocationFromLoggedUser(User user) {
-		if (user != null && user.getLastLatitude() != null && user.getLastLongitude() != null) {
-			LocationData newLocation = new LocationData(
-					user.getLastLatitude(),
-					user.getLastLongitude(),
-					user.getLastLocationAddress()
-			);
-			// Only update if it's different to avoid unnecessary emissions
-			// This requires LocationData to have a proper equals method or compare fields.
-			LocationData currentLocation = _postCreationLocation.getValue();
-			if (currentLocation == null ||
-					!Objects.equals(currentLocation.latitude, newLocation.latitude) ||
-					!Objects.equals(currentLocation.longitude, newLocation.longitude) ||
-					!Objects.equals(currentLocation.addressString, newLocation.addressString)) {
-				_postCreationLocation.postValue(newLocation);
-			}
-		} else {
-			if (_postCreationLocation.getValue() != null) {
-				_postCreationLocation.postValue(null); // Lister or their location is gone
-			}
-		}
-	}
 
 	private void triggerLLMAnalysisAndPostCreation(
 			String currentRawText,
-			String currentBaseOfferPrice,
-			String currentBaseOfferCurrency,
+			String currentBaseOfferPriceFromInput,
+			String currentBaseOfferCurrencyFromInput,
 			final User lister,
 			final List<Uri> localImageUris,
 			final LocationData creationLocation) {
@@ -131,11 +134,40 @@ public class CreatePostViewModel extends AndroidViewModel {
 		_isLoading.setValue(true);
 		_operationError.setValue(null);
 
-		getLLMSuggestionsUseCase.execute(currentRawText, null, currentBaseOfferPrice, currentBaseOfferCurrency, new GetLLMSuggestionsUseCase.AnalysisCallbacks() {
+		getLLMSuggestionsUseCase.execute(currentRawText, null, currentBaseOfferPriceFromInput, currentBaseOfferCurrencyFromInput, new GetLLMSuggestionsUseCase.AnalysisCallbacks() {
 			@Override
 			public void onSuccess(@NonNull SuggestedPostDetails suggestions) {
-				Log.d(TAG, "LLM Analysis Success: " + suggestions);
-				constructAndSavePost(suggestions, currentBaseOfferPrice, lister, localImageUris, creationLocation);
+				Log.d(TAG, "LLM Analysis Success: " + suggestions.toString());
+
+				// Update LiveData fields which might be observed by UI or used by constructAndSavePost
+				postTitle.postValue(suggestions.getSuggestedTitle());
+				postDescription.postValue(suggestions.getSuggestedDescription());
+				postListingType.postValue(suggestions.getListingType());
+				postCategory.postValue(suggestions.getSuggestedCategory());
+
+				// Handle Price: Prioritize user's direct input.
+				// If user didn't input a price, but LLM extracted one from text (via SuggestedPostDetails), use LLM's.
+				String priceToUseInPost = baseOfferPrice.getValue(); // User's explicit input via LiveData
+				String currencyToUseInPost = baseOfferCurrency.getValue();
+
+				// The LLM suggestions might include price/currency if your Cloud Function and SuggestedPostDetails model supports it
+				// Let's assume SuggestedPostDetails has getExtractedTextPrice() and getExtractedTextCurrency()
+				// For now, based on your log, SuggestedPostDetails from LLM *does* have price and currency
+				// if (priceToUseInPost == null || priceToUseInPost.trim().isEmpty()) {
+				//    Double llmPrice = suggestions.getPrice(); // Assuming getPrice() in SuggestedPostDetails
+				//    if (llmPrice != null) {
+				//        priceToUseInPost = String.valueOf(llmPrice);
+				//        baseOfferPrice.postValue(priceToUseInPost); // Update the main price LiveData
+				//        if (suggestions.getCurrency() != null) { // Assuming getCurrency()
+				//            currencyToUseInPost = suggestions.getCurrency();
+				//            baseOfferCurrency.postValue(currencyToUseInPost);
+				//        }
+				//    }
+				// }
+				// The above logic can be refined based on how you want to prioritize.
+				// For now, constructAndSavePost will use baseOfferPrice.getValue()
+
+				constructAndSavePost(lister, localImageUris, creationLocation);
 			}
 
 			@Override
@@ -157,8 +189,8 @@ public class CreatePostViewModel extends AndroidViewModel {
 			return;
 		}
 
-		String currentRawText = rawUserInputText.getValue();
-		if (currentRawText == null || currentRawText.trim().isEmpty()) {
+		String currentRawTextVal = rawUserInputText.getValue();
+		if (currentRawTextVal == null || currentRawTextVal.trim().isEmpty()) {
 			_operationError.setValue(new Event<>("Please describe what you want to post."));
 			return;
 		}
@@ -168,50 +200,62 @@ public class CreatePostViewModel extends AndroidViewModel {
 			return;
 		}
 
-		String price = baseOfferPrice.getValue();
-		String currency = baseOfferCurrency.getValue();
+		String priceVal = baseOfferPrice.getValue();
+		String currencyVal = baseOfferCurrency.getValue();
 		List<Uri> imageUrisForPost = currentUris != null ? currentUris : new ArrayList<>();
 
-		triggerLLMAnalysisAndPostCreation(currentRawText, price, currency, currentLister, imageUrisForPost, currentPostLoc);
+		triggerLLMAnalysisAndPostCreation(currentRawTextVal, priceVal, currencyVal, currentLister, imageUrisForPost, currentPostLoc);
 	}
 
 
 	private void constructAndSavePost(
-			SuggestedPostDetails suggestions,
-			String userEnteredPrice,
 			User lister,
 			List<Uri> localImageUris,
 			LocationData locationData
 	) {
-		Log.d(TAG, "Constructing Post object with LLM suggestions and user inputs.");
+		Log.d(TAG, "Constructing Post object.");
 
 		Post.Builder postBuilder = new Post.Builder();
-		// ID will be generated by Firestore or PostDataSource when saving a new post.
-		// If updating an existing post, the ID would be set.
 
-		postBuilder.title(suggestions.getSuggestedTitle());
-		postBuilder.description(suggestions.getSuggestedDescription());
-		postBuilder.type(suggestions.getListingType());
-		if (suggestions.getSuggestedCategory() != null) {
-			postBuilder.category(suggestions.getSuggestedCategory());
+		// Use values from LiveData which were populated by LLM suggestions
+		// (or potentially edited by user if UI allowed for it before this step)
+		String title = postTitle.getValue();
+		String description = postDescription.getValue();
+		ListingType type = postListingType.getValue();
+		String category = postCategory.getValue();
+		String price = baseOfferPrice.getValue(); // User's direct input is the primary source
+
+		if (title == null || title.trim().isEmpty() ||
+				description == null || description.trim().isEmpty() ||
+				type == null) {
+			Log.e(TAG, "Cannot construct post, essential LLM-derived fields are missing from LiveData.");
+			_operationError.postValue(new Event<>("AI failed to suggest essential post details. Please try rephrasing your input."));
+			_isLoading.postValue(false); // Ensure loading is stopped
+			return;
 		}
 
-		postBuilder.price(userEnteredPrice);
+		postBuilder.title(title);
+		postBuilder.description(description);
+		postBuilder.type(type);
+		if (category != null) {
+			postBuilder.category(category);
+		}
+		postBuilder.price(price);
+
 		if (localImageUris != null && !localImageUris.isEmpty()) {
-			String[] imageUriStrings = new String[localImageUris.size()];
-			for (int i = 0; i < localImageUris.size(); i++) {
-				imageUriStrings[i] = localImageUris.get(i).toString();
+			List<String> imageUriStrings = new ArrayList<>();
+			for (Uri uri : localImageUris) {
+				imageUriStrings.add(uri.toString());
 			}
-			postBuilder.imageUrl(Arrays.asList(imageUriStrings)); // Storing local URIs as strings for now
+			postBuilder.imageUrl(imageUriStrings);
 		} else {
-			postBuilder.imageUrl(Collections.emptyList());
+			postBuilder.imageUrl(new ArrayList<>());
 		}
 
 		postBuilder.lister(lister);
-		postBuilder.state(ListingState.NEW); // Default state
-		postBuilder.requests(Collections.emptyList());   // Initialize empty
+		postBuilder.state(ListingState.NEW);
+		postBuilder.requests(new ArrayList<>());
 
-		// Set location fields using the Post.Builder methods
 		if (locationData.latitude != null) {
 			postBuilder.latitude(locationData.latitude);
 		}
@@ -221,33 +265,28 @@ public class CreatePostViewModel extends AndroidViewModel {
 		if (locationData.addressString != null) {
 			postBuilder.postAddress(locationData.addressString);
 		}
-		Log.d(TAG, "Location data set on Post.Builder: " + locationData);
 
 		Post newPostToSave = postBuilder.build();
 
-		Log.d(TAG, "Attempting to save post: " + newPostToSave.getTitle());
-		_isLoading.setValue(true); // Already set by triggerLLMAnalysisAndPostCreation
+		Log.d(TAG, "Attempting to save post: " + newPostToSave.getTitle() + ", Type: " + newPostToSave.getType() + ", Category: " + newPostToSave.getCategory());
+		// _isLoading is already true from triggerLLMAnalysisAndPostCreation
 
 		savePostUseCase.execute(newPostToSave, new SavePostUseCase.SavePostCallbacks() {
 			@Override
 			public void onSaveSuccess() {
 				_isLoading.postValue(false);
-				Log.i(TAG, "Post saved successfully! Title: " + newPostToSave.getTitle());
 				_successMessage.postValue(new Event<>("Post created successfully!"));
-				// Optionally navigate after success
 				_navigationCommand.postValue(new Event<>(new NavigationRoute.Map()));
 			}
 
 			@Override
 			public void onSaveError(@NonNull String message) {
 				_isLoading.postValue(false);
-				Log.e(TAG, "Failed to save post: " + message);
 				_operationError.postValue(new Event<>("Failed to save post: " + message));
 			}
 		});
 	}
 
-	// Methods for Fragment to update LiveData values
 	public void onRawTextChanged(String text) {
 		rawUserInputText.setValue(text);
 	}
@@ -261,7 +300,21 @@ public class CreatePostViewModel extends AndroidViewModel {
 	}
 
 	public void onUserSelectedLocalImageUris(List<Uri> uris) {
-		_selectedImageUris.setValue(uris);
+		List<Uri> currentList = _selectedImageUris.getValue();
+		if (currentList == null) {
+			currentList = new ArrayList<>();
+		}
+		List<Uri> updatedList = new ArrayList<>(currentList);
+		boolean changed = false;
+		for (Uri newUri : uris) {
+			if (!updatedList.contains(newUri)) {
+				updatedList.add(newUri);
+				changed = true;
+			}
+		}
+		if (changed) {
+			_selectedImageUris.setValue(updatedList);
+		}
 	}
 
 	public void removeSelectedImageUri(Uri uri) {
@@ -278,7 +331,9 @@ public class CreatePostViewModel extends AndroidViewModel {
 	protected void onCleared() {
 		super.onCleared();
 		Log.d(TAG, "CreatePostViewModel onCleared. Stopping user observation.");
-		currentListerLiveData.removeObserver(this::getLocationFromLoggedUser);
+		if (listerObserver != null) {
+			currentListerLiveData.removeObserver(listerObserver);
+		}
 		getCurrentUserUseCase.stopObserving();
 	}
 }
