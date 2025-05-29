@@ -40,6 +40,7 @@ public class MapViewModel extends AndroidViewModel {
 	public final LiveData<Event<String>> currentUserProfileErrorEvents;
 
 	// LiveData for posts to be displayed on the map
+	// Using MediatorLiveData to combine results from GetMapPostsUseCase based on current user
 	private final MediatorLiveData<List<Post>> _mapPosts = new MediatorLiveData<>();
 	public LiveData<List<Post>> mapPosts = _mapPosts;
 
@@ -61,17 +62,17 @@ public class MapViewModel extends AndroidViewModel {
 
 
 	private boolean isMapManuallyMoved = false;
-	private boolean initialMapCenterAttempted = false; // This is the correct variable
+	private boolean initialMapCenterAttempted = false;
 
-	private final Observer<User> userProfileObserverForInitialLocation;
-	private LiveData<List<Post>> currentPostsSource = null; // To manage removing previous source
+	private final Observer<User> userProfileObserverForInitialLocationAndPosts;
+	private LiveData<List<Post>> currentMapPostsSource = null; // To manage removing previous source
 
 	@Inject
 	public MapViewModel(@NonNull Application application,
-											GetCurrentUserUseCase getCurrentUserUseCase,
-											GetCurrentDeviceLocationUseCase getCurrentDeviceLocationUseCase,
-											UpdateUserDefaultLocationUseCase updateUserDefaultLocationUseCase,
-											GetMapPostsUseCase getMapPostsUseCase) { // Inject GetMapPostsUseCase
+						GetCurrentUserUseCase getCurrentUserUseCase,
+						GetCurrentDeviceLocationUseCase getCurrentDeviceLocationUseCase,
+						UpdateUserDefaultLocationUseCase updateUserDefaultLocationUseCase,
+						GetMapPostsUseCase getMapPostsUseCase) { // Inject GetMapPostsUseCase
 		super(application);
 		this.getCurrentUserUseCase = getCurrentUserUseCase;
 		this.getCurrentDeviceLocationUseCase = getCurrentDeviceLocationUseCase;
@@ -81,11 +82,11 @@ public class MapViewModel extends AndroidViewModel {
 		this.currentUserProfileLiveData = this.getCurrentUserUseCase.getFullUserProfile();
 		this.currentUserProfileErrorEvents = this.getCurrentUserUseCase.getProfileErrorEvents();
 
-		userProfileObserverForInitialLocation = user -> {
+		userProfileObserverForInitialLocationAndPosts = user -> {
+			String currentUserId = null;
 			if (user != null) {
-				Log.d(TAG, "UserProfileObserver: User data received - " + user.getName() + " (UID: " + user.getId() + ")");
-				// Fetch posts for the map, excluding the current user's posts
-				loadPostsForMap(user.getId());
+				currentUserId = user.getId();
+				Log.d(TAG, "UserProfileObserver: User data received - " + user.getName() + " (UID: " + currentUserId + ")");
 
 				if (!initialMapCenterAttempted && user.getLastLatitude() != null && user.getLastLongitude() != null) {
 					Log.d(TAG, "UserProfileObserver: User has last known location. Centering map: " +
@@ -95,18 +96,19 @@ public class MapViewModel extends AndroidViewModel {
 				} else if (!initialMapCenterAttempted) {
 					Log.d(TAG, "UserProfileObserver: User profile loaded, but no last known location saved, or already attempted center. Will attempt to fetch current device location if permission is granted.");
 					if (Boolean.TRUE.equals(_locationPermissionGranted.getValue())) {
-						fetchAndSaveDeviceLocation(true);
+						fetchAndSaveDeviceLocation(true); // forceMapMove true for initial centering attempt
 					}
-					initialMapCenterAttempted = true;
+					initialMapCenterAttempted = true; // Mark attempt even if going for device location
 				}
 			} else {
-				Log.d(TAG, "UserProfileObserver: User is null (logged out or profile error). Clearing map posts.");
-				initialMapCenterAttempted = false;
-				loadPostsForMap(null); // Load all posts or no posts if user is null
+				Log.d(TAG, "UserProfileObserver: User is null (logged out or profile error).");
+				initialMapCenterAttempted = false; // Reset for next login session
 			}
+			// Fetch/refresh posts for the map, potentially excluding the current user's posts
+			loadPostsForMap(currentUserId);
 		};
 
-		this.currentUserProfileErrorEvents.observeForever(errorEvent -> { // Consider using observe with LifecycleOwner if this VM is not application-scoped
+		this.currentUserProfileErrorEvents.observeForever(errorEvent -> { // Use observeForever carefully
 			if(errorEvent == null) return;
 			String errorMessage = errorEvent.getContentIfNotHandled();
 			if (errorMessage != null) {
@@ -117,13 +119,13 @@ public class MapViewModel extends AndroidViewModel {
 	}
 
 	private void loadPostsForMap(@Nullable String currentUserId) {
-		Log.d(TAG, "loadPostsForMap called, excluding user ID: " + currentUserId);
-		if (currentPostsSource != null) {
-			_mapPosts.removeSource(currentPostsSource); // Remove previous source to avoid multiple emissions
+		Log.d(TAG, "loadPostsForMap called, current user ID to exclude: " + currentUserId);
+		if (currentMapPostsSource != null) {
+			_mapPosts.removeSource(currentMapPostsSource); // Remove previous source
 		}
-		currentPostsSource = getMapPostsUseCase.execute(currentUserId);
-		_mapPosts.addSource(currentPostsSource, posts -> {
-			Log.d(TAG, "Map posts updated. Count: " + (posts != null ? posts.size() : 0));
+		currentMapPostsSource = getMapPostsUseCase.execute(currentUserId);
+		_mapPosts.addSource(currentMapPostsSource, posts -> {
+			Log.d(TAG, "Map posts LiveData updated. Count: " + (posts != null ? posts.size() : 0));
 			_mapPosts.setValue(posts);
 		});
 	}
@@ -131,20 +133,21 @@ public class MapViewModel extends AndroidViewModel {
 
 	public void onMapFragmentStarted() {
 		Log.d(TAG, "MapFragment started. Starting user profile and posts observation.");
-		getCurrentUserUseCase.startObserving();
-		currentUserProfileLiveData.observeForever(userProfileObserverForInitialLocation);
-		// Initial call to load posts (will be re-triggered by userProfileObserver if user logs in/out)
+		getCurrentUserUseCase.startObserving(); // Start observing the user's full profile
+		currentUserProfileLiveData.observeForever(userProfileObserverForInitialLocationAndPosts);
+		// Initial call to load posts (will be re-triggered by userProfileObserver if user logs in/out,
+		// or if the LiveData from getMapPostsUseCase emits again)
 		User user = currentUserProfileLiveData.getValue();
 		loadPostsForMap(user != null ? user.getId() : null);
 	}
 
 	public void onMapFragmentStopped() {
 		Log.d(TAG, "MapFragment stopped. Stopping user profile and posts observation.");
-		currentUserProfileLiveData.removeObserver(userProfileObserverForInitialLocation);
+		currentUserProfileLiveData.removeObserver(userProfileObserverForInitialLocationAndPosts);
 		getCurrentUserUseCase.stopObserving();
-		if (currentPostsSource != null) {
-			_mapPosts.removeSource(currentPostsSource); // Clean up post source
-			currentPostsSource = null;
+		if (currentMapPostsSource != null) {
+			_mapPosts.removeSource(currentMapPostsSource); // Clean up post source
+			currentMapPostsSource = null;
 		}
 	}
 
@@ -154,7 +157,9 @@ public class MapViewModel extends AndroidViewModel {
 		_locationPermissionGranted.setValue(isGranted);
 		if (isGranted) {
 			_fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_gps_fixed);
-			fetchAndSaveDeviceLocation(false);
+			// If initial centering hasn't happened and user grants permission, try to center.
+			boolean shouldForceMove = !initialMapCenterAttempted;
+			fetchAndSaveDeviceLocation(shouldForceMove);
 		} else {
 			_fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_location_disabled);
 		}
@@ -165,7 +170,7 @@ public class MapViewModel extends AndroidViewModel {
 		if (Boolean.TRUE.equals(_locationPermissionGranted.getValue())) {
 			Log.d(TAG, "Permission granted, fetching device location.");
 			isMapManuallyMoved = false;
-			initialMapCenterAttempted = false; // Allow re-centering
+			initialMapCenterAttempted = false; // Allow re-centering attempt
 			fetchAndSaveDeviceLocation(true); // Force map move
 		} else {
 			Log.d(TAG, "Permission not granted, requesting permission.");
@@ -188,7 +193,7 @@ public class MapViewModel extends AndroidViewModel {
 		User currentUser = currentUserProfileLiveData.getValue();
 		if (currentUser == null || currentUser.getId() == null) {
 			Log.w(TAG, "Cannot fetch and save device location: current user or UID is null.");
-			if (forceMapMove) {
+			if (forceMapMove) { // Only show toast if user explicitly clicked button
 				_toastMessageEvent.postValue(new Event<>("Login required to save location."));
 			}
 			_fabIconResId.setValue(Boolean.TRUE.equals(_locationPermissionGranted.getValue()) ? com.shoppr.core.ui.R.drawable.ic_gps_fixed : com.shoppr.core.ui.R.drawable.ic_location_disabled);
@@ -197,7 +202,7 @@ public class MapViewModel extends AndroidViewModel {
 		final String currentUserId = currentUser.getId();
 
 		Log.d(TAG, "Attempting to fetch device location for user: " + currentUserId);
-		_fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_location_searching);
+		// FAB icon is already set to searching if called from onMyLocationButtonClicked or onLocationSearching
 
 		getCurrentDeviceLocationUseCase.execute(new GetCurrentDeviceLocationUseCase.GetDeviceLocationCallbacks() {
 			@Override
@@ -205,11 +210,10 @@ public class MapViewModel extends AndroidViewModel {
 				Log.i(TAG, "Device location fetched: " + deviceLocation.latitude + "," + deviceLocation.longitude);
 				_fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_gps_fixed);
 
-				// Corrected to use initialMapCenterAttempted
 				if (forceMapMove || !isMapManuallyMoved || !initialMapCenterAttempted) {
 					_moveToLocationEvent.postValue(new Event<>(new LatLng(deviceLocation.latitude, deviceLocation.longitude)));
-					initialMapCenterAttempted = true; // Mark that we've set a location
-					isMapManuallyMoved = false; // Centered, so reset manual move
+					initialMapCenterAttempted = true;
+					isMapManuallyMoved = false;
 				}
 
 				updateUserDefaultLocationUseCase.execute(
@@ -245,13 +249,12 @@ public class MapViewModel extends AndroidViewModel {
 	@Override
 	protected void onCleared() {
 		super.onCleared();
-		Log.d(TAG, "MapViewModel onCleared. Removing user profile observer.");
-		currentUserProfileLiveData.removeObserver(userProfileObserverForInitialLocation);
-		// Also remove observer from currentUserProfileErrorEvents if it was observeForever
-		// For this example, assuming it's observed with lifecycle owner in fragment or activity.
+		Log.d(TAG, "MapViewModel onCleared. Removing observers.");
+		currentUserProfileLiveData.removeObserver(userProfileObserverForInitialLocationAndPosts);
+		// Remove observer from currentUserProfileErrorEvents if observeForever was used
 		getCurrentUserUseCase.stopObserving();
-		if (currentPostsSource != null) {
-			_mapPosts.removeSource(currentPostsSource);
+		if (currentMapPostsSource != null) {
+			_mapPosts.removeSource(currentMapPostsSource);
 		}
 	}
 }
