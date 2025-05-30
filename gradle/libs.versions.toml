@@ -1,5 +1,7 @@
 [versions]
 agp = "8.8.2"
+androidMapsUtils = "3.8.0"
+compiler = "4.16.0"
 firebaseBom = "33.12.0"
 firebaseBomVersion = "..."
 firebaseFunctionsKtx = "21.2.1"
@@ -29,12 +31,15 @@ playServicesAuth = "21.3.0"
 playServicesLocation = "21.3.0"
 playServicesLocationVersion = "21.2.0"
 playServicesMaps = "19.2.0"
+recyclerview = "1.4.0"
 secretsGradlePlugin = "2.0.1"
 googleAndroidLibrariesMapsplatformSecretsGradlePlugin = "2.0.1"
 lifecycleLivedataCore = "2.9.0"
 
 [libraries]
+android-maps-utils = { module = "com.google.maps.android:android-maps-utils", version.ref = "androidMapsUtils" }
 com-google-firebase-firebase-auth = { module = "com.google.firebase:firebase-auth" }
+compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "compiler" }
 firebase-auth = { module = "com.google.firebase:firebase-auth" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-bom-vx = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBomVersion" }
@@ -68,6 +73,7 @@ play-services-auth = { module = "com.google.android.gms:play-services-auth", ver
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 play-services-location-v2120 = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocationVersion" }
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
+recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
 secrets-gradle-plugin = { module = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin", version.ref = "secretsGradlePlugin" }
 lifecycle-livedata-core = { group = "androidx.lifecycle", name = "lifecycle-livedata-core", version.ref = "lifecycleLivedataCore" }
 

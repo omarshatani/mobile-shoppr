@@ -3,10 +3,14 @@ package com.shoppr.data.repository;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.LiveData;
 
 import com.shoppr.domain.datasource.FirestorePostDataSource;
 import com.shoppr.domain.repository.PostRepository;
 import com.shoppr.model.Post;
+
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -43,8 +47,13 @@ public class PostRepositoryImpl implements PostRepository {
 	}
 
 	@Override
-	public void getPostById(@NonNull String postId, @NonNull GetPostCallbacks callbacks) {
-		// TODO: Implement
+	public void getPostById(@NonNull String postId, @NonNull final GetPostByIdCallbacks callbacks) {
+		Log.d(TAG, "getPostById called for postId: " + postId);
+		postDataSource.getPostById(postId, new FirestorePostDataSource.FirestoreGetPostByIdCallbacks() {
+			@Override public void onSuccess(@NonNull Post post) { callbacks.onSuccess(post); }
+			@Override public void onError(@NonNull String message) { callbacks.onError(message); }
+			@Override public void onNotFound() { callbacks.onNotFound(); }
+		});
 	}
 
 	@Override
@@ -60,5 +69,11 @@ public class PostRepositoryImpl implements PostRepository {
 	@Override
 	public void deletePost(@NonNull String postId, @NonNull DeletePostCallbacks callbacks) {
 		// TODO: Implement
+	}
+
+	@Override
+	public LiveData<List<Post>> getPostsForMap(@Nullable String currentUserId) {
+		Log.d(TAG, "getPostsForMap called. Excluding user: " + currentUserId);
+		return postDataSource.getPostsForMap(currentUserId);
 	}
 }

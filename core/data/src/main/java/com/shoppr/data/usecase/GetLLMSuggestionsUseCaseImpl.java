@@ -14,7 +14,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 public class GetLLMSuggestionsUseCaseImpl implements GetLLMSuggestionsUseCase {
-	private static final String TAG = "AnalyzePostTextUCImpl";
+	private static final String TAG = "GetLLMSuggestionsUseCaseImpl";
 	private final LLMRepository llmRepository; // Depends on the repository interface
 
 	@Inject
