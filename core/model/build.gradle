@@ -14,6 +14,7 @@ android {
 
 dependencies {
     implementation libs.lifecycle.livedata.ktx
+    implementation libs.google.firebase.firestore
 
     androidTestImplementation(project(":app")){
         exclude group: 'junit', module: 'junit'

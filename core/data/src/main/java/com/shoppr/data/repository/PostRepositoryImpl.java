@@ -76,4 +76,10 @@ public class PostRepositoryImpl implements PostRepository {
 		Log.d(TAG, "getPostsForMap called. Excluding user: " + currentUserId);
 		return postDataSource.getPostsForMap(currentUserId);
 	}
+
+	@Override
+	public LiveData<List<Post>> getPostsCreatedByUser(@NonNull String currentUserId) {
+		Log.d(TAG, "getPostsCreatedByUser called for user ID: " + currentUserId);
+		return postDataSource.getPostsCreatedByUser(currentUserId);
+	}
 }

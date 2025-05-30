@@ -6,6 +6,7 @@ import com.shoppr.data.usecase.GetCurrentDeviceLocationUseCaseImpl;
 import com.shoppr.data.usecase.GetCurrentUserUseCaseImpl;
 import com.shoppr.data.usecase.GetLLMSuggestionsUseCaseImpl;
 import com.shoppr.data.usecase.GetMapPostsUseCaseImpl;
+import com.shoppr.data.usecase.GetMyPostsUseCaseImpl;
 import com.shoppr.data.usecase.HandleSignInResultUseCaseImpl;
 import com.shoppr.data.usecase.LogoutUseCaseImpl;
 import com.shoppr.data.usecase.ObserveAuthStateUseCaseImpl;
@@ -17,6 +18,7 @@ import com.shoppr.domain.usecase.GetCurrentDeviceLocationUseCase;
 import com.shoppr.domain.usecase.GetCurrentUserUseCase;
 import com.shoppr.domain.usecase.GetLLMSuggestionsUseCase;
 import com.shoppr.domain.usecase.GetMapPostsUseCase;
+import com.shoppr.domain.usecase.GetMyPostsUseCase;
 import com.shoppr.domain.usecase.HandleSignInResultUseCase;
 import com.shoppr.domain.usecase.LogoutUseCase;
 import com.shoppr.domain.usecase.ObserveAuthStateUseCase;
@@ -72,6 +74,10 @@ public abstract class UseCaseModule {
     @Binds
     @Singleton
     public abstract GetMapPostsUseCase bindGetMapPostsUseCase(GetMapPostsUseCaseImpl impl);
+
+    @Binds
+    @Singleton
+    public abstract GetMyPostsUseCase bindGetMyPostsUseCase(GetMyPostsUseCaseImpl impl);
 
     @Binds
     @Singleton

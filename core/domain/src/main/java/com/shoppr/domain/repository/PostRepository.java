@@ -80,4 +80,12 @@ public interface PostRepository {
 	void deletePost(@NonNull String postId, @NonNull DeletePostCallbacks callbacks);
 
 	LiveData<List<Post>> getPostsForMap(@Nullable String currentUserId);
+
+	/**
+	 * Gets a LiveData stream of posts created by a specific user.
+	 *
+	 * @param userId The ID of the user whose posts are to be fetched.
+	 * @return LiveData holding a list of Post objects.
+	 */
+	LiveData<List<Post>> getPostsCreatedByUser(@NonNull String userId);
 }

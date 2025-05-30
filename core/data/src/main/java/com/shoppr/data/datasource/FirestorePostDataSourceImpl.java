@@ -143,6 +143,51 @@ public class FirestorePostDataSourceImpl implements FirestorePostDataSource {
 	}
 
 	@Override
+	public LiveData<List<Post>> getPostsCreatedByUser(@NonNull String userId) {
+		MutableLiveData<List<Post>> postsLiveData = new MutableLiveData<>();
+		Log.d(TAG, "Fetching posts created by user: " + userId);
+
+		firestore.collection(POSTS_COLLECTION)
+				// Assuming your Post object in Firestore has a 'lister' field which is an object,
+				// and that object has an 'id' field matching the user's UID.
+				// Firestore path for lister ID: "lister.id"
+				// If you store lister's UID directly as a top-level field in Post (e.g., "listerUid"),
+				// then query would be .whereEqualTo("listerUid", userId)
+				.whereEqualTo("lister.id", userId) // Query by nested field in the 'lister' object
+				.orderBy("createdAt", Query.Direction.DESCENDING) // Example: order by creation date
+				.addSnapshotListener((snapshot, e) -> {
+					if (e != null) {
+						Log.e(TAG, "Error listening for user's posts for user " + userId, e); // << EXISTING LOG
+						postsLiveData.setValue(new ArrayList<>());
+						return;
+					}
+
+					List<Post> userPosts = new ArrayList<>();
+					if (snapshot != null && !snapshot.isEmpty()) {
+						Log.d(TAG, "Snapshot received with " + snapshot.size() + " documents for user " + userId); // << ADD LOG
+						for (DocumentSnapshot doc : snapshot.getDocuments()) {
+							Log.d(TAG, "Processing document: " + doc.getId() + " => " + doc.getData()); // << ADD LOG (RAW DATA)
+							Post post = doc.toObject(Post.class);
+							if (post != null) {
+								post.setId(doc.getId());
+								userPosts.add(post);
+								Log.d(TAG, "Successfully mapped to Post object: " + post.getTitle()); // << ADD LOG
+							} else {
+								Log.w(TAG, "Failed to convert document " + doc.getId() + " to Post object. Data: " + doc.getData()); // << ADD LOG
+							}
+						}
+					} else if (snapshot != null) {
+						Log.d(TAG, "Snapshot is empty for user " + userId); // << ADD LOG
+					} else {
+						Log.w(TAG, "Snapshot is null for user " + userId); // << ADD LOG
+					}
+					postsLiveData.setValue(userPosts);
+					Log.d(TAG, "Final userPosts list size: " + userPosts.size() + " for user " + userId); // << ADD LOG
+				});
+		return postsLiveData;
+	}
+
+	@Override
 	public void updatePost(@NonNull Post post) {
 		// TODO Implement
 	}

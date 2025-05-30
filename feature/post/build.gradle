@@ -30,6 +30,9 @@ dependencies {
     implementation libs.lifecycle.livedata.ktx
     implementation libs.lifecycle.viewmodel.ktx
 
+    implementation libs.glide
+    annotationProcessor libs.compiler
+
     implementation libs.hilt.android
     annotationProcessor "com.google.dagger:hilt-compiler:$hilt_version"
 

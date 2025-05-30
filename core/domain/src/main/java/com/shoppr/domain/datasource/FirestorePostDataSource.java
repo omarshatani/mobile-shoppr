@@ -62,4 +62,11 @@ public interface FirestorePostDataSource {
      */
     LiveData<List<Post>> getPostsForMap(@Nullable String currentUserId);
 
+    /**
+     * Fetches posts from Firestore created by a specific user.
+     *
+     * @param userId The ID of the user whose posts are to be fetched.
+     * @return LiveData holding a list of Post objects.
+     */
+    LiveData<List<Post>> getPostsCreatedByUser(@NonNull String userId);
 }
