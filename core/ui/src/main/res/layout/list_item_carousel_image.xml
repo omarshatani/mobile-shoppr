@@ -17,15 +17,21 @@
         android:contentDescription="Selected image preview"
         tools:srcCompat="@tools:sample/backgrounds/scenic" />
 
-    <com.google.android.material.button.MaterialButton
+    <!-- Replaced MaterialButton with a simpler, more reliable ImageView -->
+    <ImageView
         android:id="@+id/button_remove_image"
-        style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        app:icon="@drawable/ic_close"
-        app:iconSize="18dp"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
         android:layout_gravity="top|end"
-        android:layout_margin="4dp"
-        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-        android:tooltipText="Remove image" />
+        android:layout_margin="8dp"
+        android:padding="4dp"
+        android:src="@drawable/ic_close"
+        app:tint="?attr/colorOutline"
+        android:background="@drawable/bg_circular_icon_background"
+        android:contentDescription="Remove image"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless" />
+    <!-- Ensure you have a drawable named ic_close -->
+
 </com.google.android.material.carousel.MaskableFrameLayout>

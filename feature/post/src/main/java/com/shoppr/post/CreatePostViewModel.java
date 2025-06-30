@@ -143,7 +143,7 @@ public class CreatePostViewModel extends AndroidViewModel {
         getLLMSuggestionsUseCase.execute(currentRawText, null, currentBaseOfferPriceFromInput, currentBaseOfferCurrencyFromInput, new GetLLMSuggestionsUseCase.AnalysisCallbacks() {
             @Override
             public void onSuccess(@NonNull SuggestedPostDetails suggestions) {
-                Log.d(TAG, "LLM Analysis Success: " + suggestions.toString());
+                Log.d(TAG, "LLM Analysis Success: " + suggestions);
                 // Update LiveData fields (optional if UI doesn't show them before save, but good for consistency)
                 postTitle.postValue(suggestions.getSuggestedTitle());
                 postDescription.postValue(suggestions.getSuggestedDescription());
@@ -209,9 +209,7 @@ public class CreatePostViewModel extends AndroidViewModel {
         String category = suggestions.getSuggestedCategory();
         String price = baseOfferPrice.getValue(); // Price still comes from user's direct input
 
-        if (title == null || title.trim().isEmpty() ||
-                description == null || description.trim().isEmpty() ||
-                type == null) {
+        if (title.trim().isEmpty() || description.trim().isEmpty()) {
             Log.e(TAG, "Cannot construct post, essential LLM-derived fields are missing from suggestions object.");
             _operationError.postValue(new Event<>("AI failed to suggest essential post details. Please try rephrasing your input."));
             _isLoading.postValue(false);
@@ -225,6 +223,7 @@ public class CreatePostViewModel extends AndroidViewModel {
             postBuilder.category(category);
         }
         postBuilder.price(price);
+
 
         if (localImageUris != null && !localImageUris.isEmpty()) {
             List<String> imageUriStrings = new ArrayList<>();

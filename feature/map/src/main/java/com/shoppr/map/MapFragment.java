@@ -97,7 +97,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 
 		setupFabClickListener();
 		observeViewModel();
-		setupRootViewInsets(binding.getRoot()); // Your existing inset handling
+//		setupRootViewInsets(binding.getRoot()); // Your existing inset handling
 	}
 
 	@Override
@@ -197,7 +197,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		viewModel.moveToLocationEvent.observe(getViewLifecycleOwner(), new Event.EventObserver<>(latLng -> {
 			Log.d(TAG, "Received moveToLocationEvent: " + latLng);
 			if (googleMap != null && latLng != null) {
-				googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f));
+				googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f));
 			}
 		}));
 

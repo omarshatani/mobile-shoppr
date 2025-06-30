@@ -1,5 +1,7 @@
 package com.shoppr;
 
+import static com.google.android.material.navigation.NavigationBarView.LABEL_VISIBILITY_LABELED;
+
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -45,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
 		// Find the BottomNavigationView
 		bottomNavView = findViewById(R.id.bottom_navigation_view);
+		bottomNavView.setLabelVisibilityMode(LABEL_VISIBILITY_LABELED);
 
 		NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
 

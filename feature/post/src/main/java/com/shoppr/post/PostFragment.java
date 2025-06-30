@@ -62,18 +62,19 @@ public class PostFragment extends BaseFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        setupRecyclerView(); // Initialize RecyclerView and Adapter
-        setupBindings();    // Your existing method, now also handles FAB
-        observeViewModel();
+        setupRecyclerView();
+        setupSwipeToRefresh();
+        setupBindings();
         setupRootViewInsets(view);
+        observeViewModel();
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        // Tell ViewModel to start observing user and fetching posts
         viewModel.startObservingUser();
-        // Optionally, trigger a refresh if needed, though ViewModel might do it on user observation
+        // The ViewModel will automatically fetch posts when the user is observed.
+        // An explicit refresh might still be useful here if you want to guarantee fresh data on every start.
         // viewModel.refreshPosts();
     }
 
@@ -83,22 +84,21 @@ public class PostFragment extends BaseFragment {
         viewModel.stopObservingUser();
     }
 
+
     @Override
-    public void onDestroyView() { // Changed from onDestroy to onDestroyView
+    public void onDestroyView() {
         super.onDestroyView();
-        binding.recyclerViewMyPosts.setAdapter(null); // Important for RecyclerView cleanup
+        if (binding != null) {
+            binding.recyclerViewMyPosts.setAdapter(null);
+        }
         adapter = null;
         binding = null;
     }
 
     private void setupRecyclerView() {
-        // Assuming MyPostsAdapter and its PostDiffCallback are accessible
-        // (e.g., in this package or an imported one)
-        adapter = new MyPostsAdapter(post -> { // Using the constructor that only takes OnPostClickListener
+        adapter = new MyPostsAdapter(post -> {
             Log.d(TAG, "Clicked on post: " + post.getTitle());
             Toast.makeText(getContext(), "Clicked: " + post.getTitle() + " (TODO: Navigate to detail)", Toast.LENGTH_SHORT).show();
-            // TODO: Implement navigation to post detail screen
-            // Example:
             // NavDirections action = PostFragmentDirections.actionPostFragmentToPostDetailFragment(post.getId());
             // NavHostFragment.findNavController(this).navigate(action);
         });
@@ -106,44 +106,51 @@ public class PostFragment extends BaseFragment {
         binding.recyclerViewMyPosts.setAdapter(adapter);
     }
 
+    private void setupSwipeToRefresh() {
+        if (binding == null) return;
+        // Set the listener for the swipe gesture
+        binding.swipeRefreshLayoutMyPosts.setOnRefreshListener(() -> {
+            Log.d(TAG, "Swipe to refresh triggered.");
+            viewModel.refreshPosts();
+        });
+    }
+
     private void observeViewModel() {
-        // Observe the list of posts
         viewModel.posts.observe(getViewLifecycleOwner(), posts -> {
             if (posts != null) {
                 Log.d(TAG, "Observed posts. Count: " + posts.size());
-                adapter.submitList(posts); // Update the adapter with the new list
+                adapter.submitList(posts);
                 updateEmptyState(posts.isEmpty());
             } else {
                 Log.d(TAG, "Observed posts list was null.");
-                updateEmptyState(true); // Treat null list as empty
+                updateEmptyState(true);
             }
         });
 
-        // Observe loading state
         viewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
+            if (binding == null || isLoading == null) return;
             Log.d(TAG, "isLoading changed: " + isLoading);
-            // TODO: Implement a more sophisticated loading indicator if needed
-            // For example, a SwipeRefreshLayout or a ProgressBar in the center
-            // binding.swipeRefreshLayout.setRefreshing(isLoading);
+            // We only react when loading is FINISHED to hide the spinner.
+            // The user's swipe gesture is responsible for SHOWING it.
+            // This prevents the spinner from flashing on initial load.
+            if (!isLoading) {
+                binding.swipeRefreshLayoutMyPosts.setRefreshing(false);
+            }
         });
 
-        // Observe error messages
         viewModel.errorMessage.observe(getViewLifecycleOwner(), new Event.EventObserver<>(errorMessage -> {
             Log.e(TAG, "Error message: " + errorMessage);
             Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
         }));
 
-        // Your existing navigation command observer
         viewModel.getNavigationCommand().observe(getViewLifecycleOwner(), event -> {
             if (event == null) return;
-            NavigationRoute route = event.getContentIfNotHandled(); // Consume event
+            NavigationRoute route = event.getContentIfNotHandled();
             if (route != null) {
                 if (route instanceof NavigationRoute.PostsToCreatePost) {
-                    // Navigate using NavController directly as per your existing setupBindings
                     NavDirections directions = PostFragmentDirections.actionPostFragmentToCreatePostFragment();
                     NavHostFragment.findNavController(this).navigate(directions);
                 } else {
-                    // Handle other potential navigation commands if any
                     navigator.navigate(route);
                 }
             }
@@ -151,39 +158,33 @@ public class PostFragment extends BaseFragment {
     }
 
     private void updateEmptyState(boolean isEmpty) {
-        if (binding == null) return; // View already destroyed
+        if (binding == null) return;
         if (isEmpty) {
             binding.recyclerViewMyPosts.setVisibility(View.GONE);
-            binding.fabCreatePost.setVisibility(View.GONE); // Hide FAB when list is empty
+            binding.fabCreatePost.setVisibility(View.GONE);
             binding.layoutEmptyStateMyPosts.setVisibility(View.VISIBLE);
         } else {
             binding.recyclerViewMyPosts.setVisibility(View.VISIBLE);
-            binding.fabCreatePost.setVisibility(View.VISIBLE); // Show FAB when list has items
+            binding.fabCreatePost.setVisibility(View.VISIBLE);
             binding.layoutEmptyStateMyPosts.setVisibility(View.GONE);
         }
     }
 
     private void setupBindings() {
-        // This is the button in your empty state layout
-        binding.buttonCreateNewPostEmptyState.setOnClickListener(v -> {
-            viewModel.navigateToCreatePost();
-        });
+        binding.buttonCreateFirstPost.setOnClickListener(v -> viewModel.navigateToCreatePost());
 
-        // This is the FloatingActionButton
-        binding.fabCreatePost.setOnClickListener(v -> {
-            viewModel.navigateToCreatePost();
-        });
+        binding.fabCreatePost.setOnClickListener(v -> viewModel.navigateToCreatePost());
     }
 
     private void setupRootViewInsets(View view) {
         ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
             InsetUtils.applyBottomNavPadding(
-                    v,
-                    windowInsets,
-                    com.shoppr.core.ui.R.dimen.bottom_nav_height
+                v,
+                windowInsets,
+                com.shoppr.core.ui.R.dimen.bottom_nav_height
             );
-            InsetUtils.applyStatusBarInsetAsPaddingTop(v, windowInsets);
             return windowInsets;
         });
+        ViewCompat.requestApplyInsets(view);
     }
 }

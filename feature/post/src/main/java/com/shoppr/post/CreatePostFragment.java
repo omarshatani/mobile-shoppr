@@ -52,7 +52,7 @@ public class CreatePostFragment extends BaseFragment {
 	// Adapter for the image carousel
 	private SelectedImagesCarouselAdapter selectedImagesAdapter;
 	private ActivityResultLauncher<Intent> pickImagesLauncher;
-	// Removed local postCreationLocation field. ViewModel is the source of truth.
+	// postCreationLocation is now managed by observing ViewModel's postCreationLocation LiveData
 
 	public CreatePostFragment() { /* Required empty public constructor */ }
 
@@ -253,7 +253,7 @@ public class CreatePostFragment extends BaseFragment {
 			// Fragment no longer needs to store postCreationLocation locally for submission.
 			// It just uses this observer to enable/disable the button.
 			if (locationData != null && locationData.latitude != null && locationData.longitude != null) {
-				Log.d(TAG, "ViewModel provided postCreationLocation: " + locationData.toString());
+				Log.d(TAG, "ViewModel provided postCreationLocation: " + locationData);
 				if (viewModel.currentListerLiveData.getValue() != null) {
 					createPostButton.setEnabled(true);
 				}
@@ -270,7 +270,7 @@ public class CreatePostFragment extends BaseFragment {
 		viewModel.selectedImageUris.observe(getViewLifecycleOwner(), uris -> {
 			if (selectedImagesAdapter != null) {
 				Log.d(TAG, "Updating carousel adapter with URIs from ViewModel, count: " + (uris != null ? uris.size() : 0));
-				selectedImagesAdapter.submitList(uris != null ? uris : new ArrayList<>()); // Use submitList
+				selectedImagesAdapter.updateUris(uris != null ? uris : new ArrayList<>()); // Changed from submitList
 				updateCarouselVisibility(uris);
 			}
 		});
