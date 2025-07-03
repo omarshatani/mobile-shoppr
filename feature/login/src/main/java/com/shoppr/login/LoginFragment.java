@@ -79,6 +79,17 @@ public class LoginFragment extends BaseFragment {
 	}
 
 	private void observeViewModel() {
+		// Observe the user state from the ViewModel.
+		// Navigation is triggered by the ViewModel's _navigationCommand.
+		viewModel.loggedInUserWithProfileLiveData.observe(getViewLifecycleOwner(), user -> {
+			if (user != null) {
+				Log.d(TAG, "LoginFragment Observer (loggedInUserWithProfileLiveData): User is present - " + user.getId());
+			} else {
+				Log.d(TAG, "LoginFragment Observer (loggedInUserWithProfileLiveData): User is null.");
+			}
+		});
+
+
 		viewModel.getNavigationCommand().observe(getViewLifecycleOwner(), event -> {
 			if (event == null) {
 				return;
@@ -91,34 +102,32 @@ public class LoginFragment extends BaseFragment {
 					Log.d(TAG, "LoginFragment: Handling and navigating to LoginToMap.");
 					Toast.makeText(requireContext(), "Login Successful! Navigating to Map...", Toast.LENGTH_SHORT).show();
 					navigator.navigate(consumedRoute);
-					viewModel.onNavigationComplete();
+					viewModel.onNavigationComplete(); // Notify ViewModel
 				}
 			} else if (route != null) {
 				Log.w(TAG, "LoginFragment: Received a navigation command (" + route.getClass().getSimpleName() + ") not specifically handled with UI feedback here.");
 			}
 		});
 
-		viewModel.getSignInFlowToastMessage().observe(getViewLifecycleOwner(), event -> {
+		viewModel.getSignInFlowFeedbackMessage().observe(getViewLifecycleOwner(), event -> { // Renamed from getSignInFlowToastMessage
 			if (event == null) {
 				return;
 			}
-
 			String message = event.getContentIfNotHandled();
 			if (message != null && !message.isEmpty()) {
-				Log.d(TAG, "LoginFragment Observer (signInFlowToastMessage): " + message);
+				Log.d(TAG, "LoginFragment Observer (signInFlowFeedbackMessage): " + message);
 				Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
 			}
 		});
 
-		viewModel.authenticationErrorEvents.observe(getViewLifecycleOwner(), event -> {
+		viewModel.getOperationErrorEvents().observe(getViewLifecycleOwner(), event -> { // Renamed from authenticationErrorEvents
 			if (event == null) {
 				return;
 			}
-
 			String errorMessage = event.getContentIfNotHandled();
 			if (errorMessage != null) {
-				Log.e(TAG, "LoginFragment Observer (authenticationErrorEvents): Auth Error: " + errorMessage);
-				Toast.makeText(requireContext(), "Authentication process error: " + errorMessage, Toast.LENGTH_LONG).show();
+				Log.e(TAG, "LoginFragment Observer (operationErrorEvents): Operation Error: " + errorMessage);
+				Toast.makeText(requireContext(), "Operation error: " + errorMessage, Toast.LENGTH_LONG).show();
 			}
 		});
 	}
@@ -131,8 +140,8 @@ public class LoginFragment extends BaseFragment {
 		Intent signInIntent = AuthUI.getInstance()
 				.createSignInIntentBuilder()
 				.setAvailableProviders(providers)
-				.setLogo(com.shoppr.core.ui.R.mipmap.ic_launcher)
-				.setTheme(com.shoppr.core.ui.R.style.Theme_Shoppr)
+				.setLogo(com.shoppr.core.ui.R.mipmap.ic_launcher) // Make sure this R is correct
+				.setTheme(com.shoppr.core.ui.R.style.Theme_Shoppr) // Make sure this R is correct
 				.setTosAndPrivacyPolicyUrls(
 						"[https://yourcompany.com/terms.html](https://yourcompany.com/terms.html)",
 						"[https://yourcompany.com/privacy.html](https://yourcompany.com/privacy.html)")
@@ -143,6 +152,9 @@ public class LoginFragment extends BaseFragment {
 
 	private void onSignInResult(@NonNull FirebaseAuthUIAuthenticationResult result) {
 		Log.d(TAG, "onSignInResult: Received result from FirebaseUI. ResultCode: " + result.getResultCode());
+		// hasLaunchedSignIn is managed by the Fragment for UI launch control.
+		// If result is not OK, user stays on this screen. If they navigate away and back,
+		// a new instance of LoginFragment will have hasLaunchedSignIn = false.
 		viewModel.processSignInResult(result);
 	}
 
@@ -156,13 +168,13 @@ public class LoginFragment extends BaseFragment {
 	public void onStart() {
 		super.onStart();
 		Log.d(TAG, "onStart: Telling ViewModel to start observing auth state.");
-		viewModel.registerAuthStateListener();
+		viewModel.registerGlobalAuthStateObserver(); // Renamed for clarity
 	}
 
 	@Override
 	public void onStop() {
 		super.onStop();
 		Log.d(TAG, "onStop: Telling ViewModel to stop observing auth state.");
-		viewModel.unregisterAuthStateListener();
+		viewModel.unregisterGlobalAuthStateObserver(); // Renamed for clarity
 	}
 }

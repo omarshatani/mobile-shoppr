@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+
+    <!-- This gives the icon a semi-transparent or solid background -->
+    <!-- Using a theme attribute makes it adapt to light/dark themes -->
+    <solid android:color="?attr/colorSurfaceContainerHigh" />
+
+    <stroke
+        android:width="1dp"
+        android:color="?attr/colorOutline" />
+
+</shape>

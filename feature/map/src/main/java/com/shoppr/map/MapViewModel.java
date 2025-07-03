@@ -1,152 +1,260 @@
 package com.shoppr.map;
 
-import android.annotation.SuppressLint;
+import android.app.Application;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.Observer;
 
-import com.google.android.gms.location.CurrentLocationRequest;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.tasks.CancellationTokenSource;
+import com.shoppr.domain.usecase.GetCurrentDeviceLocationUseCase;
+import com.shoppr.domain.usecase.GetCurrentUserUseCase;
+import com.shoppr.domain.usecase.GetMapPostsUseCase;
+import com.shoppr.domain.usecase.UpdateUserDefaultLocationUseCase;
 import com.shoppr.model.Event;
+import com.shoppr.model.Post;
+import com.shoppr.model.User;
 
+import java.util.List;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
-public class MapViewModel extends ViewModel {
-	private final static String TAG = "MapViewModel";
-	private final FusedLocationProviderClient fusedLocationClient;
+public class MapViewModel extends AndroidViewModel {
+	private static final String TAG = "MapViewModel";
 
-	// --- State LiveData ---
-	// Permission Granted State
+	private final GetCurrentUserUseCase getCurrentUserUseCase;
+	private final GetCurrentDeviceLocationUseCase getCurrentDeviceLocationUseCase;
+	private final UpdateUserDefaultLocationUseCase updateUserDefaultLocationUseCase;
+	private final GetMapPostsUseCase getMapPostsUseCase; // Injected
+
+	// LiveData for the currently authenticated user (with full profile)
+	public final LiveData<User> currentUserProfileLiveData;
+	public final LiveData<Event<String>> currentUserProfileErrorEvents;
+
+	// LiveData for posts to be displayed on the map
+	// Using MediatorLiveData to combine results from GetMapPostsUseCase based on current user
+	private final MediatorLiveData<List<Post>> _mapPosts = new MediatorLiveData<>();
+	public LiveData<List<Post>> mapPosts = _mapPosts;
+
+
 	private final MutableLiveData<Boolean> _locationPermissionGranted = new MutableLiveData<>(false);
 	public LiveData<Boolean> locationPermissionGranted = _locationPermissionGranted;
 
-	// Is the camera currently supposed to be tracking the user's location?
-	private final MutableLiveData<Boolean> _isCameraTrackingUser = new MutableLiveData<>(false);
-	public LiveData<Boolean> isCameraTrackingUser = _isCameraTrackingUser;
-
-	// FAB Icon State (Resource ID)
-	private final MutableLiveData<Integer> _fabIconResId = new MutableLiveData<>(com.shoppr.core.ui.R.drawable.ic_location_disabled);
+	private final MutableLiveData<Integer> _fabIconResId = new MutableLiveData<>(com.shoppr.core.ui.R.drawable.ic_gps_fixed); // Default icon
 	public LiveData<Integer> fabIconResId = _fabIconResId;
 
-	// --- Event LiveData ---
-	// Event to tell the Fragment to move the camera
 	private final MutableLiveData<Event<LatLng>> _moveToLocationEvent = new MutableLiveData<>();
 	public LiveData<Event<LatLng>> moveToLocationEvent = _moveToLocationEvent;
 
-	// Event to tell the Fragment to request permission
 	private final MutableLiveData<Event<Boolean>> _requestPermissionEvent = new MutableLiveData<>();
 	public LiveData<Event<Boolean>> requestPermissionEvent = _requestPermissionEvent;
 
+	private final MutableLiveData<Event<String>> _toastMessageEvent = new MutableLiveData<>();
+	public LiveData<Event<String>> toastMessageEvent = _toastMessageEvent;
+
+
+	private boolean isMapManuallyMoved = false;
+	private boolean initialMapCenterAttempted = false;
+
+	private final Observer<User> userProfileObserverForInitialLocationAndPosts;
+	private LiveData<List<Post>> currentMapPostsSource = null; // To manage removing previous source
+
 	@Inject
-	public MapViewModel(FusedLocationProviderClient fusedLocationClient) {
-		this.fusedLocationClient = fusedLocationClient;
-		updateFabIcon(); // Set initial icon based on default state
+	public MapViewModel(@NonNull Application application,
+						GetCurrentUserUseCase getCurrentUserUseCase,
+						GetCurrentDeviceLocationUseCase getCurrentDeviceLocationUseCase,
+						UpdateUserDefaultLocationUseCase updateUserDefaultLocationUseCase,
+						GetMapPostsUseCase getMapPostsUseCase) { // Inject GetMapPostsUseCase
+		super(application);
+		this.getCurrentUserUseCase = getCurrentUserUseCase;
+		this.getCurrentDeviceLocationUseCase = getCurrentDeviceLocationUseCase;
+		this.updateUserDefaultLocationUseCase = updateUserDefaultLocationUseCase;
+		this.getMapPostsUseCase = getMapPostsUseCase; // Store it
+
+		this.currentUserProfileLiveData = this.getCurrentUserUseCase.getFullUserProfile();
+		this.currentUserProfileErrorEvents = this.getCurrentUserUseCase.getProfileErrorEvents();
+
+		userProfileObserverForInitialLocationAndPosts = user -> {
+			String currentUserId = null;
+			if (user != null) {
+				currentUserId = user.getId();
+				Log.d(TAG, "UserProfileObserver: User data received - " + user.getName() + " (UID: " + currentUserId + ")");
+
+				if (!initialMapCenterAttempted && user.getLastLatitude() != null && user.getLastLongitude() != null) {
+					Log.d(TAG, "UserProfileObserver: User has last known location. Centering map: " +
+							user.getLastLatitude() + ", " + user.getLastLongitude());
+					_moveToLocationEvent.postValue(new Event<>(new LatLng(user.getLastLatitude(), user.getLastLongitude())));
+					initialMapCenterAttempted = true;
+				} else if (!initialMapCenterAttempted) {
+					Log.d(TAG, "UserProfileObserver: User profile loaded, but no last known location saved, or already attempted center. Will attempt to fetch current device location if permission is granted.");
+					if (Boolean.TRUE.equals(_locationPermissionGranted.getValue())) {
+						fetchAndSaveDeviceLocation(true); // forceMapMove true for initial centering attempt
+					}
+					initialMapCenterAttempted = true; // Mark attempt even if going for device location
+				}
+			} else {
+				Log.d(TAG, "UserProfileObserver: User is null (logged out or profile error).");
+				initialMapCenterAttempted = false; // Reset for next login session
+			}
+			// Fetch/refresh posts for the map, potentially excluding the current user's posts
+			loadPostsForMap(currentUserId);
+		};
+
+		this.currentUserProfileErrorEvents.observeForever(errorEvent -> { // Use observeForever carefully
+			if(errorEvent == null) return;
+			String errorMessage = errorEvent.getContentIfNotHandled();
+			if (errorMessage != null) {
+				Log.e(TAG, "Error loading user profile: " + errorMessage);
+				_toastMessageEvent.postValue(new Event<>("Error loading user profile: " + errorMessage));
+			}
+		});
 	}
 
-	// Called by Fragment when permission result is received
-	public void onLocationPermissionResult(boolean granted) {
-		_locationPermissionGranted.setValue(granted);
-		if (granted) {
-			// Permission granted, try to get location immediately
-			requestLocationUpdate(); // Center camera after getting permission
-		} else {
-			// Permission denied, ensure tracking is off and icon is updated
-			_isCameraTrackingUser.setValue(false);
+	private void loadPostsForMap(@Nullable String currentUserId) {
+		Log.d(TAG, "loadPostsForMap called, current user ID to exclude: " + currentUserId);
+		if (currentMapPostsSource != null) {
+			_mapPosts.removeSource(currentMapPostsSource); // Remove previous source
 		}
-		updateFabIcon();
+		currentMapPostsSource = getMapPostsUseCase.execute(currentUserId);
+		_mapPosts.addSource(currentMapPostsSource, posts -> {
+			Log.d(TAG, "Map posts LiveData updated. Count: " + (posts != null ? posts.size() : 0));
+			_mapPosts.setValue(posts);
+		});
 	}
 
-	// Called by Fragment when FAB is clicked
-	public void onMyLocationButtonClicked() {
-		if (Boolean.TRUE.equals(_locationPermissionGranted.getValue())) {
-			// Permission already granted, get location and center
-			requestLocationUpdate();
+
+	public void onMapFragmentStarted() {
+		Log.d(TAG, "MapFragment started. Starting user profile and posts observation.");
+		getCurrentUserUseCase.startObserving(); // Start observing the user's full profile
+		currentUserProfileLiveData.observeForever(userProfileObserverForInitialLocationAndPosts);
+		// Initial call to load posts (will be re-triggered by userProfileObserver if user logs in/out,
+		// or if the LiveData from getMapPostsUseCase emits again)
+		User user = currentUserProfileLiveData.getValue();
+		loadPostsForMap(user != null ? user.getId() : null);
+	}
+
+	public void onMapFragmentStopped() {
+		Log.d(TAG, "MapFragment stopped. Stopping user profile and posts observation.");
+		currentUserProfileLiveData.removeObserver(userProfileObserverForInitialLocationAndPosts);
+		getCurrentUserUseCase.stopObserving();
+		if (currentMapPostsSource != null) {
+			_mapPosts.removeSource(currentMapPostsSource); // Clean up post source
+			currentMapPostsSource = null;
+		}
+	}
+
+
+	public void onLocationPermissionResult(boolean isGranted) {
+		Log.d(TAG, "Location permission result: " + isGranted);
+		_locationPermissionGranted.setValue(isGranted);
+		if (isGranted) {
+			_fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_gps_fixed);
+			// If initial centering hasn't happened and user grants permission, try to center.
+			boolean shouldForceMove = !initialMapCenterAttempted;
+			fetchAndSaveDeviceLocation(shouldForceMove);
 		} else {
-			// Permission not granted, trigger request via Fragment
+			_fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_location_disabled);
+		}
+	}
+
+	public void onMyLocationButtonClicked() {
+		Log.d(TAG, "My Location FAB clicked.");
+		if (Boolean.TRUE.equals(_locationPermissionGranted.getValue())) {
+			Log.d(TAG, "Permission granted, fetching device location.");
+			isMapManuallyMoved = false;
+			initialMapCenterAttempted = false; // Allow re-centering attempt
+			fetchAndSaveDeviceLocation(true); // Force map move
+		} else {
+			Log.d(TAG, "Permission not granted, requesting permission.");
 			_requestPermissionEvent.setValue(new Event<>(true));
 		}
 	}
 
-	// Called by Fragment when user starts moving the map
 	public void onMapManualMoveStarted() {
-		// If user moves map, stop tracking their location automatically
-		if (Boolean.TRUE.equals(_isCameraTrackingUser.getValue())) {
-			_isCameraTrackingUser.setValue(false);
-			updateFabIcon();
-		}
+		Log.d(TAG, "Map manually moved by user.");
+		isMapManuallyMoved = true;
+		_fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_location_searching);
 	}
 
-	// --- Location Fetching ---
-	@SuppressLint("MissingPermission") // Permission checked via _locationPermissionGranted state
-	private void requestLocationUpdate() {
-		if (!Boolean.TRUE.equals(_locationPermissionGranted.getValue())) {
-			Log.w(TAG, "requestLocationUpdate called without permission.");
-			_isCameraTrackingUser.setValue(false); // Ensure tracking is off
-			updateFabIcon();
+	public void onLocationSearching() {
+		Log.d(TAG, "onLocationSearching: Updating FAB to searching icon.");
+		_fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_location_searching);
+	}
+
+	private void fetchAndSaveDeviceLocation(boolean forceMapMove) {
+		User currentUser = currentUserProfileLiveData.getValue();
+		if (currentUser == null || currentUser.getId() == null) {
+			Log.w(TAG, "Cannot fetch and save device location: current user or UID is null.");
+			if (forceMapMove) { // Only show toast if user explicitly clicked button
+				_toastMessageEvent.postValue(new Event<>("Login required to save location."));
+			}
+			_fabIconResId.setValue(Boolean.TRUE.equals(_locationPermissionGranted.getValue()) ? com.shoppr.core.ui.R.drawable.ic_gps_fixed : com.shoppr.core.ui.R.drawable.ic_location_disabled);
 			return;
 		}
+		final String currentUserId = currentUser.getId();
 
-		Log.d(TAG, "Requesting current location...");
-		// Use PRIORITY_HIGH_ACCURACY for centering, adjust if needed
-		CurrentLocationRequest request = new CurrentLocationRequest.Builder()
-				.setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-				.setDurationMillis(5000) // Timeout after 5 seconds
-				.build();
-		CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+		Log.d(TAG, "Attempting to fetch device location for user: " + currentUserId);
+		// FAB icon is already set to searching if called from onMyLocationButtonClicked or onLocationSearching
 
-		// Consider showing a loading state here
-		_fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_location_searching);
+		getCurrentDeviceLocationUseCase.execute(new GetCurrentDeviceLocationUseCase.GetDeviceLocationCallbacks() {
+			@Override
+			public void onDeviceLocationSuccess(@NonNull GetCurrentDeviceLocationUseCase.DeviceLocation deviceLocation) {
+				Log.i(TAG, "Device location fetched: " + deviceLocation.latitude + "," + deviceLocation.longitude);
+				_fabIconResId.setValue(com.shoppr.core.ui.R.drawable.ic_gps_fixed);
 
-		fusedLocationClient.getCurrentLocation(request, cancellationTokenSource.getToken())
-				.addOnSuccessListener(location -> {
-					if (location != null) {
-						Log.d(TAG, "Location received: " + location.getLatitude() + ", " + location.getLongitude());
-						LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-						_moveToLocationEvent.setValue(new Event<>(currentLatLng));
-						_isCameraTrackingUser.setValue(true); // We just centered, so start tracking
-						// Update icon AFTER potential camera move event
-						updateFabIcon();
-					} else {
-						Log.w(TAG, "FusedLocationClient returned null location.");
-						// Handle null location case (e.g., show error, reset icon)
-						_isCameraTrackingUser.setValue(false); // Cannot track if location is null
-						updateFabIcon();
-					}
-				})
-				.addOnFailureListener(e -> {
-					Log.e(TAG, "Failed to get current location", e);
-					_isCameraTrackingUser.setValue(false); // Cannot track on failure
-					updateFabIcon();
-					// Handle failure (e.g., show error message)
-				});
+				if (forceMapMove || !isMapManuallyMoved || !initialMapCenterAttempted) {
+					_moveToLocationEvent.postValue(new Event<>(new LatLng(deviceLocation.latitude, deviceLocation.longitude)));
+					initialMapCenterAttempted = true;
+					isMapManuallyMoved = false;
+				}
+
+				updateUserDefaultLocationUseCase.execute(
+						currentUserId,
+						deviceLocation.latitude,
+						deviceLocation.longitude,
+						deviceLocation.address,
+						new UpdateUserDefaultLocationUseCase.UpdateLocationCallbacks() {
+							@Override
+							public void onLocationUpdateSuccess() {
+								Log.i(TAG, "User default location updated in Firestore for user: " + currentUserId);
+							}
+							@Override
+							public void onLocationUpdateError(@NonNull String message) {
+								Log.e(TAG, "Failed to update user default location in Firestore: " + message);
+								_toastMessageEvent.postValue(new Event<>("Could not save current location."));
+							}
+						}
+				);
+			}
+
+			@Override
+			public void onDeviceLocationError(@NonNull String message) {
+				Log.e(TAG, "Failed to fetch device location: " + message);
+				_fabIconResId.setValue(Boolean.TRUE.equals(_locationPermissionGranted.getValue()) ? com.shoppr.core.ui.R.drawable.ic_gps_fixed : com.shoppr.core.ui.R.drawable.ic_location_disabled);
+				if (!message.toLowerCase().contains("permission")) {
+					_toastMessageEvent.postValue(new Event<>("Could not get current location: " + message));
+				}
+			}
+		});
 	}
 
-	// --- Helper to update FAB icon based on current state ---
-	private void updateFabIcon() {
-		boolean permissionGranted = Boolean.TRUE.equals(_locationPermissionGranted.getValue());
-		boolean trackingUser = Boolean.TRUE.equals(_isCameraTrackingUser.getValue());
-
-		int iconRes;
-		if (!permissionGranted) {
-			iconRes = com.shoppr.core.ui.R.drawable.ic_location_disabled; // Permission denied/unknown
-		} else if (trackingUser) {
-			iconRes = com.shoppr.core.ui.R.drawable.ic_gps_fixed; // Permission granted AND centered
-		} else {
-			iconRes = com.shoppr.core.ui.R.drawable.ic_location_searching; // Permission granted but NOT centered
-		}
-
-		// Only update if changed
-		if (_fabIconResId.getValue() == null || _fabIconResId.getValue() != iconRes) {
-			_fabIconResId.setValue(iconRes);
+	@Override
+	protected void onCleared() {
+		super.onCleared();
+		Log.d(TAG, "MapViewModel onCleared. Removing observers.");
+		currentUserProfileLiveData.removeObserver(userProfileObserverForInitialLocationAndPosts);
+		// Remove observer from currentUserProfileErrorEvents if observeForever was used
+		getCurrentUserUseCase.stopObserving();
+		if (currentMapPostsSource != null) {
+			_mapPosts.removeSource(currentMapPostsSource);
 		}
 	}
 }

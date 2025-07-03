@@ -22,21 +22,28 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.maps.android.clustering.ClusterManager;
 import com.shoppr.map.databinding.FragmentMapBinding;
 import com.shoppr.model.Event;
+import com.shoppr.model.Post;
 import com.shoppr.ui.BaseFragment;
 import com.shoppr.ui.utils.InsetUtils;
+
+import java.util.List;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class MapFragment extends BaseFragment implements OnMapReadyCallback,
-		GoogleMap.OnCameraMoveStartedListener {
+		GoogleMap.OnCameraMoveStartedListener, ClusterManager.OnClusterItemClickListener<PostClusterItem> {
 	private static final String TAG = "MapFragment";
 	private FragmentMapBinding binding;
 	private MapViewModel viewModel;
 	private GoogleMap googleMap;
 	private SupportMapFragment mapFragment;
+
+	// For Marker Clustering
+	private ClusterManager<PostClusterItem> clusterManager;
 
 	private final ActivityResultLauncher<String> requestPermissionLauncher =
 			registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
@@ -64,7 +71,10 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		viewModel = new ViewModelProvider(this).get(MapViewModel.class);
-		viewModel.onLocationPermissionResult(hasFineLocationPermission());
+		// Initial permission check
+		if (getContext() != null) { // Ensure context is available
+			viewModel.onLocationPermissionResult(hasFineLocationPermission());
+		}
 	}
 
 	@Nullable
@@ -87,15 +97,48 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 
 		setupFabClickListener();
 		observeViewModel();
-		setupRootViewInsets(binding.getRoot());
+//		setupRootViewInsets(binding.getRoot()); // Your existing inset handling
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		viewModel.onMapFragmentStarted();
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+		viewModel.onMapFragmentStopped();
 	}
 
 	@Override
 	public void onMapReady(@NonNull GoogleMap googleMap) {
 		this.googleMap = googleMap;
 		Log.d(TAG, "onMapReady called. Map is ready.");
+
+		// Initialize ClusterManager
+		if (getContext() != null) {
+			clusterManager = new ClusterManager<>(getContext(), googleMap);
+			// Optional: Customize the clustering algorithm
+			// clusterManager.setAlgorithm(new NonHierarchicalDistanceBasedAlgorithm<>());
+			// Optional: Customize the renderer for individual markers and clusters
+			// clusterManager.setRenderer(new YourCustomClusterRenderer(getContext(), googleMap, clusterManager));
+
+			googleMap.setOnCameraIdleListener(clusterManager); // Important for clustering to work
+			googleMap.setOnMarkerClickListener(clusterManager); // Delegate marker clicks to ClusterManager
+			clusterManager.setOnClusterItemClickListener(this); // Listen for clicks on individual items
+		}
+
+
 		googleMap.setOnCameraMoveStartedListener(this);
 		updateMapMyLocationUI(viewModel.locationPermissionGranted.getValue());
+
+		// Observe posts after map is ready and cluster manager is set up
+		viewModel.mapPosts.observe(getViewLifecycleOwner(), posts -> {
+			Log.d(TAG, "Observed map posts. Count: " + (posts != null ? posts.size() : 0));
+			addPostsToMap(posts);
+		});
 	}
 
 	@Override
@@ -104,18 +147,42 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 			Log.d(TAG, "User started moving the map manually.");
 			viewModel.onMapManualMoveStarted();
 		}
+		if (clusterManager != null) {
+			// Also notify cluster manager on general camera move if not covered by onCameraIdle
+			clusterManager.onCameraIdle();
+		}
 	}
+
+	@Override
+	public boolean onClusterItemClick(@NonNull PostClusterItem item) {
+		Log.i(TAG, "Clicked marker for post: " + item.getTitle() + " (ID: " + item.post.getId() + ")");
+		Toast.makeText(getContext(), "Tapped on: " + item.getTitle(), Toast.LENGTH_SHORT).show();
+		// TODO: Navigate to Post Detail screen or show BottomSheet
+		// Example: NavHostFragment.findNavController(this).navigate(
+		//    MapFragmentDirections.actionMapFragmentToPostDetailFragment(item.post.getId())
+		// );
+		return false; // Return false to allow default behavior (show info window & center on marker)
+		// Return true if you've fully handled the click.
+	}
+
 
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView();
 		if (googleMap != null) {
 			googleMap.setOnCameraMoveStartedListener(null);
+			googleMap.setOnCameraIdleListener(null);
+			googleMap.setOnMarkerClickListener(null);
 		}
+		if (clusterManager != null) {
+			clusterManager.setOnClusterItemClickListener(null);
+			clusterManager.clearItems(); // Clear items to avoid memory leaks
+		}
+		clusterManager = null;
 		googleMap = null;
-		mapFragment = null;
+		mapFragment = null; // mapFragment is managed by childFragmentManager, usually okay
 		binding = null;
-		Log.d(TAG, "onDestroyView called, binding set to null");
+		Log.d(TAG, "onDestroyView called, map resources cleaned up.");
 	}
 
 	private void observeViewModel() {
@@ -127,7 +194,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 			}
 		});
 
-		// Observe camera move events
 		viewModel.moveToLocationEvent.observe(getViewLifecycleOwner(), new Event.EventObserver<>(latLng -> {
 			Log.d(TAG, "Received moveToLocationEvent: " + latLng);
 			if (googleMap != null && latLng != null) {
@@ -135,11 +201,16 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 			}
 		}));
 
-		// Observe permission request events
 		viewModel.requestPermissionEvent.observe(getViewLifecycleOwner(), new Event.EventObserver<>(shouldRequest -> {
 			Log.d(TAG, "Received requestPermissionEvent");
 			if (shouldRequest) {
 				requestLocationPermission();
+			}
+		}));
+
+		viewModel.toastMessageEvent.observe(getViewLifecycleOwner(), new Event.EventObserver<>(message -> {
+			if (getContext() != null && message != null && !message.isEmpty()) {
+				Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
 			}
 		}));
 	}
@@ -150,11 +221,10 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		try {
 			if (Boolean.TRUE.equals(isGranted)) {
 				googleMap.setMyLocationEnabled(true);
-				googleMap.getUiSettings().setMyLocationButtonEnabled(false);
+				googleMap.getUiSettings().setMyLocationButtonEnabled(false); // Using custom FAB
 				Log.d(TAG, "Map MyLocation layer enabled.");
 			} else {
 				googleMap.setMyLocationEnabled(false);
-				googleMap.getUiSettings().setMyLocationButtonEnabled(false);
 				Log.d(TAG, "Map MyLocation layer disabled.");
 			}
 		} catch (SecurityException e) {
@@ -168,21 +238,59 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 				Log.d(TAG, "My Location FAB clicked");
 				viewModel.onMyLocationButtonClicked();
 			});
-		} else {
-			Log.w(TAG, "FAB was null during setupFabClickListener");
 		}
 	}
 
 	private void requestLocationPermission() {
 		Log.d(TAG, "Requesting location permission...");
+		if (viewModel != null) { // Check if viewModel is initialized
+			viewModel.onLocationSearching(); // Update FAB icon
+		}
 		requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
 	}
 
 	private boolean hasFineLocationPermission() {
+		if (getContext() == null) return false;
 		return ContextCompat.checkSelfPermission(
 				requireContext(),
 				Manifest.permission.ACCESS_FINE_LOCATION
 		) == PackageManager.PERMISSION_GRANTED;
+	}
+
+	private void addPostsToMap(@Nullable List<Post> posts) {
+		if (googleMap == null || clusterManager == null) {
+			Log.w(TAG, "GoogleMap or ClusterManager not ready, cannot add posts.");
+			return;
+		}
+
+		clusterManager.clearItems(); // Clear previous markers before adding new ones
+
+		if (posts == null || posts.isEmpty()) {
+			Log.d(TAG, "No posts to display on map.");
+			clusterManager.cluster(); // Important to call cluster even if empty to refresh map
+			return;
+		}
+
+		Log.d(TAG, "Adding " + posts.size() + " posts to map.");
+		for (Post post : posts) {
+			if (post.getLatitude() != null && post.getLongitude() != null) {
+				String title = post.getTitle() != null ? post.getTitle() : "Untitled Post";
+				String snippet = post.getCategory() != null ? "Category: " + post.getCategory() :
+						(post.getPrice() != null ? "Price: " + post.getPrice() : "View Details");
+
+				PostClusterItem clusterItem = new PostClusterItem(
+						post.getLatitude(),
+						post.getLongitude(),
+						title,
+						snippet,
+						post // Store the original post object
+				);
+				clusterManager.addItem(clusterItem);
+			} else {
+				Log.w(TAG, "Post with ID " + post.getId() + " has no location data.");
+			}
+		}
+		clusterManager.cluster(); // Re-cluster after adding new items
 	}
 
 	private void setupRootViewInsets(View view) {
@@ -196,5 +304,4 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		});
 		ViewCompat.requestApplyInsets(view);
 	}
-
 }

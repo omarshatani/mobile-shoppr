@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.library'
     id 'com.google.dagger.hilt.android'
+    id 'androidx.navigation.safeargs'
 }
 
 android {
@@ -17,8 +18,10 @@ android {
 
 dependencies {
     def hilt_version = "2.51.1"
-    implementation project(":core:ui")
+    implementation project(':core:ui')
     implementation project(':core:navigation')
+    implementation project(':core:domain')
+    implementation project(':core:model')
 
     implementation libs.navigation.fragment
     implementation libs.navigation.ui
@@ -26,6 +29,9 @@ dependencies {
     implementation libs.legacy.support.v4
     implementation libs.lifecycle.livedata.ktx
     implementation libs.lifecycle.viewmodel.ktx
+
+    implementation libs.glide
+    annotationProcessor libs.compiler
 
     implementation libs.hilt.android
     annotationProcessor "com.google.dagger:hilt-compiler:$hilt_version"
