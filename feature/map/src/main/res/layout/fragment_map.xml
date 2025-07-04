@@ -13,6 +13,16 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_my_location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:contentDescription="My Location"
+        app:elevation="6dp"
+        app:srcCompat="@drawable/ic_location_disabled" />
+
     <!-- The Persistent Bottom Sheet -->
     <LinearLayout
         android:id="@+id/bottom_sheet_nearby"
@@ -20,6 +30,7 @@
         android:layout_height="match_parent"
         android:background="@drawable/bg_bottom_sheet_rounded"
         android:orientation="vertical"
+        android:elevation="8dp"
         app:behavior_fitToContents="false"
         app:behavior_halfExpandedRatio="0.5"
         app:behavior_hideable="false"
@@ -30,13 +41,5 @@
 
     </LinearLayout>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_my_location"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="16dp"
-        android:contentDescription="My Location"
-        app:srcCompat="@drawable/ic_location_disabled" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

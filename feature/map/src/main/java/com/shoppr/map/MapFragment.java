@@ -1,7 +1,6 @@
 package com.shoppr.map;
 
 import static com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_COLLAPSED;
-import static com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -254,16 +253,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
 			@Override
 			public void onStateChanged(@NonNull View bottomSheet, int newState) {
-				// You can add logic here for different states if needed
-				// e.g., load more items when expanded
-				switch (newState) {
-					case STATE_COLLAPSED:
-						Log.d(TAG, "Bottom sheet collapsed");
-						break;
-					case STATE_EXPANDED:
-						Log.d(TAG, "Bottom sheet expanded");
-						break;
-				}
 			}
 
 			@Override
@@ -274,24 +263,41 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 
 		binding.bottomSheetNearby.post(() -> {
 			Log.d(TAG, "Setting initial FAB position.");
+			// The initial slideOffset for a collapsed sheet is 0.
 			moveFabWithBottomSheet(binding.bottomSheetNearby);
 		});
 	}
 
 	/**
-	 * Helper method to calculate and set the FAB's vertical position based on the bottom sheet's top edge.
-	 *
+	 * Calculates and sets the FAB's vertical position based on the bottom sheet's slide offset.
+	 * The FAB follows the sheet up to the half-expanded point, then stays fixed.
 	 * @param bottomSheet The bottom sheet view.
 	 */
 	private void moveFabWithBottomSheet(@NonNull View bottomSheet) {
-		if (binding == null) return;
+		if (binding == null || getContext() == null) return;
 
-		// The FAB's default position is at the bottom of the CoordinatorLayout.
-		// We want to move it up so its bottom edge is always above the top edge of the sheet.
 		final float fabHeight = binding.fabMyLocation.getHeight();
-		// Assuming you have a fab_margin dimension (e.g., 16dp)
-		// Set the FAB's Y position to be `fabMargin` above the top of the bottom sheet.
-		binding.fabMyLocation.setY(bottomSheet.getTop() - fabHeight - 16);
+		if (fabHeight == 0) return; // Wait until FAB is measured
+
+		final float fabMargin = 16;
+		final float parentHeight = ((View) bottomSheet.getParent()).getHeight();
+		final float halfExpandedRatio = bottomSheetBehavior.getHalfExpandedRatio();
+
+		// Calculate the Y position where the FAB should "stop" moving up.
+		// This is its position when the sheet is at its half-expanded state.
+		float halfExpandedSheetTop = parentHeight * (1f - halfExpandedRatio);
+		float fabStopY = halfExpandedSheetTop - fabHeight - fabMargin;
+
+		// Calculate the FAB's current "natural" position if it were to follow the sheet
+		float currentFabY = bottomSheet.getTop() - fabHeight - fabMargin;
+
+		// The FAB should follow the sheet up to the stop point, and then stay there.
+		// We use Math.max because Y coordinates decrease as you go up the screen.
+		// We want the FAB's Y to be the *larger* of its current calculated position and its stop position.
+		// As the sheet goes up, bottomSheet.getTop() decreases, so currentFabY decreases.
+		// Math.max will choose currentFabY until it becomes smaller than fabStopY, at which point
+		// it will always choose fabStopY, effectively "pinning" the FAB.
+		binding.fabMyLocation.setY(Math.max(fabStopY, currentFabY));
 	}
 
 
