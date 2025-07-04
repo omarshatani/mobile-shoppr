@@ -1,5 +1,8 @@
 package com.shoppr.map;
 
+import static com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_COLLAPSED;
+import static com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
@@ -8,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -17,16 +21,20 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.maps.android.clustering.ClusterManager;
 import com.shoppr.map.databinding.FragmentMapBinding;
 import com.shoppr.model.Event;
 import com.shoppr.model.Post;
 import com.shoppr.ui.BaseFragment;
+import com.shoppr.ui.adapter.NearbyPostsAdapter;
 import com.shoppr.ui.utils.InsetUtils;
 
 import java.util.List;
@@ -41,9 +49,10 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	private MapViewModel viewModel;
 	private GoogleMap googleMap;
 	private SupportMapFragment mapFragment;
-
-	// For Marker Clustering
 	private ClusterManager<PostClusterItem> clusterManager;
+	private BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
+	private RecyclerView nearbyPostsRecyclerView;
+	private NearbyPostsAdapter nearbyPostsAdapter;
 
 	private final ActivityResultLauncher<String> requestPermissionLauncher =
 			registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
@@ -72,7 +81,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		super.onCreate(savedInstanceState);
 		viewModel = new ViewModelProvider(this).get(MapViewModel.class);
 		// Initial permission check
-		if (getContext() != null) { // Ensure context is available
+		if (getContext() != null) {
 			viewModel.onLocationPermissionResult(hasFineLocationPermission());
 		}
 	}
@@ -94,10 +103,10 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		} else {
 			Log.e(TAG, "SupportMapFragment NOT found!");
 		}
-
-		setupFabClickListener();
+		setupBottomSheet();
 		observeViewModel();
-//		setupRootViewInsets(binding.getRoot()); // Your existing inset handling
+		setupRootViewInsets(binding.getRoot());
+		setupFabClickListener();
 	}
 
 	@Override
@@ -165,7 +174,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		// Return true if you've fully handled the click.
 	}
 
-
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView();
@@ -183,6 +191,15 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		mapFragment = null; // mapFragment is managed by childFragmentManager, usually okay
 		binding = null;
 		Log.d(TAG, "onDestroyView called, map resources cleaned up.");
+	}
+
+	private void setupFabClickListener() {
+		if (binding != null) {
+			binding.fabMyLocation.setOnClickListener(v -> {
+				Log.d(TAG, "My Location FAB clicked");
+				viewModel.onMyLocationButtonClicked();
+			});
+		}
 	}
 
 	private void observeViewModel() {
@@ -215,6 +232,81 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		}));
 	}
 
+	private void setupBottomSheet() {
+		final float fabHeight = binding.fabMyLocation.getHeight();
+		// The view with the behavior is the LinearLayout with id 'bottom_sheet_nearby'
+		bottomSheetBehavior = BottomSheetBehavior.from(binding.bottomSheetNearby);
+
+		// Set initial state to collapsed (peek height)
+		bottomSheetBehavior.setState(STATE_COLLAPSED);
+		bottomSheetBehavior.setPeekHeight(getResources().getDimensionPixelSize(com.shoppr.core.ui.R.dimen.bottom_sheet_peek_height));
+
+		// Find the RecyclerView inside the bottom sheet layout
+		RecyclerView nearbyPostsRecyclerView = binding.bottomSheetNearby.findViewById(com.shoppr.core.ui.R.id.recycler_view_nearby_posts);
+		nearbyPostsAdapter = new NearbyPostsAdapter(post -> {
+			Toast.makeText(getContext(), "Tapped on " + post.getTitle(), Toast.LENGTH_SHORT).show();
+			// TODO: Navigate to post detail screen
+		});
+		nearbyPostsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+		nearbyPostsRecyclerView.setAdapter(nearbyPostsAdapter);
+
+		// Add a callback to listen for state changes and slide events
+		bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+			@Override
+			public void onStateChanged(@NonNull View bottomSheet, int newState) {
+				// You can add logic here for different states if needed
+				// e.g., load more items when expanded
+				switch (newState) {
+					case STATE_COLLAPSED:
+						Log.d(TAG, "Bottom sheet collapsed");
+						break;
+					case STATE_EXPANDED:
+						Log.d(TAG, "Bottom sheet expanded");
+						break;
+				}
+			}
+
+			@Override
+			public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+				moveFabWithBottomSheet(bottomSheet);
+			}
+		});
+
+		binding.bottomSheetNearby.post(() -> {
+			Log.d(TAG, "Setting initial FAB position.");
+			moveFabWithBottomSheet(binding.bottomSheetNearby);
+		});
+	}
+
+	/**
+	 * Helper method to calculate and set the FAB's vertical position based on the bottom sheet's top edge.
+	 *
+	 * @param bottomSheet The bottom sheet view.
+	 */
+	private void moveFabWithBottomSheet(@NonNull View bottomSheet) {
+		if (binding == null) return;
+
+		// The FAB's default position is at the bottom of the CoordinatorLayout.
+		// We want to move it up so its bottom edge is always above the top edge of the sheet.
+		final float fabHeight = binding.fabMyLocation.getHeight();
+		// Assuming you have a fab_margin dimension (e.g., 16dp)
+		// Set the FAB's Y position to be `fabMargin` above the top of the bottom sheet.
+		binding.fabMyLocation.setY(bottomSheet.getTop() - fabHeight - 16);
+	}
+
+
+	private void setupRootViewInsets(View view) {
+		ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
+			InsetUtils.applyBottomNavPadding(
+					v,
+					windowInsets,
+					com.shoppr.core.ui.R.dimen.bottom_nav_height
+			);
+			return windowInsets;
+		});
+		ViewCompat.requestApplyInsets(view);
+	}
+
 	@SuppressLint("MissingPermission")
 	private void updateMapMyLocationUI(Boolean isGranted) {
 		if (googleMap == null) return;
@@ -229,15 +321,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 			}
 		} catch (SecurityException e) {
 			Log.e(TAG, "SecurityException setting MyLocationEnabled", e);
-		}
-	}
-
-	private void setupFabClickListener() {
-		if (binding != null) {
-			binding.fabMyLocation.setOnClickListener(v -> {
-				Log.d(TAG, "My Location FAB clicked");
-				viewModel.onMyLocationButtonClicked();
-			});
 		}
 	}
 
@@ -293,15 +376,5 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		clusterManager.cluster(); // Re-cluster after adding new items
 	}
 
-	private void setupRootViewInsets(View view) {
-		ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
-			InsetUtils.applyBottomNavPadding(
-					v,
-					windowInsets,
-					com.shoppr.core.ui.R.dimen.bottom_nav_height
-			);
-			return windowInsets;
-		});
-		ViewCompat.requestApplyInsets(view);
-	}
+
 }
