@@ -27,7 +27,7 @@
     <LinearLayout
         android:id="@+id/bottom_sheet_nearby"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:background="@drawable/bg_bottom_sheet_rounded"
         android:orientation="vertical"
         android:elevation="8dp"

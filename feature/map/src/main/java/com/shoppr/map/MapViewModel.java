@@ -193,9 +193,6 @@ public class MapViewModel extends AndroidViewModel {
 		User currentUser = currentUserProfileLiveData.getValue();
 		if (currentUser == null || currentUser.getId() == null) {
 			Log.w(TAG, "Cannot fetch and save device location: current user or UID is null.");
-			if (forceMapMove) { // Only show toast if user explicitly clicked button
-				_toastMessageEvent.postValue(new Event<>("Login required to save location."));
-			}
 			_fabIconResId.setValue(Boolean.TRUE.equals(_locationPermissionGranted.getValue()) ? com.shoppr.core.ui.R.drawable.ic_gps_fixed : com.shoppr.core.ui.R.drawable.ic_location_disabled);
 			return;
 		}
