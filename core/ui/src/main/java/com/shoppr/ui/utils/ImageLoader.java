@@ -27,7 +27,7 @@ public class ImageLoader {
 
         // Use default placeholders defined in core:ui
         int placeholderResId = R.drawable.ic_placeholder_image;
-        int errorResId = R.drawable.ic_error_image;
+        int errorResId = R.drawable.ic_placeholder_image;
 
         if (url != null && !url.isEmpty()) {
             Glide.with(view.getContext())

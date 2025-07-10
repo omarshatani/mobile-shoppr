@@ -65,7 +65,7 @@ public class MyPostsAdapter extends ListAdapter<Post, MyPostsAdapter.PostViewHol
             binding.textPostItemDescription.setText(post.getDescription());
 
             if (post.getPrice() != null && !post.getPrice().isEmpty()) {
-                binding.textPostItemPrice.setText(post.getPrice() + " " + "USD");
+                binding.textPostItemPrice.setText(String.format("%s %s", post.getPrice(), post.getCurrency()));
                 binding.textPostItemPrice.setVisibility(View.VISIBLE);
             } else {
                 binding.textPostItemPrice.setVisibility(View.GONE);

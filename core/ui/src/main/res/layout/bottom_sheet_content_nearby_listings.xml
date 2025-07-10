@@ -24,26 +24,58 @@
             android:id="@+id/text_bottom_sheet_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Nearby"
+            android:textAppearance="?attr/textAppearanceHeadline6"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:layout_marginBottom="8dp"
-            android:text="Nearby"
-            android:textAppearance="?attr/textAppearanceHeadline6" />
+            android:layout_marginBottom="8dp" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_view_nearby_posts"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:clipToPadding="false"
             android:paddingHorizontal="8dp"
+            android:clipToPadding="false"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:listitem="@layout/list_item_nearby_post" />
+
+        <LinearLayout
+            android:id="@+id/layout_empty_state_nearby"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="32dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <ImageView
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/placeholder_searching"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No Listings Nearby"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="?attr/colorOnSurface" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Try moving the map to a different area."
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
 
         <View
             android:id="@+id/bottom_sheet_nav_bar_spacer"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/bottom_nav_height"
+            android:layout_height="@dimen/bottom_sheet_peek_height"
             android:background="@android:color/transparent" />
     </LinearLayout>
 

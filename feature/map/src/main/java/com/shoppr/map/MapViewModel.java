@@ -47,6 +47,9 @@ public class MapViewModel extends AndroidViewModel {
     private final MediatorLiveData<List<Post>> _mapPosts = new MediatorLiveData<>();
     public LiveData<List<Post>> mapPosts = _mapPosts;
 
+    private final MediatorLiveData<List<Post>> _bottomSheetPosts = new MediatorLiveData<>();
+    public LiveData<List<Post>> bottomSheetPosts = _bottomSheetPosts;
+
     // For the specific post selected by the user
     private final MutableLiveData<Post> _selectedPostDetails = new MutableLiveData<>();
     public LiveData<Post> selectedPostDetails = _selectedPostDetails;
@@ -74,9 +77,9 @@ public class MapViewModel extends AndroidViewModel {
 
     private boolean isMapManuallyMoved = false;
     private boolean initialMapCenterAttempted = false;
-
-    private final Observer<User> userProfileObserverForInitialLocationAndPosts;
-    private LiveData<List<Post>> currentMapPostsSource = null; // To manage removing previous source
+    private final Observer<User> userProfileAndPostsObserver;
+    private LiveData<List<Post>> currentPostsSource = null;
+    private final LiveData<List<Post>> currentMapPostsSource = null;
 
     @Inject
     public MapViewModel(@NonNull Application application,
@@ -94,7 +97,7 @@ public class MapViewModel extends AndroidViewModel {
         this.currentUserProfileLiveData = this.getCurrentUserUseCase.getFullUserProfile();
         this.currentUserProfileErrorEvents = this.getCurrentUserUseCase.getProfileErrorEvents();
 
-        userProfileObserverForInitialLocationAndPosts = user -> {
+        userProfileAndPostsObserver = user -> {
             String currentUserId = null;
             if (user != null) {
                 currentUserId = user.getId();
@@ -131,22 +134,21 @@ public class MapViewModel extends AndroidViewModel {
     }
 
     private void loadPostsForMap(@Nullable String currentUserId) {
-        Log.d(TAG, "loadPostsForMap called, current user ID to exclude: " + currentUserId);
-        if (currentMapPostsSource != null) {
-            _mapPosts.removeSource(currentMapPostsSource); // Remove previous source
+        if (currentPostsSource != null) {
+            _mapPosts.removeSource(currentPostsSource);
+            _bottomSheetPosts.removeSource(currentPostsSource); // Also remove from bottom sheet source
         }
-        currentMapPostsSource = getMapPostsUseCase.execute(currentUserId);
-        _mapPosts.addSource(currentMapPostsSource, posts -> {
-            Log.d(TAG, "Map posts LiveData updated. Count: " + (posts != null ? posts.size() : 0));
-            _mapPosts.setValue(posts);
-        });
+        currentPostsSource = getMapPostsUseCase.execute(currentUserId);
+        // Both LiveData objects observe the same source initially
+        _mapPosts.addSource(currentPostsSource, _mapPosts::setValue);
+        _bottomSheetPosts.addSource(currentPostsSource, _bottomSheetPosts::setValue);
     }
 
 
     public void onMapFragmentStarted() {
         Log.d(TAG, "MapFragment started. Starting user profile and posts observation.");
         getCurrentUserUseCase.startObserving(); // Start observing the user's full profile
-        currentUserProfileLiveData.observeForever(userProfileObserverForInitialLocationAndPosts);
+        currentUserProfileLiveData.observeForever(userProfileAndPostsObserver);
         // Initial call to load posts (will be re-triggered by userProfileObserver if user logs in/out,
         // or if the LiveData from getMapPostsUseCase emits again)
         User user = currentUserProfileLiveData.getValue();
@@ -154,12 +156,11 @@ public class MapViewModel extends AndroidViewModel {
     }
 
     public void onMapFragmentStopped() {
-        Log.d(TAG, "MapFragment stopped. Stopping user profile and posts observation.");
-        currentUserProfileLiveData.removeObserver(userProfileObserverForInitialLocationAndPosts);
+        currentUserProfileLiveData.removeObserver(userProfileAndPostsObserver);
         getCurrentUserUseCase.stopObserving();
-        if (currentMapPostsSource != null) {
-            _mapPosts.removeSource(currentMapPostsSource); // Clean up post source
-            currentMapPostsSource = null;
+        if (currentPostsSource != null) {
+            _mapPosts.removeSource(currentPostsSource);
+            _bottomSheetPosts.removeSource(currentPostsSource);
         }
     }
 
@@ -239,18 +240,20 @@ public class MapViewModel extends AndroidViewModel {
     }
 
     public void onSameLocationClusterClicked(@NonNull List<Post> posts) {
-        Log.d(TAG, "Same location cluster clicked. Updating bottom sheet list.");
-        _mapPosts.setValue(posts); // Update the list to show only the posts in that cluster
+        Log.d(TAG, "Same location cluster clicked. Updating bottom sheet list only.");
+        _bottomSheetPosts.setValue(posts); // Update only the bottom sheet's data source
         _selectedPostDetails.setValue(null); // Ensure detail view is hidden
     }
+
 
     /**
      * Called when the user dismisses the post detail view (e.g., collapses the bottom sheet back to the list).
      */
     public void clearSelectedPost() {
         _selectedPostDetails.setValue(null);
+        // Reset the bottom sheet list to the main list of all map posts
+        _bottomSheetPosts.setValue(_mapPosts.getValue());
     }
-
     private void fetchAndSaveDeviceLocation(boolean forceMapMove) {
         User currentUser = currentUserProfileLiveData.getValue();
         if (currentUser == null || currentUser.getId() == null) {
@@ -310,7 +313,7 @@ public class MapViewModel extends AndroidViewModel {
     protected void onCleared() {
         super.onCleared();
         Log.d(TAG, "MapViewModel onCleared. Removing observers.");
-        currentUserProfileLiveData.removeObserver(userProfileObserverForInitialLocationAndPosts);
+        currentUserProfileLiveData.removeObserver(userProfileAndPostsObserver);
         // Remove observer from currentUserProfileErrorEvents if observeForever was used
         getCurrentUserUseCase.stopObserving();
         if (currentMapPostsSource != null) {

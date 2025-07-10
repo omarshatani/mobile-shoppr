@@ -68,7 +68,7 @@ public class NearbyPostsAdapter extends ListAdapter<Post, NearbyPostsAdapter.Pos
 			textNearbyPostTitle.setText(post.getTitle());
 
 			if (post.getPrice() != null && !post.getPrice().isEmpty()) {
-				textNearbyPostPrice.setText(post.getPrice());
+				textNearbyPostPrice.setText(String.format("%s %s", post.getPrice(), post.getCurrency()));
 				textNearbyPostPrice.setVisibility(View.VISIBLE);
 			} else {
 				// If there's no price, you might want to show the listing type or hide the view
