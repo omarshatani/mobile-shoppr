@@ -84,7 +84,7 @@ public class NearbyPostsAdapter extends ListAdapter<Post, NearbyPostsAdapter.Pos
 			Glide.with(imageNearbyPost.getContext())
 					.load(imageUrl)
 					.placeholder(R.drawable.ic_placeholder_image) // Your placeholder drawable
-					.error(R.drawable.ic_error_image)       // Your error drawable
+					.error(R.drawable.ic_placeholder_image)       // Your error drawable
 					.centerCrop()
 					.into(imageNearbyPost);
 

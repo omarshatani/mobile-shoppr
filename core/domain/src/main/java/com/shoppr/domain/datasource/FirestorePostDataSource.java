@@ -31,13 +31,16 @@ public interface FirestorePostDataSource {
 
 
     /**
-		 * Callbacks for retrieving a single post by its ID from Firestore.
-		 */
-		interface FirestoreGetPostByIdCallbacks {
+     * Callbacks for retrieving a single post by its ID from Firestore.
+     */
+    interface FirestoreGetPostByIdCallbacks {
         void onSuccess(@NonNull Post post);
+
         void onError(@NonNull String message);
+
         void onNotFound();
     }
+
     void getPostById(@NonNull String postId, @NonNull FirestoreGetPostByIdCallbacks callbacks);
 
 
@@ -57,6 +60,7 @@ public interface FirestorePostDataSource {
 
     /**
      * Fetches posts from Firestore for map display.
+     *
      * @param currentUserId The ID of the currently logged-in user, to potentially exclude their posts.
      * @return LiveData holding a list of Post objects.
      */

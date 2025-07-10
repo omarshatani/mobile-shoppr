@@ -3,8 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp">
 
     <!-- Drag Handle -->
     <com.google.android.material.bottomsheet.BottomSheetDragHandleView
@@ -12,25 +13,49 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-    <!-- Title Area -->
-    <TextView
-        android:id="@+id/text_bottom_sheet_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Nearby"
-        android:textAppearance="?attr/textAppearanceHeadline6"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="8dp" />
+    <LinearLayout
+        android:id="@+id/view_nearby_list_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="visible">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view_nearby_posts"
+        <TextView
+            android:id="@+id/text_bottom_sheet_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="8dp"
+            android:text="Nearby"
+            android:textAppearance="?attr/textAppearanceHeadline6" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_view_nearby_posts"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingHorizontal="8dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/list_item_nearby_post" />
+
+        <View
+            android:id="@+id/bottom_sheet_nav_bar_spacer"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/bottom_nav_height"
+            android:background="@android:color/transparent" />
+    </LinearLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/view_post_detail_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="8dp"
-        android:clipToPadding="false"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        tools:listitem="@layout/list_item_nearby_post" />
-    <!-- You will need to create list_item_nearby_post.xml -->
+        android:visibility="gone">
+
+        <include layout="@layout/bottom_sheet_content_post_detail" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 
 </LinearLayout>

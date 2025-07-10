@@ -7,120 +7,133 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.view.DefaultClusterRenderer;
 import com.shoppr.model.Post;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PostClusterManager {
-	private static final String TAG = "PostClusterManager";
+    private static final String TAG = "PostClusterManager";
 
-	private final GoogleMap googleMap;
-	private final Context context;
-	private final ClusterManager<PostClusterItem> clusterManager;
-	private final OnPostMarkerClickListener markerClickListener;
+    private final GoogleMap googleMap;
+    private final Context context;
+    private final ClusterManager<PostClusterItem> clusterManager;
+    private final OnPostMarkerClickListener markerClickListener;
+    private final OnPostClusterClickListener clusterClickListener; // New listener for clusters
 
-	public interface OnPostMarkerClickListener {
-		void onPostMarkerClicked(@NonNull Post post);
-	}
+    public interface OnPostMarkerClickListener {
+        void onPostMarkerClicked(@NonNull Post post);
+    }
 
-	public PostClusterManager(
-			@NonNull Context context,
-			@NonNull GoogleMap googleMap,
-			@NonNull OnPostMarkerClickListener markerClickListener
-	) {
-		this.context = context;
-		this.googleMap = googleMap;
-		this.markerClickListener = markerClickListener;
+    public interface OnPostClusterClickListener {
+        // Called when a cluster of posts at the same location is clicked
+        void onSameLocationClusterClicked(@NonNull List<Post> posts);
 
-		// Initialize the ClusterManager
-		this.clusterManager = new ClusterManager<>(context, googleMap);
+        // Called when a cluster of posts at different locations is clicked
+        void onDifferentLocationClusterClicked(@NonNull Cluster<PostClusterItem> cluster);
+    }
 
-		// Set a custom renderer to control how individual markers look (optional but recommended)
-		this.clusterManager.setRenderer(new PostClusterRenderer(context, googleMap, this.clusterManager));
+    public PostClusterManager(
+            @NonNull Context context,
+            @NonNull GoogleMap googleMap,
+            @NonNull OnPostMarkerClickListener markerClickListener,
+            @NonNull OnPostClusterClickListener clusterClickListener // New listener
+    ) {
+        this.context = context;
+        this.googleMap = googleMap;
+        this.markerClickListener = markerClickListener;
+        this.clusterClickListener = clusterClickListener;
 
-		// Set listeners on the ClusterManager
-		this.clusterManager.setOnClusterItemClickListener(item -> {
-			if (item != null && item.post != null) {
-				this.markerClickListener.onPostMarkerClicked(item.post);
-			}
-			// Return true to indicate we've handled the click and prevent the default
-			// behavior (which is to open an info window and center the camera).
-			return true;
-		});
+        this.clusterManager = new ClusterManager<>(context, googleMap);
+        this.clusterManager.setRenderer(new PostClusterRenderer(context, googleMap, this.clusterManager));
 
-		// Point the map's listeners to the ClusterManager
-		googleMap.setOnCameraIdleListener(clusterManager);
-		googleMap.setOnMarkerClickListener(clusterManager);
-	}
+        this.clusterManager.setOnClusterItemClickListener(item -> {
+            if (item != null && item.post != null) {
+                this.markerClickListener.onPostMarkerClicked(item.post);
+            }
+            return true; // Mark as handled
+        });
 
-	/**
-	 * Clears all existing posts from the map and adds the new ones.
-	 *
-	 * @param posts The new list of posts to display.
-	 */
-	public void setPosts(@Nullable List<Post> posts) {
-		clusterManager.clearItems();
-		if (posts != null && !posts.isEmpty()) {
-			Log.d(TAG, "Adding " + posts.size() + " posts to the map.");
-			for (Post post : posts) {
-				if (post.getLatitude() != null && post.getLongitude() != null) {
-					PostClusterItem clusterItem = new PostClusterItem(
-							post.getLatitude(),
-							post.getLongitude(),
-							post.getTitle(),
-							post.getPrice(), // Snippet can be price or category
-							post
-					);
-					clusterManager.addItem(clusterItem);
-				}
-			}
-		}
-		// Re-cluster all the items on the map
-		clusterManager.cluster();
-	}
+        this.clusterManager.setOnClusterClickListener(cluster -> {
+            if (cluster == null || cluster.getItems().isEmpty()) {
+                return false; // Let the map handle it (zoom)
+            }
+            // Check if all items in the cluster have the exact same location
+            LatLng firstPosition = null;
+            boolean allSameLocation = true;
+            List<Post> postsInCluster = new ArrayList<>();
+            for (PostClusterItem item : cluster.getItems()) {
+                if (firstPosition == null) {
+                    firstPosition = item.getPosition();
+                } else if (!firstPosition.equals(item.getPosition())) {
+                    allSameLocation = false;
+                }
+                postsInCluster.add(item.post);
+            }
 
-	/**
-	 * Cleans up listeners to prevent memory leaks.
-	 */
-	public void cleanup() {
-		if (clusterManager != null) {
-			clusterManager.setOnClusterItemClickListener(null);
-			clusterManager.clearItems();
-		}
-	}
+            if (allSameLocation) {
+                Log.d(TAG, "Clicked cluster with " + postsInCluster.size() + " items at the SAME location.");
+                this.clusterClickListener.onSameLocationClusterClicked(postsInCluster);
+                return true; // We handled it, don't zoom
+            } else {
+                Log.d(TAG, "Clicked cluster with items at DIFFERENT locations. Letting map zoom.");
+                this.clusterClickListener.onDifferentLocationClusterClicked(cluster);
+                return false; // Let the default behavior (zoom) happen
+            }
+        });
 
-	/**
-	 * Custom renderer to customize the appearance of individual post markers.
-	 */
-	private static class PostClusterRenderer extends DefaultClusterRenderer<PostClusterItem> {
-		public PostClusterRenderer(Context context, GoogleMap map, ClusterManager<PostClusterItem> clusterManager) {
-			super(context, map, clusterManager);
-			// Set minimum cluster size if desired (e.g., don't cluster groups of less than 4)
-			setMinClusterSize(4);
-		}
+        googleMap.setOnCameraIdleListener(clusterManager);
+        googleMap.setOnMarkerClickListener(clusterManager);
+    }
 
-		@Override
-		protected void onBeforeClusterItemRendered(@NonNull PostClusterItem item, @NonNull com.google.android.gms.maps.model.MarkerOptions markerOptions) {
-			// This is where you customize the individual marker before it's rendered.
-			// You can set a custom icon, title, snippet, etc.
-			// For now, it will use the default marker appearance.
-			// Example:
-			// markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_custom_post_marker));
-			markerOptions.title(item.getTitle());
-			markerOptions.snippet(item.getSnippet());
+    public void setPosts(@Nullable List<Post> posts) {
+        clusterManager.clearItems();
+        if (posts != null && !posts.isEmpty()) {
+            Log.d(TAG, "Adding " + posts.size() + " posts to the map.");
+            for (Post post : posts) {
+                if (post.getLatitude() != null && post.getLongitude() != null) {
+                    PostClusterItem clusterItem = new PostClusterItem(
+                            post.getLatitude(), post.getLongitude(),
+                            post.getTitle(), post.getPrice(), post
+                    );
+                    clusterManager.addItem(clusterItem);
+                }
+            }
+        }
+        clusterManager.cluster();
+    }
 
-			super.onBeforeClusterItemRendered(item, markerOptions);
-		}
+    public void cleanup() {
+        if (clusterManager != null) {
+            clusterManager.setOnClusterItemClickListener(null);
+            clusterManager.setOnClusterClickListener(null);
+            clusterManager.clearItems();
+        }
+    }
 
-		@Override
-		protected void onClusterItemUpdated(@NonNull PostClusterItem item, @NonNull Marker marker) {
-			// Called when an item is already rendered and needs updating.
-			marker.setTitle(item.getTitle());
-			marker.setSnippet(item.getSnippet());
-			super.onClusterItemUpdated(item, marker);
-		}
-	}
+    private static class PostClusterRenderer extends DefaultClusterRenderer<PostClusterItem> {
+        public PostClusterRenderer(Context context, GoogleMap map, ClusterManager<PostClusterItem> clusterManager) {
+            super(context, map, clusterManager);
+            setMinClusterSize(2); // Start clustering when 2 or more items are close
+        }
+
+        @Override
+        protected void onBeforeClusterItemRendered(@NonNull PostClusterItem item, @NonNull com.google.android.gms.maps.model.MarkerOptions markerOptions) {
+            markerOptions.title(item.getTitle());
+            markerOptions.snippet(item.getSnippet());
+            super.onBeforeClusterItemRendered(item, markerOptions);
+        }
+
+        @Override
+        protected void onClusterItemUpdated(@NonNull PostClusterItem item, @NonNull Marker marker) {
+            marker.setTitle(item.getTitle());
+            marker.setSnippet(item.getSnippet());
+            super.onClusterItemUpdated(item, marker);
+        }
+    }
 }
