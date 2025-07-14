@@ -28,8 +28,6 @@ interface ClientRequestData {
 type ListingType =
   | "SELLING_ITEM"
   | "WANTING_TO_BUY_ITEM"
-  | "OFFERING_SERVICE"
-  | "REQUESTING_SERVICE"
   | "UNKNOWN";
 
 interface LLMSuggestions {
@@ -88,13 +86,13 @@ ${metaContext}
 
 Based on this input, create an optimized and detailed prompt for another AI assistant. This optimized prompt must instruct the second AI to:
 1. Analyze the original user request text.
-2. Determine the "listingType" from: "SELLING_ITEM", "WANTING_TO_BUY_ITEM", "OFFERING_SERVICE", "REQUESTING_SERVICE", or "UNKNOWN".
+2. Determine the "listingType" from: "SELLING_ITEM", "WANTING_TO_BUY_ITEM" or "UNKNOWN".
 3. Generate a "suggestedTitle" (5-10 words, concise and appealing).
 4. Generate a "suggestedDescription" (1-3 informative sentences).
 5. Extract the "extractedItemName" (the primary item or service).
 6. Extract a "price" (as a number, or null if not explicitly stated in the user's text).
 7. Extract a "currency" (e.g., "USD", "EUR", "CHF", or null if no price/currency is stated in the user's text).
-8. Suggest a "suggestedCategory" from this list: ["Electronics", "Vehicles", "Home Goods", "Furniture", "Apparel", "Books", "Services-General", "Services-HomeRepair", "Services-Tutoring", "Jobs", "Community", "Other"], or null if unsure.
+8. Suggest a "suggestedCategory" from this list: ["Electronics", "Vehicles", "Home Goods", "Furniture", "Apparel", "Books", "General Services", "Home Repair", "Tutoring", "Jobs", "Community", "Other"], or null if unsure.
 9. The second AI MUST return its findings as a VALID JSON object with exactly these keys and no other text, comments, or markdown formatting like \`\`\`json.
 
 Return ONLY the text of the optimized prompt for the second AI. Do not include any explanations or conversational text in your own response.
@@ -210,7 +208,7 @@ JSON Output:
       }
     }
 
-    const validListingTypes: ListingType[] = ["SELLING_ITEM", "WANTING_TO_BUY_ITEM", "OFFERING_SERVICE", "REQUESTING_SERVICE", "UNKNOWN"];
+    const validListingTypes: ListingType[] = ["SELLING_ITEM", "WANTING_TO_BUY_ITEM", "UNKNOWN"];
     if (!validListingTypes.includes(structuredData.listingType)) {
       logger.warn(`Invalid listingType '${structuredData.listingType}' from LLM, defaulting to UNKNOWN.`);
       structuredData.listingType = "UNKNOWN";

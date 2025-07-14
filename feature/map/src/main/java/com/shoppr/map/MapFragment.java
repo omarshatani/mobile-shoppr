@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -15,19 +16,24 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
-import androidx.core.view.ViewCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.maps.android.clustering.ClusterManager;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.maps.android.clustering.Cluster;
+import com.shoppr.core.ui.databinding.BottomSheetContentPostDetailBinding;
 import com.shoppr.map.databinding.FragmentMapBinding;
 import com.shoppr.model.Event;
 import com.shoppr.model.Post;
 import com.shoppr.ui.BaseFragment;
-import com.shoppr.ui.utils.InsetUtils;
+import com.shoppr.ui.adapter.NearbyPostsAdapter;
+import com.shoppr.ui.utils.ImageLoader;
 
 import java.util.List;
 
@@ -35,19 +41,29 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class MapFragment extends BaseFragment implements OnMapReadyCallback,
-		GoogleMap.OnCameraMoveStartedListener, ClusterManager.OnClusterItemClickListener<PostClusterItem> {
+		GoogleMap.OnCameraMoveStartedListener {
 	private static final String TAG = "MapFragment";
 	private FragmentMapBinding binding;
 	private MapViewModel viewModel;
 	private GoogleMap googleMap;
 	private SupportMapFragment mapFragment;
 
-	// For Marker Clustering
-	private ClusterManager<PostClusterItem> clusterManager;
+	// Bottom Sheet components
+	private BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
+	private NearbyPostsAdapter nearbyPostsAdapter;
+
+	// Views for the two states of the bottom sheet
+	private View nearbyListView;
+	private View postDetailView;
+	private View emptyStateNearbyView;
+
+	private BottomSheetContentPostDetailBinding detailViewBinding; // For easy view access
+
+	// The manager for map markers and clustering
+	private PostClusterManager postClusterManager;
 
 	private final ActivityResultLauncher<String> requestPermissionLauncher =
 			registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-				Log.d(TAG, "Permission result received: " + isGranted);
 				viewModel.onLocationPermissionResult(isGranted);
 				if (!isGranted) {
 					Toast.makeText(requireContext(), R.string.location_permission_denied, Toast.LENGTH_SHORT).show();
@@ -71,8 +87,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		viewModel = new ViewModelProvider(this).get(MapViewModel.class);
-		// Initial permission check
-		if (getContext() != null) { // Ensure context is available
+		if (getContext() != null) {
 			viewModel.onLocationPermissionResult(hasFineLocationPermission());
 		}
 	}
@@ -95,9 +110,9 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 			Log.e(TAG, "SupportMapFragment NOT found!");
 		}
 
+		setupBottomSheet();
 		setupFabClickListener();
 		observeViewModel();
-//		setupRootViewInsets(binding.getRoot()); // Your existing inset handling
 	}
 
 	@Override
@@ -117,72 +132,113 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		this.googleMap = googleMap;
 		Log.d(TAG, "onMapReady called. Map is ready.");
 
-		// Initialize ClusterManager
 		if (getContext() != null) {
-			clusterManager = new ClusterManager<>(getContext(), googleMap);
-			// Optional: Customize the clustering algorithm
-			// clusterManager.setAlgorithm(new NonHierarchicalDistanceBasedAlgorithm<>());
-			// Optional: Customize the renderer for individual markers and clusters
-			// clusterManager.setRenderer(new YourCustomClusterRenderer(getContext(), googleMap, clusterManager));
+			postClusterManager = new PostClusterManager(getContext(), googleMap,
+					// OnPostMarkerClickListener
+					post -> viewModel.onPostMarkerClicked(post.getId()),
+					// OnPostClusterClickListener
+					new PostClusterManager.OnPostClusterClickListener() {
+						@Override
+						public void onSameLocationClusterClicked(@NonNull List<Post> posts) {
+							Log.d(TAG, "Handling click for cluster with items at same location.");
+							viewModel.onSameLocationClusterClicked(posts);
+							bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
+						}
 
-			googleMap.setOnCameraIdleListener(clusterManager); // Important for clustering to work
-			googleMap.setOnMarkerClickListener(clusterManager); // Delegate marker clicks to ClusterManager
-			clusterManager.setOnClusterItemClickListener(this); // Listen for clicks on individual items
+						@Override
+						public void onDifferentLocationClusterClicked(@NonNull Cluster<PostClusterItem> cluster) {
+							Log.d(TAG, "Handling click for cluster with items at different locations (zooming).");
+							LatLngBounds.Builder builder = LatLngBounds.builder();
+							for (PostClusterItem item : cluster.getItems()) {
+								builder.include(item.getPosition());
+							}
+							googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 100));
+						}
+					}
+			);
 		}
-
 
 		googleMap.setOnCameraMoveStartedListener(this);
 		updateMapMyLocationUI(viewModel.locationPermissionGranted.getValue());
 
-		// Observe posts after map is ready and cluster manager is set up
 		viewModel.mapPosts.observe(getViewLifecycleOwner(), posts -> {
-			Log.d(TAG, "Observed map posts. Count: " + (posts != null ? posts.size() : 0));
-			addPostsToMap(posts);
+			if (postClusterManager != null) {
+				postClusterManager.setPosts(posts);
+			}
 		});
 	}
 
 	@Override
 	public void onCameraMoveStarted(int reason) {
 		if (reason == GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE) {
-			Log.d(TAG, "User started moving the map manually.");
 			viewModel.onMapManualMoveStarted();
 		}
-		if (clusterManager != null) {
-			// Also notify cluster manager on general camera move if not covered by onCameraIdle
-			clusterManager.onCameraIdle();
-		}
 	}
-
-	@Override
-	public boolean onClusterItemClick(@NonNull PostClusterItem item) {
-		Log.i(TAG, "Clicked marker for post: " + item.getTitle() + " (ID: " + item.post.getId() + ")");
-		Toast.makeText(getContext(), "Tapped on: " + item.getTitle(), Toast.LENGTH_SHORT).show();
-		// TODO: Navigate to Post Detail screen or show BottomSheet
-		// Example: NavHostFragment.findNavController(this).navigate(
-		//    MapFragmentDirections.actionMapFragmentToPostDetailFragment(item.post.getId())
-		// );
-		return false; // Return false to allow default behavior (show info window & center on marker)
-		// Return true if you've fully handled the click.
-	}
-
 
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView();
 		if (googleMap != null) {
 			googleMap.setOnCameraMoveStartedListener(null);
-			googleMap.setOnCameraIdleListener(null);
-			googleMap.setOnMarkerClickListener(null);
 		}
-		if (clusterManager != null) {
-			clusterManager.setOnClusterItemClickListener(null);
-			clusterManager.clearItems(); // Clear items to avoid memory leaks
+		if (postClusterManager != null) {
+			postClusterManager.cleanup();
+			postClusterManager = null;
 		}
-		clusterManager = null;
 		googleMap = null;
-		mapFragment = null; // mapFragment is managed by childFragmentManager, usually okay
 		binding = null;
-		Log.d(TAG, "onDestroyView called, map resources cleaned up.");
+	}
+
+	private void setupBottomSheet() {
+		bottomSheetBehavior = BottomSheetBehavior.from(binding.bottomSheetNearby);
+		bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+		bottomSheetBehavior.setPeekHeight(getResources().getDimensionPixelSize(com.shoppr.core.ui.R.dimen.bottom_sheet_peek_height));
+
+		// Get references to the two main views inside the bottom sheet
+		nearbyListView = binding.bottomSheetNearby.findViewById(com.shoppr.core.ui.R.id.view_nearby_list_container);
+		postDetailView = binding.bottomSheetNearby.findViewById(com.shoppr.core.ui.R.id.view_post_detail_container);
+		// Bind the detail view for easy access to its children
+		detailViewBinding = BottomSheetContentPostDetailBinding.bind(postDetailView);
+		emptyStateNearbyView = nearbyListView.findViewById(com.shoppr.core.ui.R.id.layout_empty_state_nearby);
+
+		RecyclerView nearbyPostsRecyclerView = nearbyListView.findViewById(com.shoppr.core.ui.R.id.recycler_view_nearby_posts);
+		nearbyPostsAdapter = new NearbyPostsAdapter(post -> {
+			Toast.makeText(getContext(), "Tapped on list item: " + post.getTitle(), Toast.LENGTH_SHORT).show();
+			viewModel.onPostMarkerClicked(post.getId());
+		});
+		nearbyPostsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+		nearbyPostsRecyclerView.setAdapter(nearbyPostsAdapter);
+
+
+		bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+			@Override
+			public void onStateChanged(@NonNull View bottomSheet, int newState) {
+				if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
+					viewModel.clearSelectedPost();
+				}
+			}
+
+			@Override
+			public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+				moveFabWithBottomSheet(bottomSheet);
+			}
+		});
+
+		binding.bottomSheetNearby.post(() -> moveFabWithBottomSheet(binding.bottomSheetNearby));
+	}
+
+	private void moveFabWithBottomSheet(@NonNull View bottomSheet) {
+		if (binding == null || getContext() == null) return;
+		final float fabHeight = binding.fabMyLocation.getHeight();
+		if (fabHeight == 0) return; // Wait until FAB is measured
+
+		final float fabMargin = getResources().getDimension(com.shoppr.core.ui.R.dimen.fab_margin);
+		float halfExpandedRatio = bottomSheetBehavior.getHalfExpandedRatio();
+		float parentHeight = ((View) bottomSheet.getParent()).getHeight();
+		float halfExpandedSheetTop = parentHeight * (1f - halfExpandedRatio);
+		float fabStopY = halfExpandedSheetTop - fabHeight - fabMargin;
+		float currentFabY = bottomSheet.getTop() - fabHeight - fabMargin;
+		binding.fabMyLocation.setY(Math.max(fabStopY, currentFabY));
 	}
 
 	private void observeViewModel() {
@@ -195,24 +251,89 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		});
 
 		viewModel.moveToLocationEvent.observe(getViewLifecycleOwner(), new Event.EventObserver<>(latLng -> {
-			Log.d(TAG, "Received moveToLocationEvent: " + latLng);
 			if (googleMap != null && latLng != null) {
-				googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f));
+				googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f));
 			}
 		}));
 
 		viewModel.requestPermissionEvent.observe(getViewLifecycleOwner(), new Event.EventObserver<>(shouldRequest -> {
-			Log.d(TAG, "Received requestPermissionEvent");
 			if (shouldRequest) {
 				requestLocationPermission();
 			}
 		}));
 
 		viewModel.toastMessageEvent.observe(getViewLifecycleOwner(), new Event.EventObserver<>(message -> {
-			if (getContext() != null && message != null && !message.isEmpty()) {
+			if (getContext() != null && message != null) {
 				Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
 			}
 		}));
+
+		// Observer for the list of posts for the bottom sheet
+		viewModel.mapPosts.observe(getViewLifecycleOwner(), posts -> {
+			if (postClusterManager != null) {
+				Log.d(TAG, "Updating MAP MARKERS with " + (posts != null ? posts.size() : 0) + " posts.");
+				postClusterManager.setPosts(posts);
+			}
+		});
+
+		viewModel.bottomSheetPosts.observe(getViewLifecycleOwner(), posts -> {
+			if (nearbyPostsAdapter != null) {
+				Log.d(TAG, "Updating BOTTOM SHEET LIST with " + (posts != null ? posts.size() : 0) + " posts.");
+				nearbyPostsAdapter.submitList(posts);
+				// Toggle empty state visibility
+				RecyclerView nearbyRecyclerView = nearbyListView.findViewById(com.shoppr.core.ui.R.id.recycler_view_nearby_posts);
+				if (posts == null || posts.isEmpty()) {
+					nearbyRecyclerView.setVisibility(View.GONE);
+					emptyStateNearbyView.setVisibility(View.VISIBLE);
+				} else {
+					nearbyRecyclerView.setVisibility(View.VISIBLE);
+					emptyStateNearbyView.setVisibility(View.GONE);
+				}
+			}
+		});
+
+		// Observe the selected post to switch the bottom sheet UI
+		viewModel.selectedPostDetails.observe(getViewLifecycleOwner(), selectedPost -> {
+			if (selectedPost != null) {
+				// A post is selected, show the detail view
+				nearbyListView.setVisibility(View.GONE);
+				binding.bottomSheetNearby.findViewById(com.shoppr.core.ui.R.id.text_bottom_sheet_title).setVisibility(View.GONE);
+				postDetailView.setVisibility(View.VISIBLE);
+				bindPostDetail(selectedPost);
+				if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
+					bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
+				}
+			} else {
+				// No post is selected, show the "nearby" list view
+				nearbyListView.setVisibility(View.VISIBLE);
+				binding.bottomSheetNearby.findViewById(com.shoppr.core.ui.R.id.text_bottom_sheet_title).setVisibility(View.VISIBLE);
+				postDetailView.setVisibility(View.GONE);
+
+			}
+		});
+
+		viewModel.isDetailLoading.observe(getViewLifecycleOwner(), isLoading -> {
+			// TODO: Show a loading indicator in the detail view
+		});
+	}
+
+	private void bindPostDetail(@NonNull Post post) {
+		detailViewBinding.detailPostTitle.setText(post.getTitle());
+		detailViewBinding.detailPostPrice.setText(String.format("%s %s", post.getPrice(), post.getCurrency()));
+		detailViewBinding.detailPostDescription.setText(post.getDescription());
+		detailViewBinding.detailPostCategoryChip.setText(post.getCategory());
+		detailViewBinding.detailPostTypeChip.setText(post.getType().getLabel().toUpperCase());
+
+		if (post.getLister() != null) {
+			detailViewBinding.detailListerName.setText("by " + post.getLister().getName());
+			detailViewBinding.detailListerName.setVisibility(View.VISIBLE);
+		} else {
+			detailViewBinding.detailListerName.setVisibility(View.GONE);
+		}
+
+		String imageUrl = (post.getImageUrl() != null && !post.getImageUrl().isEmpty()) ? post.getImageUrl().get(0) : null;
+		ImageLoader.loadImage(detailViewBinding.detailPostImage, imageUrl);
+
 	}
 
 	@SuppressLint("MissingPermission")
@@ -221,11 +342,9 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		try {
 			if (Boolean.TRUE.equals(isGranted)) {
 				googleMap.setMyLocationEnabled(true);
-				googleMap.getUiSettings().setMyLocationButtonEnabled(false); // Using custom FAB
-				Log.d(TAG, "Map MyLocation layer enabled.");
+				googleMap.getUiSettings().setMyLocationButtonEnabled(false);
 			} else {
 				googleMap.setMyLocationEnabled(false);
-				Log.d(TAG, "Map MyLocation layer disabled.");
 			}
 		} catch (SecurityException e) {
 			Log.e(TAG, "SecurityException setting MyLocationEnabled", e);
@@ -235,17 +354,13 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	private void setupFabClickListener() {
 		if (binding != null) {
 			binding.fabMyLocation.setOnClickListener(v -> {
-				Log.d(TAG, "My Location FAB clicked");
 				viewModel.onMyLocationButtonClicked();
 			});
 		}
 	}
 
 	private void requestLocationPermission() {
-		Log.d(TAG, "Requesting location permission...");
-		if (viewModel != null) { // Check if viewModel is initialized
-			viewModel.onLocationSearching(); // Update FAB icon
-		}
+		viewModel.onLocationSearching();
 		requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
 	}
 
@@ -255,53 +370,5 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 				requireContext(),
 				Manifest.permission.ACCESS_FINE_LOCATION
 		) == PackageManager.PERMISSION_GRANTED;
-	}
-
-	private void addPostsToMap(@Nullable List<Post> posts) {
-		if (googleMap == null || clusterManager == null) {
-			Log.w(TAG, "GoogleMap or ClusterManager not ready, cannot add posts.");
-			return;
-		}
-
-		clusterManager.clearItems(); // Clear previous markers before adding new ones
-
-		if (posts == null || posts.isEmpty()) {
-			Log.d(TAG, "No posts to display on map.");
-			clusterManager.cluster(); // Important to call cluster even if empty to refresh map
-			return;
-		}
-
-		Log.d(TAG, "Adding " + posts.size() + " posts to map.");
-		for (Post post : posts) {
-			if (post.getLatitude() != null && post.getLongitude() != null) {
-				String title = post.getTitle() != null ? post.getTitle() : "Untitled Post";
-				String snippet = post.getCategory() != null ? "Category: " + post.getCategory() :
-						(post.getPrice() != null ? "Price: " + post.getPrice() : "View Details");
-
-				PostClusterItem clusterItem = new PostClusterItem(
-						post.getLatitude(),
-						post.getLongitude(),
-						title,
-						snippet,
-						post // Store the original post object
-				);
-				clusterManager.addItem(clusterItem);
-			} else {
-				Log.w(TAG, "Post with ID " + post.getId() + " has no location data.");
-			}
-		}
-		clusterManager.cluster(); // Re-cluster after adding new items
-	}
-
-	private void setupRootViewInsets(View view) {
-		ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
-			InsetUtils.applyBottomNavPadding(
-					v,
-					windowInsets,
-					com.shoppr.core.ui.R.dimen.bottom_nav_height
-			);
-			return windowInsets;
-		});
-		ViewCompat.requestApplyInsets(view);
 	}
 }
