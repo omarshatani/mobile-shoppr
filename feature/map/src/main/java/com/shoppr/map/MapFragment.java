@@ -48,18 +48,15 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	private GoogleMap googleMap;
 	private SupportMapFragment mapFragment;
 
-	// Bottom Sheet components
 	private BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
 	private NearbyPostsAdapter nearbyPostsAdapter;
 
-	// Views for the two states of the bottom sheet
 	private View nearbyListView;
 	private View postDetailView;
 	private View emptyStateNearbyView;
 
-	private BottomSheetContentPostDetailBinding detailViewBinding; // For easy view access
+	private BottomSheetContentPostDetailBinding detailViewBinding;
 
-	// The manager for map markers and clustering
 	private PostClusterManager postClusterManager;
 
 	private final ActivityResultLauncher<String> requestPermissionLauncher =
@@ -134,9 +131,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 
 		if (getContext() != null) {
 			postClusterManager = new PostClusterManager(getContext(), googleMap,
-					// OnPostMarkerClickListener
 					post -> viewModel.onPostMarkerClicked(post.getId()),
-					// OnPostClusterClickListener
 					new PostClusterManager.OnPostClusterClickListener() {
 						@Override
 						public void onSameLocationClusterClicked(@NonNull List<Post> posts) {
@@ -194,16 +189,13 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 		bottomSheetBehavior.setPeekHeight(getResources().getDimensionPixelSize(com.shoppr.core.ui.R.dimen.bottom_sheet_peek_height));
 
-		// Get references to the two main views inside the bottom sheet
 		nearbyListView = binding.bottomSheetNearby.findViewById(com.shoppr.core.ui.R.id.view_nearby_list_container);
 		postDetailView = binding.bottomSheetNearby.findViewById(com.shoppr.core.ui.R.id.view_post_detail_container);
-		// Bind the detail view for easy access to its children
 		detailViewBinding = BottomSheetContentPostDetailBinding.bind(postDetailView);
 		emptyStateNearbyView = nearbyListView.findViewById(com.shoppr.core.ui.R.id.layout_empty_state_nearby);
 
 		RecyclerView nearbyPostsRecyclerView = nearbyListView.findViewById(com.shoppr.core.ui.R.id.recycler_view_nearby_posts);
 		nearbyPostsAdapter = new NearbyPostsAdapter(post -> {
-			Toast.makeText(getContext(), "Tapped on list item: " + post.getTitle(), Toast.LENGTH_SHORT).show();
 			viewModel.onPostMarkerClicked(post.getId());
 		});
 		nearbyPostsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -230,7 +222,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	private void moveFabWithBottomSheet(@NonNull View bottomSheet) {
 		if (binding == null || getContext() == null) return;
 		final float fabHeight = binding.fabMyLocation.getHeight();
-		if (fabHeight == 0) return; // Wait until FAB is measured
+		if (fabHeight == 0) return;
 
 		final float fabMargin = getResources().getDimension(com.shoppr.core.ui.R.dimen.fab_margin);
 		float halfExpandedRatio = bottomSheetBehavior.getHalfExpandedRatio();
@@ -268,7 +260,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 			}
 		}));
 
-		// Observer for the list of posts for the bottom sheet
 		viewModel.mapPosts.observe(getViewLifecycleOwner(), posts -> {
 			if (postClusterManager != null) {
 				Log.d(TAG, "Updating MAP MARKERS with " + (posts != null ? posts.size() : 0) + " posts.");
@@ -280,7 +271,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 			if (nearbyPostsAdapter != null) {
 				Log.d(TAG, "Updating BOTTOM SHEET LIST with " + (posts != null ? posts.size() : 0) + " posts.");
 				nearbyPostsAdapter.submitList(posts);
-				// Toggle empty state visibility
 				RecyclerView nearbyRecyclerView = nearbyListView.findViewById(com.shoppr.core.ui.R.id.recycler_view_nearby_posts);
 				if (posts == null || posts.isEmpty()) {
 					nearbyRecyclerView.setVisibility(View.GONE);
@@ -292,10 +282,8 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 			}
 		});
 
-		// Observe the selected post to switch the bottom sheet UI
 		viewModel.selectedPostDetails.observe(getViewLifecycleOwner(), selectedPost -> {
 			if (selectedPost != null) {
-				// A post is selected, show the detail view
 				nearbyListView.setVisibility(View.GONE);
 				binding.bottomSheetNearby.findViewById(com.shoppr.core.ui.R.id.text_bottom_sheet_title).setVisibility(View.GONE);
 				postDetailView.setVisibility(View.VISIBLE);
@@ -304,7 +292,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 					bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
 				}
 			} else {
-				// No post is selected, show the "nearby" list view
 				nearbyListView.setVisibility(View.VISIBLE);
 				binding.bottomSheetNearby.findViewById(com.shoppr.core.ui.R.id.text_bottom_sheet_title).setVisibility(View.VISIBLE);
 				postDetailView.setVisibility(View.GONE);
@@ -313,7 +300,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		});
 
 		viewModel.isDetailLoading.observe(getViewLifecycleOwner(), isLoading -> {
-			// TODO: Show a loading indicator in the detail view
 		});
 	}
 
