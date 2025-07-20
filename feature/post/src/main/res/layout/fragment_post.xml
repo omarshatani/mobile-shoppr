@@ -7,11 +7,12 @@
     android:background="?attr/colorSurfaceContainerLowest"
     android:fitsSystemWindows="true"
     tools:context=".PostFragment">
-    <!-- SwipeRefreshLayout wraps the RecyclerView -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresh_layout_my_posts"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:paddingHorizontal="8dp"
+        android:layout_marginBottom="@dimen/bottom_nav_height"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -20,10 +21,8 @@
             android:id="@+id/recycler_view_my_posts"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:paddingVertical="16dp"
             android:clipToPadding="false"
-            android:paddingHorizontal="8dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="@dimen/bottom_nav_height"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:listitem="@layout/list_item_post" />
 
@@ -83,7 +82,8 @@
         android:id="@+id/fab_create_post"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="96dp"
         android:contentDescription="Create New Post"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"

@@ -64,7 +64,9 @@ public class PostDetailFragment extends BaseFragment {
                 binding.detailPostDescription.setText(post.getDescription());
                 binding.detailPostPrice.setText(String.format("%s %s", post.getPrice(), post.getCurrency()));
                 binding.detailPostCategoryChip.setText(post.getCategory());
-                binding.detailPostTypeChip.setText(post.getType().getLabel().toUpperCase());
+                if (post.getType() != null) {
+                    binding.detailPostTypeChip.setText(post.getType().getLabel().toUpperCase());
+                }
 
                 if (post.getLister() != null) {
                     binding.detailListerName.setText("by " + post.getLister().getName());

@@ -9,7 +9,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.view.ViewCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
@@ -20,7 +19,6 @@ import com.shoppr.navigation.NavigationRoute;
 import com.shoppr.navigation.Navigator;
 import com.shoppr.post.databinding.FragmentPostBinding;
 import com.shoppr.ui.BaseFragment;
-import com.shoppr.ui.utils.InsetUtils;
 
 import javax.inject.Inject;
 
@@ -65,7 +63,6 @@ public class PostFragment extends BaseFragment {
         setupRecyclerView();
         setupSwipeToRefresh();
         setupBindings();
-        setupRootViewInsets(view);
         observeViewModel();
     }
 
@@ -172,19 +169,6 @@ public class PostFragment extends BaseFragment {
 
     private void setupBindings() {
         binding.buttonCreateFirstPost.setOnClickListener(v -> viewModel.navigateToCreatePost());
-
         binding.fabCreatePost.setOnClickListener(v -> viewModel.navigateToCreatePost());
-    }
-
-    private void setupRootViewInsets(View view) {
-        ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
-            InsetUtils.applyBottomNavPadding(
-                v,
-                windowInsets,
-                com.shoppr.core.ui.R.dimen.bottom_nav_height
-            );
-            return windowInsets;
-        });
-        ViewCompat.requestApplyInsets(view);
     }
 }

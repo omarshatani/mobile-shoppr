@@ -41,6 +41,7 @@ public class LLMRepositoryImpl implements LLMRepository {
 
         Map<String, Object> data = new HashMap<>();
         data.put("text", text);
+
         if (imageUrls != null && !imageUrls.isEmpty()) {
             data.put("imageUrls", imageUrls);
         }
@@ -51,7 +52,7 @@ public class LLMRepositoryImpl implements LLMRepository {
             data.put("baseOfferCurrency", baseOfferCurrency);
         }
 
-        Log.d(TAG, "Calling Firebase Cloud Function: " + CLOUD_FUNCTION_NAME + " with data: " + data.toString());
+        Log.d(TAG, "Calling Firebase Cloud Function: " + CLOUD_FUNCTION_NAME + " with data: " + data);
 
         functions.getHttpsCallable(CLOUD_FUNCTION_NAME)
                 .call(data)
@@ -126,6 +127,7 @@ public class LLMRepositoryImpl implements LLMRepository {
         String title = (String) map.get("suggestedTitle");
         String description = (String) map.get("suggestedDescription");
         String itemName = (String) map.get("extractedItemName");
+        String currency = (String) map.get("extractedCurrency");
         String category = (String) map.get("suggestedCategory");
         Double price = null;
         if (map.get("price") instanceof Number) {
@@ -133,14 +135,13 @@ public class LLMRepositoryImpl implements LLMRepository {
         } else if (map.get("price") != null) {
             Log.w(TAG, "Received non-null price from LLM that is not a number: " + map.get("price"));
         }
-        String currency = (String) map.get("currency");
-
 
         return new SuggestedPostDetails(
                 listingTypeEnum,
                 title != null ? title : "Untitled Post",
                 description != null ? description : "",
                 itemName != null ? itemName : "N/A",
+            currency != null ? currency : "USD",
                 category
         );
     }

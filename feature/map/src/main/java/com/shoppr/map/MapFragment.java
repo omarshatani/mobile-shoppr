@@ -18,6 +18,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -32,9 +33,12 @@ import com.shoppr.map.databinding.FragmentMapBinding;
 import com.shoppr.model.Event;
 import com.shoppr.model.Post;
 import com.shoppr.ui.BaseFragment;
+import com.shoppr.ui.ProminentLayoutManager;
 import com.shoppr.ui.adapter.NearbyPostsAdapter;
-import com.shoppr.ui.utils.ImageLoader;
+import com.shoppr.ui.adapter.PostImageCarouselAdapter;
+import com.shoppr.ui.utils.OffsetCenterItemDecoration;
 
+import java.util.Collections;
 import java.util.List;
 
 import dagger.hilt.android.AndroidEntryPoint;
@@ -100,7 +104,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 
-		mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
+		mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(com.shoppr.map.R.id.map);
 		if (mapFragment != null) {
 			mapFragment.getMapAsync(this);
 		} else {
@@ -200,6 +204,14 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		});
 		nearbyPostsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 		nearbyPostsRecyclerView.setAdapter(nearbyPostsAdapter);
+
+		// --- Setup the carousel RecyclerView ONCE here ---
+		RecyclerView carousel = detailViewBinding.postImageCarousel;
+		carousel.setLayoutManager(new ProminentLayoutManager(requireContext()));
+		carousel.addItemDecoration(new OffsetCenterItemDecoration());
+		new PagerSnapHelper().attachToRecyclerView(carousel);
+		// Set a default empty adapter
+		carousel.setAdapter(new PostImageCarouselAdapter(Collections.emptyList()));
 
 
 		bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
@@ -304,22 +316,15 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	}
 
 	private void bindPostDetail(@NonNull Post post) {
+		// --- Bind Text Data ---
 		detailViewBinding.detailPostTitle.setText(post.getTitle());
-		detailViewBinding.detailPostPrice.setText(String.format("%s %s", post.getPrice(), post.getCurrency()));
-		detailViewBinding.detailPostDescription.setText(post.getDescription());
-		detailViewBinding.detailPostCategoryChip.setText(post.getCategory());
-		detailViewBinding.detailPostTypeChip.setText(post.getType().getLabel().toUpperCase());
+		// ... set other text views if needed ...
 
-		if (post.getLister() != null) {
-			detailViewBinding.detailListerName.setText("by " + post.getLister().getName());
-			detailViewBinding.detailListerName.setVisibility(View.VISIBLE);
-		} else {
-			detailViewBinding.detailListerName.setVisibility(View.GONE);
-		}
-
-		String imageUrl = (post.getImageUrl() != null && !post.getImageUrl().isEmpty()) ? post.getImageUrl().get(0) : null;
-		ImageLoader.loadImage(detailViewBinding.detailPostImage, imageUrl);
-
+		// --- Update Carousel Adapter ---
+		RecyclerView carousel = detailViewBinding.postImageCarousel;
+		List<String> imageUrls = post.getImageUrl() != null ? post.getImageUrl() : Collections.emptyList();
+		PostImageCarouselAdapter adapter = new PostImageCarouselAdapter(imageUrls);
+		carousel.setAdapter(adapter);
 	}
 
 	@SuppressLint("MissingPermission")
