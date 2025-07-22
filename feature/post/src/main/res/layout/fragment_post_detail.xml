@@ -55,36 +55,18 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <LinearLayout
-                    android:id="@+id/chips_container"
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/detail_chip_group_category"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="16dp">
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/detail_post_category_chip"
-                        style="@style/Widget.Material3.Chip.Suggestion"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        tools:text="Electronics" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/detail_post_type_chip"
-                        style="@style/Widget.Material3.Chip.Assist"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        tools:text="Selling Item" />
-
-                </LinearLayout>
+                    android:layout_marginBottom="16dp" />
 
                 <TextView
                     android:id="@+id/detail_post_description"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textAppearance="?attr/textAppearanceBodyLarge"
-                    tools:text="This sleek laptop features a powerful processor, a vibrant display, and a lightweight design. Perfect for work or entertainment on the go. Includes a long-lasting battery and ample storage." />
+                    tools:text="This sleek laptop features a powerful processor..." />
 
                 <TextView
                     android:id="@+id/label_price"
@@ -136,13 +118,6 @@
                         android:textStyle="bold"
                         tools:text="Ethan Harper" />
                 </LinearLayout>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/button_make_offer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:text="Make an offer" />
 
             </LinearLayout>
         </LinearLayout>

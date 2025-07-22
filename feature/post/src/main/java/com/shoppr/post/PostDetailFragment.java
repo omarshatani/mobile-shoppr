@@ -12,9 +12,12 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
+import com.google.android.material.chip.Chip;
 import com.shoppr.post.databinding.FragmentPostDetailBinding;
 import com.shoppr.ui.BaseFragment;
 import com.shoppr.ui.utils.ImageLoader;
+
+import java.util.List;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -51,21 +54,28 @@ public class PostDetailFragment extends BaseFragment {
 
     private void setupToolbar() {
         NavController navController = NavHostFragment.findNavController(this);
-        // We leave the toolbar title empty, as the headline TextView will serve as the title.
         NavigationUI.setupWithNavController(binding.topAppBar, navController);
     }
 
     private void observeViewModel() {
         viewModel.getSelectedPost().observe(getViewLifecycleOwner(), post -> {
             if (post != null) {
-                // Set the title in the new headline TextView
                 binding.detailPostHeadline.setText(post.getTitle());
-
                 binding.detailPostDescription.setText(post.getDescription());
                 binding.detailPostPrice.setText(String.format("%s %s", post.getPrice(), post.getCurrency()));
-                binding.detailPostCategoryChip.setText(post.getCategory());
-                if (post.getType() != null) {
-                    binding.detailPostTypeChip.setText(post.getType().getLabel().toUpperCase());
+
+                binding.detailChipGroupCategory.removeAllViews();
+                List<String> categories = post.getCategories();
+                if (categories != null && !categories.isEmpty()) {
+                    binding.detailChipGroupCategory.setVisibility(View.VISIBLE);
+                    for (String categoryName : categories) {
+                        Chip chip = new Chip(getContext());
+                        chip.setText(categoryName);
+                        // You can customize the chip style here if needed
+                        binding.detailChipGroupCategory.addView(chip);
+                    }
+                } else {
+                    binding.detailChipGroupCategory.setVisibility(View.GONE);
                 }
 
                 if (post.getLister() != null) {

@@ -1,81 +1,86 @@
 package com.shoppr.model;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import java.util.List;
 
-/**
- * Represents the structured suggestions extracted by the LLM
- * for creating a new post. This is a domain model.
- */
 public class SuggestedPostDetails {
-	@NonNull
-	public final ListingType listingType;
-	@NonNull
-	public final String suggestedTitle;
-	@NonNull
-	public final String suggestedDescription;
-	@NonNull
-	public final String extractedItemName;
-	@NonNull
-	public final String extractedCurrency;
-	@Nullable
-	public final String suggestedCategory;
+	private ListingType listingType;
+	private String title;
+	private String description;
+	private String extractedItemName;
+	private Double price;
+	private String currency;
+	private List<String> categories;
 
-	public SuggestedPostDetails(
-			@NonNull ListingType listingType,
-			@NonNull String suggestedTitle,
-			@NonNull String suggestedDescription,
-			@NonNull String extractedItemName, @NonNull String extractedCurrency,
-			@Nullable String suggestedCategory) {
-		this.listingType = listingType;
-		this.suggestedTitle = suggestedTitle;
-		this.suggestedDescription = suggestedDescription;
-		this.extractedItemName = extractedItemName;
-		this.extractedCurrency = extractedCurrency;
-		this.suggestedCategory = suggestedCategory;
+	public SuggestedPostDetails() {
+		// Default constructor
 	}
 
-	// --- Getters ---
-	@NonNull
+	// This is the corrected constructor
+	public SuggestedPostDetails(ListingType listingType, String title, String description, String extractedItemName, Double price, String currency, List<String> categories) {
+		this.listingType = listingType;
+		this.title = title;
+		this.description = description;
+		this.extractedItemName = extractedItemName;
+		this.price = price;
+		this.currency = currency;
+		this.categories = categories;
+	}
+
+	// --- Getters and Setters ---
+
 	public ListingType getListingType() {
 		return listingType;
 	}
 
-	@NonNull
-	public String getSuggestedTitle() {
-		return suggestedTitle;
+	public void setListingType(ListingType listingType) {
+		this.listingType = listingType;
 	}
 
-	@NonNull
-	public String getSuggestedDescription() {
-		return suggestedDescription;
+	public String getTitle() {
+		return title;
 	}
 
-	@NonNull
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
 	public String getExtractedItemName() {
 		return extractedItemName;
 	}
 
-	@NonNull
-	public String getExtractedCurrency() {
-		return extractedCurrency;
+	public void setExtractedItemName(String extractedItemName) {
+		this.extractedItemName = extractedItemName;
 	}
 
-	@Nullable
-	public String getSuggestedCategory() {
-		return suggestedCategory;
+	public Double getPrice() {
+		return price;
 	}
 
-	@NonNull
-	@Override
-	public String toString() {
-		return "SuggestedPostDetails{" +
-				"listingType=" + listingType.name() +
-				", suggestedTitle='" + suggestedTitle + '\'' +
-				", suggestedDescription='" + suggestedDescription + '\'' +
-				", extractedItemName='" + extractedItemName + '\'' +
-				", extractedCurrency='" + extractedCurrency + '\'' +
-				", suggestedCategory='" + suggestedCategory + '\'' +
-				'}';
+	public void setPrice(Double price) {
+		this.price = price;
+	}
+
+	public String getCurrency() {
+		return currency;
+	}
+
+	public void setCurrency(String currency) {
+		this.currency = currency;
+	}
+
+	public List<String> getCategories() {
+		return categories;
+	}
+
+	public void setCategories(List<String> categories) {
+		this.categories = categories;
 	}
 }

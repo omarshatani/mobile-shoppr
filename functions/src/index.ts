@@ -39,7 +39,7 @@ interface LLMSuggestions {
   extractedItemName: string;
   price: number | null;
   currency: string | null;
-  suggestedCategory: string | null;
+  suggestedCategories: string[] | null; // Changed from suggestedCategory: string
 }
 
 interface CloudFunctionSuccessResponse {
@@ -94,7 +94,7 @@ Based on this input, create an optimized and detailed prompt for another AI assi
 5. Extract the "extractedItemName" (the primary item or service).
 6. Extract a "price" (as a number, or null if not explicitly stated in the user's text).
 7. Extract a "currency" (e.g., "USD", "EUR", "CHF", or null if no price/currency is stated in the user's text).
-8. Generate a "suggestedCategory" (1-2 words max).
+8. Generate "suggestedCategories", which must be an array of up to 3 relevant categories chosen ONLY from the following list: [Electronics, Vehicles, Property, Home & Garden, Fashion, Hobbies & Leisure, Services, Jobs, Pets, Travel, Other].
 9. The second AI MUST return its findings as a VALID JSON object with exactly these keys and no other text, comments, or markdown formatting like \`\`\`json.
 10. Make sure all fields are populated.
 Return ONLY the text of the optimized prompt for the second AI. Do not include any explanations or conversational text in your own response.
@@ -202,9 +202,9 @@ JSON Output:
       }
     }
 
-    const requiredKeys: Array<keyof LLMSuggestions> = ["listingType", "suggestedTitle", "suggestedDescription", "extractedItemName"];
+    const requiredKeys: Array<keyof LLMSuggestions> = ["listingType", "suggestedTitle", "suggestedDescription", "extractedItemName", "suggestedCategories"];
     for (const key of requiredKeys) {
-      if (!(key in structuredData) || (structuredData[key] === null && key !== "price" && key !== "currency" && key !== "suggestedCategory")) {
+      if (!(key in structuredData) || (structuredData[key] === null && key !== "price" && key !== "currency" && key !== "suggestedCategories")) {
         logger.error(`Missing or null required key '${key}' in parsed JSON.`, structuredData);
         throw new HttpsError("internal", `AI service response missing or invalid key: ${key}`);
       }

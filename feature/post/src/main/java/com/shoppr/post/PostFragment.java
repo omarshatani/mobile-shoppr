@@ -94,8 +94,6 @@ public class PostFragment extends BaseFragment {
 
     private void setupRecyclerView() {
         adapter = new MyPostsAdapter(post -> {
-            Log.d(TAG, "Clicked on post: " + post.getTitle());
-            Toast.makeText(getContext(), "Clicked: " + post.getTitle() + " (TODO: Navigate to detail)", Toast.LENGTH_SHORT).show();
             NavDirections action = PostFragmentDirections.actionPostFragmentToPostDetailFragment(post.getId());
             NavHostFragment.findNavController(this).navigate(action);
         });

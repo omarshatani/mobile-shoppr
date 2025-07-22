@@ -16,8 +16,7 @@ public class ImageLoader {
 
         Glide.with(imageView.getContext())
             .load(url)
-            // This listener is the key fix. It catches loading errors.
-            .error(R.drawable.ic_error_image)
+            .error(R.drawable.ic_placeholder_image)
             .diskCacheStrategy(DiskCacheStrategy.ALL)
             .transition(DrawableTransitionOptions.withCrossFade())
             .placeholder(R.drawable.ic_placeholder_image)

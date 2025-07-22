@@ -44,7 +44,7 @@ public class GetLLMSuggestionsUseCaseImpl implements GetLLMSuggestionsUseCase {
 		llmRepository.getPostSuggestionsFromLLM(rawText, imageUrls, baseOfferPrice, baseOfferCurrency, new LLMRepository.LLMAnalysisCallbacks() {
 			@Override
 			public void onSuccess(@NonNull SuggestedPostDetails suggestions) {
-				Log.d(TAG, "LLMRepository returned success. Title: " + suggestions.getSuggestedTitle());
+				Log.d(TAG, "LLMRepository returned success. Title: " + suggestions.getTitle());
 				useCaseCallbacks.onSuccess(suggestions);
 			}
 

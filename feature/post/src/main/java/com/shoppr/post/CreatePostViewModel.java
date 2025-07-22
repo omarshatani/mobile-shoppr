@@ -70,7 +70,7 @@ public class CreatePostViewModel extends AndroidViewModel {
     public final MutableLiveData<String> postTitle = new MutableLiveData<>("");
     public final MutableLiveData<String> postDescription = new MutableLiveData<>("");
     public final MutableLiveData<ListingType> postListingType = new MutableLiveData<>();
-    public final MutableLiveData<String> postCategory = new MutableLiveData<>("");
+    public final MutableLiveData<List<String>> postCategories = new MutableLiveData<>(new ArrayList<>());
 
     private final MutableLiveData<List<Uri>> _selectedImageUris = new MutableLiveData<>(new ArrayList<>());
     public LiveData<List<Uri>> selectedImageUris = _selectedImageUris;
@@ -144,10 +144,10 @@ public class CreatePostViewModel extends AndroidViewModel {
             @Override
             public void onSuccess(@NonNull SuggestedPostDetails suggestions) {
                 Log.d(TAG, "LLM Analysis Success: " + suggestions);
-                postTitle.postValue(suggestions.getSuggestedTitle());
-                postDescription.postValue(suggestions.getSuggestedDescription());
+                postTitle.postValue(suggestions.getTitle());
+                postDescription.postValue(suggestions.getDescription());
                 postListingType.postValue(suggestions.getListingType());
-                postCategory.postValue(suggestions.getSuggestedCategory());
+                postCategories.postValue(suggestions.getCategories());
 
                 // Now construct and save the post, passing the fresh suggestions directly
                 constructAndSavePost(suggestions, lister, localImageUris, creationLocation);
@@ -201,12 +201,12 @@ public class CreatePostViewModel extends AndroidViewModel {
 
         Post.Builder postBuilder = new Post.Builder();
 
-        String title = suggestions.getSuggestedTitle();
-        String description = suggestions.getSuggestedDescription();
+        String title = suggestions.getTitle();
+        String description = suggestions.getDescription();
         ListingType type = suggestions.getListingType();
-        String category = suggestions.getSuggestedCategory();
-        String price = baseOfferPrice.getValue();
-        String currency = suggestions.getExtractedCurrency();
+        List<String> categories = suggestions.getCategories();
+        String price = suggestions.getPrice().toString();
+        String currency = suggestions.getCurrency();
 
         if (title.trim().isEmpty() || description.trim().isEmpty()) {
             Log.e(TAG, "Cannot construct post, essential LLM-derived fields are missing from suggestions object.");
@@ -218,9 +218,7 @@ public class CreatePostViewModel extends AndroidViewModel {
         postBuilder.title(title);
         postBuilder.description(description);
         postBuilder.type(type);
-        if (category != null) {
-            postBuilder.category(category);
-        }
+        postBuilder.categories(categories);
         postBuilder.price(price);
         postBuilder.currency(currency);
 
@@ -251,7 +249,7 @@ public class CreatePostViewModel extends AndroidViewModel {
 
         Post newPostToSave = postBuilder.build();
 
-        Log.d(TAG, "Attempting to save post: " + newPostToSave.getTitle() + ", Type: " + newPostToSave.getType() + ", Category: " + newPostToSave.getCategory());
+        Log.d(TAG, "Attempting to save post: " + newPostToSave.getTitle() + ", Type: " + newPostToSave.getType() + ", Category: " + newPostToSave.getCategories());
 
         savePostUseCase.execute(newPostToSave, new SavePostUseCase.SavePostCallbacks() {
             @Override
