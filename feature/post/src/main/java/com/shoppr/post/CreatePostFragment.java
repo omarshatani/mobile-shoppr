@@ -52,7 +52,6 @@ public class CreatePostFragment extends BaseFragment {
 	// Adapter for the image carousel
 	private SelectedImagesCarouselAdapter selectedImagesAdapter;
 	private ActivityResultLauncher<Intent> pickImagesLauncher;
-	// postCreationLocation is now managed by observing ViewModel's postCreationLocation LiveData
 
 	public CreatePostFragment() { /* Required empty public constructor */ }
 
@@ -270,7 +269,7 @@ public class CreatePostFragment extends BaseFragment {
 		viewModel.selectedImageUris.observe(getViewLifecycleOwner(), uris -> {
 			if (selectedImagesAdapter != null) {
 				Log.d(TAG, "Updating carousel adapter with URIs from ViewModel, count: " + (uris != null ? uris.size() : 0));
-				selectedImagesAdapter.updateUris(uris != null ? uris : new ArrayList<>()); // Changed from submitList
+				selectedImagesAdapter.updateUris(uris != null ? uris : new ArrayList<>());
 				updateCarouselVisibility(uris);
 			}
 		});

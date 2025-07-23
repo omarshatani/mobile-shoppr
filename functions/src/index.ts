@@ -28,6 +28,8 @@ interface ClientRequestData {
 type ListingType =
   | "SELLING_ITEM"
   | "WANTING_TO_BUY_ITEM"
+  | "WANTING_TO_OFFER_SERVICE"
+  | "OFFER_TO_BUY_SERVICE"
   | "UNKNOWN";
 
 interface LLMSuggestions {
@@ -37,7 +39,7 @@ interface LLMSuggestions {
   extractedItemName: string;
   price: number | null;
   currency: string | null;
-  suggestedCategory: string | null;
+  suggestedCategories: string[] | null; // Changed from suggestedCategory: string
 }
 
 interface CloudFunctionSuccessResponse {
@@ -86,15 +88,15 @@ ${metaContext}
 
 Based on this input, create an optimized and detailed prompt for another AI assistant. This optimized prompt must instruct the second AI to:
 1. Analyze the original user request text.
-2. Determine the "listingType" from: "SELLING_ITEM", "WANTING_TO_BUY_ITEM" or "UNKNOWN".
+2. Determine the "listingType". This can be one of the following: "SELLING_ITEM", "WANTING_TO_BUY_ITEM", "WANTING_TO_OFFER_SERVICE", "OFFER_TO_BUY_SERVICE" or "UNKNOWN".
 3. Generate a "suggestedTitle" (5-10 words, concise and appealing).
 4. Generate a "suggestedDescription" (1-3 informative sentences).
 5. Extract the "extractedItemName" (the primary item or service).
 6. Extract a "price" (as a number, or null if not explicitly stated in the user's text).
 7. Extract a "currency" (e.g., "USD", "EUR", "CHF", or null if no price/currency is stated in the user's text).
-8. Suggest a "suggestedCategory" from this list: ["Electronics", "Vehicles", "Home Goods", "Furniture", "Apparel", "Books", "General Services", "Home Repair", "Tutoring", "Jobs", "Community", "Other"], or null if unsure.
+8. Generate "suggestedCategories", which must be an array of up to 3 relevant categories chosen ONLY from the following list: [Electronics, Vehicles, Property, Home & Garden, Fashion, Hobbies & Leisure, Services, Jobs, Pets, Travel, Other].
 9. The second AI MUST return its findings as a VALID JSON object with exactly these keys and no other text, comments, or markdown formatting like \`\`\`json.
-
+10. Make sure all fields are populated.
 Return ONLY the text of the optimized prompt for the second AI. Do not include any explanations or conversational text in your own response.
 Optimized Prompt for Second AI:
   `;
@@ -200,15 +202,15 @@ JSON Output:
       }
     }
 
-    const requiredKeys: Array<keyof LLMSuggestions> = ["listingType", "suggestedTitle", "suggestedDescription", "extractedItemName"];
+    const requiredKeys: Array<keyof LLMSuggestions> = ["listingType", "suggestedTitle", "suggestedDescription", "extractedItemName", "suggestedCategories"];
     for (const key of requiredKeys) {
-      if (!(key in structuredData) || (structuredData[key] === null && key !== "price" && key !== "currency" && key !== "suggestedCategory")) {
+      if (!(key in structuredData) || (structuredData[key] === null && key !== "price" && key !== "currency" && key !== "suggestedCategories")) {
         logger.error(`Missing or null required key '${key}' in parsed JSON.`, structuredData);
         throw new HttpsError("internal", `AI service response missing or invalid key: ${key}`);
       }
     }
 
-    const validListingTypes: ListingType[] = ["SELLING_ITEM", "WANTING_TO_BUY_ITEM", "UNKNOWN"];
+    const validListingTypes: ListingType[] = ["SELLING_ITEM", "WANTING_TO_BUY_ITEM", "WANTING_TO_OFFER_SERVICE", "OFFER_TO_BUY_SERVICE", "UNKNOWN"];
     if (!validListingTypes.includes(structuredData.listingType)) {
       logger.warn(`Invalid listingType '${structuredData.listingType}' from LLM, defaulting to UNKNOWN.`);
       structuredData.listingType = "UNKNOWN";

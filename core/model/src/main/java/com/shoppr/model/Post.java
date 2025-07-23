@@ -17,7 +17,7 @@ public class Post {
 	private ListingState state;
 	private ListingType type;
 	private List<String> imageUrl;
-	private String category;
+	private List<String> categories;
 	private User lister;
 	private List<String> requests;
 
@@ -36,6 +36,7 @@ public class Post {
 	public Post() {
 		this.imageUrl = new ArrayList<>();
 		this.requests = new ArrayList<>();
+		this.categories = new ArrayList<>();
 	}
 
 	private Post(Builder builder) {
@@ -47,7 +48,7 @@ public class Post {
 		this.state = builder.state;
 		this.type = builder.type;
 		this.imageUrl = builder.imageUrl != null ? new ArrayList<>(builder.imageUrl) : new ArrayList<>();
-		this.category = builder.category;
+		this.categories = builder.categories != null ? new ArrayList<>(builder.categories) : new ArrayList<>(); // Changed to handle List
 		this.lister = builder.lister;
 		this.requests = builder.requests != null ? new ArrayList<>(builder.requests) : new ArrayList<>();
 		this.latitude = builder.latitude;
@@ -94,11 +95,11 @@ public class Post {
 
 	public String getCurrency() {
 		return currency;
-	} // New getter
+	}
 
 	public void setCurrency(String currency) {
 		this.currency = currency;
-	} // New setter
+	}
 
 	public ListingState getState() {
 		return state;
@@ -124,12 +125,12 @@ public class Post {
 		this.imageUrl = imageUrl;
 	}
 
-	public String getCategory() {
-		return category;
+	public List<String> getCategories() { // Updated getter
+		return categories;
 	}
 
-	public void setCategory(String category) {
-		this.category = category;
+	public void setCategories(List<String> categories) { // Updated setter
+		this.categories = categories;
 	}
 
 	public User getLister() {
@@ -202,7 +203,7 @@ public class Post {
 		private ListingState state;
 		private ListingType type;
 		private List<String> imageUrl = new ArrayList<>();
-		private String category;
+		private List<String> categories = new ArrayList<>(); // Changed to List<String>
 		private User lister;
 		private List<String> requests = new ArrayList<>();
 		@Nullable
@@ -254,8 +255,8 @@ public class Post {
 			return this;
 		}
 
-		public Builder category(String category) {
-			this.category = category;
+		public Builder categories(List<String> categories) { // Updated builder method
+			this.categories = categories;
 			return this;
 		}
 
