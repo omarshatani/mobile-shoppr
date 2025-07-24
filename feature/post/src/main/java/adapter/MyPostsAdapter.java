@@ -10,24 +10,39 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.chip.Chip;
+import com.shoppr.core.ui.R;
 import com.shoppr.model.Post;
 import com.shoppr.post.databinding.ListItemPostBinding;
 import com.shoppr.ui.utils.ImageLoader;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 public class MyPostsAdapter extends ListAdapter<Post, MyPostsAdapter.PostViewHolder> {
 
 	private final OnPostClickListener listener;
+	private final OnFavoriteClickListener favoriteClickListener;
+	private List<String> favoritePostIds = Collections.emptyList();
 
 	public interface OnPostClickListener {
 		void onPostClicked(@NonNull Post post);
 	}
 
-	public MyPostsAdapter(@NonNull OnPostClickListener listener) {
+	public interface OnFavoriteClickListener {
+		void onFavoriteClick(@NonNull Post post);
+	}
+
+	public MyPostsAdapter(@NonNull OnPostClickListener listener, @NonNull OnFavoriteClickListener favoriteClickListener) {
 		super(PostDiffCallback.INSTANCE);
 		this.listener = listener;
+		this.favoriteClickListener = favoriteClickListener;
+	}
+
+	// New method to update the adapter with the user's favorite posts
+	public void setFavoritePostIds(List<String> favoritePostIds) {
+		this.favoritePostIds = favoritePostIds != null ? favoritePostIds : Collections.emptyList();
+		notifyDataSetChanged(); // Re-bind all visible items with new favorite state
 	}
 
 	@NonNull
@@ -35,28 +50,31 @@ public class MyPostsAdapter extends ListAdapter<Post, MyPostsAdapter.PostViewHol
 	public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 		ListItemPostBinding binding = ListItemPostBinding.inflate(
 				LayoutInflater.from(parent.getContext()), parent, false);
-		return new PostViewHolder(binding, listener);
+		return new PostViewHolder(binding, listener, favoriteClickListener);
 	}
 
 	@Override
 	public void onBindViewHolder(@NonNull PostViewHolder holder, int position) {
 		Post post = getItem(position);
 		if (post != null) {
-			holder.bind(post);
+			boolean isFavorite = favoritePostIds.contains(post.getId());
+			holder.bind(post, isFavorite);
 		}
 	}
 
 	static class PostViewHolder extends RecyclerView.ViewHolder {
 		private final ListItemPostBinding binding;
 		private final OnPostClickListener listener;
+		private final OnFavoriteClickListener favoriteClickListener;
 
-		public PostViewHolder(@NonNull ListItemPostBinding binding, @NonNull OnPostClickListener listener) {
+		public PostViewHolder(@NonNull ListItemPostBinding binding, @NonNull OnPostClickListener listener, @NonNull OnFavoriteClickListener favoriteClickListener) {
 			super(binding.getRoot());
 			this.binding = binding;
 			this.listener = listener;
+			this.favoriteClickListener = favoriteClickListener;
 		}
 
-		public void bind(final Post post) {
+		public void bind(final Post post, final boolean isFavorite) {
 			binding.textPostItemTitle.setText(post.getTitle());
 			binding.textPostItemDescription.setText(post.getDescription());
 
@@ -67,33 +85,36 @@ public class MyPostsAdapter extends ListAdapter<Post, MyPostsAdapter.PostViewHol
 				binding.textPostItemPrice.setVisibility(View.GONE);
 			}
 
-			// --- This is the new logic for category chips ---
-			binding.chipGroupCategory.removeAllViews(); // Clear previous chips
+			binding.chipGroupCategory.removeAllViews();
 			List<String> categories = post.getCategories();
 			if (categories != null && !categories.isEmpty()) {
 				binding.chipGroupCategory.setVisibility(View.VISIBLE);
 				for (String categoryName : categories) {
 					Chip chip = new Chip(itemView.getContext());
 					chip.setText(categoryName);
-					// You can customize the chip style here if needed
 					binding.chipGroupCategory.addView(chip);
 				}
 			} else {
 				binding.chipGroupCategory.setVisibility(View.GONE);
 			}
-			// --- End of new logic ---
 
-			if (post.getRequests() != null && !post.getRequests().isEmpty()) {
-				String offersText = post.getRequests().size() + " Offer" + (post.getRequests().size() > 1 ? "s" : "");
+			if (post.getRequests() != null) {
+				String offersText = post.getRequests().size() + " Offer" + (post.getRequests().size() != 1 ? "s" : "");
 				binding.textPostItemOffersCount.setText(offersText);
-				binding.textPostItemOffersCount.setVisibility(View.VISIBLE);
-			} else {
-				binding.textPostItemOffersCount.setText("0 Offers");
 				binding.textPostItemOffersCount.setVisibility(View.VISIBLE);
 			}
 
 			String imageUrl = (post.getImageUrl() != null && !post.getImageUrl().isEmpty()) ? post.getImageUrl().get(0) : null;
 			ImageLoader.loadImage(binding.imagePostItem, imageUrl);
+
+			if (isFavorite) {
+				binding.buttonFavorite.setText("In Favorites");
+				binding.buttonFavorite.setIconResource(R.drawable.ic_favorite_filled);
+			} else {
+				binding.buttonFavorite.setText("Add to favorites");
+				binding.buttonFavorite.setIconResource(R.drawable.ic_favorite_outline);
+			}
+			binding.buttonFavorite.setOnClickListener(v -> favoriteClickListener.onFavoriteClick(post));
 
 			itemView.setOnClickListener(v -> listener.onPostClicked(post));
 		}

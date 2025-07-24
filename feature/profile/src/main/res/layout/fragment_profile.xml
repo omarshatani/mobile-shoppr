@@ -75,30 +75,33 @@
             android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="16dp"
+            android:paddingVertical="8dp"
             android:background="@drawable/bg_rounded_surface_container"
             android:elevation="1dp"
             android:orientation="vertical">
 
             <com.shoppr.ui.MenuItemView
-                android:id="@+id/item_contact"
+                android:id="@+id/menu_personal_information"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:menuItemIcon="@drawable/ic_person_24"
-                app:menuItemText="@string/menu_contact" />
+                android:layout_marginTop="8dp"
+                app:menuItemIcon="@drawable/ic_account_circle"
+                app:menuItemText="@string/menu_personal_information" />
 
             <com.shoppr.ui.MenuItemView
-                android:id="@+id/item_location"
+                android:id="@+id/menu_item_my_messages"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:menuItemIcon="@drawable/ic_location_on"
-                app:menuItemText="@string/menu_location" />
+                app:menuItemIcon="@drawable/ic_inbox"
+                app:menuItemText="@string/menu_my_posts" />
 
             <com.shoppr.ui.MenuItemView
-                android:id="@+id/item_barcode"
+                android:id="@+id/menu_item_my_favorites"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:menuItemIcon="@drawable/ic_barcode"
-                app:menuItemText="@string/menu_barcode" />
+                app:menuItemIcon="@drawable/ic_favorite_filled"
+                app:menuItemText="@string/menu_favorites" />
+
         </LinearLayout>
 
         <View
@@ -124,25 +127,27 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
+            android:paddingVertical="8dp"
             android:background="@drawable/bg_rounded_surface_container"
             android:elevation="1dp"
             android:orientation="vertical">
 
             <com.shoppr.ui.MenuItemView
-                android:id="@+id/item_likes_coffee"
+                android:id="@+id/menu_item_settings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:menuItemIcon="@drawable/ic_coffee"
-                app:menuItemText="@string/menu_likes_coffee" />
+                app:menuItemIcon="@drawable/ic_settings"
+                app:menuItemText="@string/menu_settings" />
 
             <com.shoppr.ui.MenuItemView
-                android:id="@+id/item_calendar"
+                android:id="@+id/menu_item_help"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:menuItemIcon="@drawable/ic_calendar_month"
-                app:menuItemText="@string/menu_calendar" />
+                app:menuItemIcon="@drawable/ic_help"
+                app:menuItemText="@string/menu_help" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton

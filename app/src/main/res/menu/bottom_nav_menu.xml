@@ -6,7 +6,7 @@
         android:title="Map" />
     <item
         android:id="@+id/request_nav_graph"
-        android:icon="@drawable/ic_inbox_24"
+        android:icon="@drawable/ic_inbox"
         android:title="Requests" />
     <item
         android:id="@+id/post_nav_graph"

@@ -1,6 +1,5 @@
 package com.shoppr.data.di;
 
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.functions.FirebaseFunctions;
 import com.shoppr.data.datasource.FirebaseAuthDataSourceImpl;
 import com.shoppr.data.datasource.FirestorePostDataSourceImpl;
@@ -33,14 +32,14 @@ public class RepositoryModule {
 
 	@Provides
 	@Singleton
-	public UserRepository provideUserRepository() {
-		return new UserRepositoryImpl(new FirestoreUserDataSourceImpl(FirebaseFirestore.getInstance()));
+	public UserRepository provideUserRepository(FirestoreUserDataSourceImpl firestoreUserDataSourceImpl, FirebaseAuthDataSourceImpl firebaseAuthDataSourceImpl) {
+		return new UserRepositoryImpl(firestoreUserDataSourceImpl, firebaseAuthDataSourceImpl);
 	}
 
 	@Provides
 	@Singleton
-	public PostRepository providePostRepository() {
-		return new PostRepositoryImpl(new FirestorePostDataSourceImpl(FirebaseFirestore.getInstance()));
+	public PostRepository providePostRepository(FirestorePostDataSourceImpl firestoreUserDataSourceImpl) {
+		return new PostRepositoryImpl(firestoreUserDataSourceImpl);
 	}
 
 	@Provides

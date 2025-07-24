@@ -5,6 +5,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 import com.shoppr.domain.datasource.FirestoreUserDataSource;
@@ -94,5 +95,33 @@ public class FirestoreUserDataSourceImpl implements FirestoreUserDataSource {
 					Log.e(TAG, "Error updating user profile in Firestore for UID: " + user.getId(), e);
 					callbacks.onError("Error updating user profile: " + e.getMessage());
 				});
+	}
+
+	@Override
+	public void updateUserFavorites(
+			@NonNull String uid,
+			@NonNull String postId,
+			boolean shouldAdd,
+			@NonNull FavoriteUpdateCallbacks callbacks
+	) {
+		firestore.collection("users").document(uid)
+				.update("favoritePosts", shouldAdd ? FieldValue.arrayUnion(postId) : FieldValue.arrayRemove(postId))
+				.addOnSuccessListener(aVoid -> {
+					firestore.collection("users").document(uid).get()
+							.addOnSuccessListener(documentSnapshot -> {
+								if (documentSnapshot.exists()) {
+									User updatedUser = documentSnapshot.toObject(User.class);
+									if (updatedUser != null) {
+										callbacks.onSuccess(updatedUser.getFavoritePosts());
+									} else {
+										callbacks.onError("Failed to parse updated user data.");
+									}
+								} else {
+									callbacks.onError("User document not found after update.");
+								}
+							})
+							.addOnFailureListener(e -> callbacks.onError("Failed to fetch updated favorites: " + e.getMessage()));
+				})
+				.addOnFailureListener(e -> callbacks.onError("Failed to update favorites: " + e.getMessage()));
 	}
 }

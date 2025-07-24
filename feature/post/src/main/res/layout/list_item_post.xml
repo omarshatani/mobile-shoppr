@@ -17,7 +17,7 @@
             android:id="@+id/image_post_item"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:contentDescription="Image of the post"
+            android:contentDescription="@string/post_image"
             android:scaleType="centerCrop"
             app:layout_constraintDimensionRatio="H,16:9"
             app:layout_constraintEnd_toEndOf="parent"
@@ -51,7 +51,7 @@
                 android:maxLines="2"
                 android:textAppearance="?attr/textAppearanceBodyMedium"
                 android:textColor="?android:attr/textColorSecondary"
-                tools:text="This is a great laptop for students and professionals..." />
+                tools:text="This is a great laptop for students and professionals. It has a fast processor, a long-lasting battery, and a lightweight design. Comes with a charger and a protective sleeve." />
 
             <TextView
                 android:id="@+id/text_post_item_price"
@@ -93,6 +93,18 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/divider"
             tools:text="3 offers" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_favorite"
+            style="@style/Widget.Material3.Button.TextButton.Icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="@string/add_to_favorites"
+            app:icon="@drawable/ic_favorite_outline"
+            app:layout_constraintBottom_toBottomOf="@+id/text_post_item_offers_count"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/text_post_item_offers_count" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

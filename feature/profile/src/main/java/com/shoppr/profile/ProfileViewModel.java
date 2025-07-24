@@ -35,4 +35,10 @@ public class ProfileViewModel extends ViewModel {
 		logoutUseCase.invoke();
 		_navigationCommand.setValue(new Event<>(new NavigationRoute.ProfileToLogin()));
 	}
+
+	// --- This is the new method for handling the favorites click ---
+	public void onMyFavoritesClicked() {
+		Log.d(TAG, "My Favorites clicked. Navigating to ProfileToFavorites.");
+		_navigationCommand.setValue(new Event<>(new NavigationRoute.ProfileToFavorites()));
+	}
 }

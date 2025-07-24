@@ -13,6 +13,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.chip.Chip;
+import com.shoppr.core.ui.R;
 import com.shoppr.post.databinding.FragmentPostDetailBinding;
 import com.shoppr.ui.BaseFragment;
 import com.shoppr.ui.utils.ImageLoader;
@@ -55,6 +56,14 @@ public class PostDetailFragment extends BaseFragment {
     private void setupToolbar() {
         NavController navController = NavHostFragment.findNavController(this);
         NavigationUI.setupWithNavController(binding.topAppBar, navController);
+
+        binding.topAppBar.setOnMenuItemClickListener(menuItem -> {
+            if (menuItem.getItemId() == com.shoppr.post.R.id.action_favorite) {
+                viewModel.toggleFavorite();
+                return true;
+            }
+            return false;
+        });
     }
 
     private void observeViewModel() {
@@ -71,7 +80,6 @@ public class PostDetailFragment extends BaseFragment {
                     for (String categoryName : categories) {
                         Chip chip = new Chip(getContext());
                         chip.setText(categoryName);
-                        // You can customize the chip style here if needed
                         binding.detailChipGroupCategory.addView(chip);
                     }
                 } else {
@@ -79,7 +87,7 @@ public class PostDetailFragment extends BaseFragment {
                 }
 
                 if (post.getLister() != null) {
-                    binding.detailListerName.setText("by " + post.getLister().getName());
+                    binding.detailListerName.setText(String.format("by %s", post.getLister().getName()));
                     binding.detailListerName.setVisibility(View.VISIBLE);
                 } else {
                     binding.detailListerName.setVisibility(View.GONE);
@@ -87,6 +95,13 @@ public class PostDetailFragment extends BaseFragment {
 
                 String imageUrl = (post.getImageUrl() != null && !post.getImageUrl().isEmpty()) ? post.getImageUrl().get(0) : null;
                 ImageLoader.loadImage(binding.detailPostImage, imageUrl);
+            }
+        });
+
+        viewModel.isFavorite().observe(getViewLifecycleOwner(), isFavorite -> {
+            if (isFavorite != null) {
+                binding.topAppBar.getMenu().findItem(com.shoppr.post.R.id.action_favorite)
+                    .setIcon(isFavorite ? R.drawable.ic_favorite_filled : R.drawable.ic_favorite_outline);
             }
         });
     }

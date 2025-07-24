@@ -12,6 +12,7 @@ import com.shoppr.data.usecase.HandleSignInResultUseCaseImpl;
 import com.shoppr.data.usecase.LogoutUseCaseImpl;
 import com.shoppr.data.usecase.ObserveAuthStateUseCaseImpl;
 import com.shoppr.data.usecase.SavePostUseCaseImpl;
+import com.shoppr.data.usecase.ToggleFavoriteUseCaseImpl;
 import com.shoppr.data.usecase.UpdateUserDefaultLocationUseCaseImpl;
 import com.shoppr.domain.usecase.CheckInitialNavigationUseCase;
 import com.shoppr.domain.usecase.CreateUserProfileUseCase;
@@ -25,6 +26,7 @@ import com.shoppr.domain.usecase.HandleSignInResultUseCase;
 import com.shoppr.domain.usecase.LogoutUseCase;
 import com.shoppr.domain.usecase.ObserveAuthStateUseCase;
 import com.shoppr.domain.usecase.SavePostUseCase;
+import com.shoppr.domain.usecase.ToggleFavoriteUseCase;
 import com.shoppr.domain.usecase.UpdateUserDefaultLocationUseCase;
 
 import javax.inject.Singleton;
@@ -84,6 +86,10 @@ public abstract class UseCaseModule {
     @Binds
     @Singleton
     public abstract GetPostByIdUseCase bindGetPostByIdUseCase(GetPostByIdUseCaseImpl impl);
+
+    @Binds
+    @Singleton
+    public abstract ToggleFavoriteUseCase bindToggleFavoriteUseCase(ToggleFavoriteUseCaseImpl impl);
 
     @Binds
     @Singleton

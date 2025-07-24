@@ -2,22 +2,28 @@ package com.shoppr.model;
 
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class User {
 	private String id;
 	private String name;
 	private String email;
 	private String phoneNumber;
-	private String address; // General address string
+	private String address;
+	private List<String> favoritePosts;
 
-	// New fields for last known/default posting location
 	@Nullable
 	private Double lastLatitude;
 	@Nullable
 	private Double lastLongitude;
 	@Nullable
-	private String lastLocationAddress; // Optional: A reverse-geocoded address for this lat/lon
+	private String lastLocationAddress;
 
-	public User() {}
+
+	public User() {
+		this.favoritePosts = new ArrayList<>();
+	}
 
 	private User(Builder builder) {
 		this.id = builder.id;
@@ -30,7 +36,6 @@ public class User {
 		this.lastLocationAddress = builder.lastLocationAddress;
 	}
 
-	// Existing getters and setters...
 	public String getId() {
 		return id;
 	}
@@ -71,7 +76,6 @@ public class User {
 		this.address = address;
 	}
 
-	// Getters and Setters for new location fields
 	@Nullable
 	public Double getLastLatitude() {
 		return lastLatitude;
@@ -99,6 +103,13 @@ public class User {
 		this.lastLocationAddress = lastLocationAddress;
 	}
 
+	public List<String> getFavoritePosts() {
+		return favoritePosts;
+	}
+
+	public void setFavoritePosts(List<String> favoritePosts) {
+		this.favoritePosts = favoritePosts;
+	}
 
 	public static class Builder {
 		private String id;
@@ -106,6 +117,7 @@ public class User {
 		private String email;
 		private String phoneNumber;
 		private String address;
+		private List<String> favoritePosts;
 		@Nullable
 		private Double lastLatitude;
 		@Nullable
@@ -135,6 +147,11 @@ public class User {
 
 		public Builder address(String address) {
 			this.address = address;
+			return this;
+		}
+
+		public Builder favorites(List<String> favoritePosts) {
+			this.favoritePosts = favoritePosts;
 			return this;
 		}
 
