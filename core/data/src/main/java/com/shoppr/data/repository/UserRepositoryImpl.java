@@ -45,10 +45,9 @@ public class UserRepositoryImpl implements UserRepository {
 						.id(uid)
 						.name(displayName)
 						.email(email)
-						// Initialize new location fields to null or default
-						.lastLatitude(null)
-						.lastLongitude(null)
-						.lastLocationAddress(null)
+						.latitude(null)
+						.longitude(null)
+						.locationAddress(null)
 						.build();
 
 				firestoreUserDataSource.createUser(newUser, new FirestoreUserDataSource.FirestoreOperationCallbacks() {
@@ -91,9 +90,9 @@ public class UserRepositoryImpl implements UserRepository {
 			@Override
 			public void onSuccess(@NonNull User user) {
 				Log.d(TAG, "User " + uid + " found. Updating location fields on the fetched User object.");
-				user.setLastLatitude(latitude);
-				user.setLastLongitude(longitude);
-				user.setLastLocationAddress(addressName);
+				user.setLatitude(latitude);
+				user.setLongitude(longitude);
+				user.setLocationAddress(addressName);
 
 				// Now call the updateUser method in the DataSource with the modified User object
 				firestoreUserDataSource.updateUser(user, new FirestoreUserDataSource.FirestoreOperationCallbacks() {

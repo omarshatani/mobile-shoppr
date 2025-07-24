@@ -1,14 +1,12 @@
 package com.shoppr.post;
 
-import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.shoppr.domain.repository.AuthenticationRepository;
+import com.shoppr.domain.usecase.GetCurrentUserUseCase;
 import com.shoppr.domain.usecase.GetPostByIdUseCase;
 import com.shoppr.domain.usecase.ToggleFavoriteUseCase;
 import com.shoppr.model.Post;
@@ -20,21 +18,17 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
 public class PostDetailViewModel extends ViewModel {
-    private static final String TAG = "PostDetailViewModel";
 
     private final GetPostByIdUseCase getPostByIdUseCase;
     private final ToggleFavoriteUseCase toggleFavoriteUseCase;
-    private final AuthenticationRepository authenticationRepository;
+    private final GetCurrentUserUseCase getCurrentUserUseCase;
 
     private final MutableLiveData<Post> _selectedPost = new MutableLiveData<>();
-
     public LiveData<Post> getSelectedPost() {
         return _selectedPost;
     }
 
-    // This MediatorLiveData is the key to the fix.
     private final MediatorLiveData<Boolean> _isFavorite = new MediatorLiveData<>();
-
     public LiveData<Boolean> isFavorite() {
         return _isFavorite;
     }
@@ -45,14 +39,21 @@ public class PostDetailViewModel extends ViewModel {
     public PostDetailViewModel(
         GetPostByIdUseCase getPostByIdUseCase,
         ToggleFavoriteUseCase toggleFavoriteUseCase,
-        AuthenticationRepository authenticationRepository
+        GetCurrentUserUseCase getCurrentUserUseCase
     ) {
         this.getPostByIdUseCase = getPostByIdUseCase;
         this.toggleFavoriteUseCase = toggleFavoriteUseCase;
-        this.authenticationRepository = authenticationRepository;
+        this.getCurrentUserUseCase = getCurrentUserUseCase;
 
-        // Observe the user's auth state to react to changes in their favorites list
-        _isFavorite.addSource(authenticationRepository.getRawAuthState(), this::updateFavoriteStatus);
+        _isFavorite.addSource(getCurrentUserUseCase.getFullUserProfile(), this::updateFavoriteStatus);
+    }
+
+    public void onStart() {
+        getCurrentUserUseCase.startObserving();
+    }
+
+    public void onStop() {
+        getCurrentUserUseCase.stopObserving();
     }
 
     public void loadPostDetails(String postId) {
@@ -61,8 +62,7 @@ public class PostDetailViewModel extends ViewModel {
             @Override
             public void onSuccess(@NonNull Post post) {
                 _selectedPost.setValue(post);
-                // Now that we have a post, check its favorite status against the current user
-                updateFavoriteStatus(authenticationRepository.getRawAuthState().getValue());
+                updateFavoriteStatus(getCurrentUserUseCase.getFullUserProfile().getValue());
             }
 
             @Override
@@ -76,17 +76,21 @@ public class PostDetailViewModel extends ViewModel {
 
     private void updateFavoriteStatus(User user) {
         if (currentPostId == null) {
-            return; // Don't do anything if we don't have a post yet
+            _isFavorite.setValue(false);
+            return;
         }
+
         if (user != null && user.getFavoritePosts() != null) {
-            _isFavorite.setValue(user.getFavoritePosts().contains(currentPostId));
+            boolean isFavorite = user.getFavoritePosts().contains(currentPostId);
+            _isFavorite.setValue(isFavorite);
         } else {
             _isFavorite.setValue(false);
         }
     }
 
     public void toggleFavorite() {
-        if (currentPostId == null || !authenticationRepository.isUserLoggedIn()) {
+        User currentUser = getCurrentUserUseCase.getFullUserProfile().getValue();
+        if (currentPostId == null || currentUser == null) {
             return;
         }
 
@@ -94,14 +98,16 @@ public class PostDetailViewModel extends ViewModel {
         toggleFavoriteUseCase.execute(currentPostId, currentlyFavorite, new ToggleFavoriteUseCase.FavoriteToggleCallbacks() {
             @Override
             public void onSuccess(boolean isNowFavorite) {
-                // The LiveData will update automatically from the user auth state listener.
             }
-
             @Override
             public void onError(@NonNull String message) {
-                // Optionally show an error
-                Log.e(TAG, "Error toggling favorite: " + message);
             }
         });
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        getCurrentUserUseCase.stopObserving();
     }
 }

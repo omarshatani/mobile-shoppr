@@ -14,15 +14,13 @@ public class User {
 	private List<String> favoritePosts;
 
 	@Nullable
-	private Double lastLatitude;
+	private Double latitude;
 	@Nullable
-	private Double lastLongitude;
+	private Double longitude;
 	@Nullable
-	private String lastLocationAddress;
-
+	private String locationAddress;
 
 	public User() {
-		this.favoritePosts = new ArrayList<>();
 	}
 
 	private User(Builder builder) {
@@ -31,9 +29,10 @@ public class User {
 		this.email = builder.email;
 		this.phoneNumber = builder.phoneNumber;
 		this.address = builder.address;
-		this.lastLatitude = builder.lastLatitude;
-		this.lastLongitude = builder.lastLongitude;
-		this.lastLocationAddress = builder.lastLocationAddress;
+		this.latitude = builder.latitude;
+		this.longitude = builder.longitude;
+		this.locationAddress = builder.locationAddress;
+		this.favoritePosts = builder.favoritePosts != null ? new ArrayList<>(builder.favoritePosts) : new ArrayList<>();
 	}
 
 	public String getId() {
@@ -77,30 +76,30 @@ public class User {
 	}
 
 	@Nullable
-	public Double getLastLatitude() {
-		return lastLatitude;
+	public Double getLatitude() {
+		return latitude;
 	}
 
-	public void setLastLatitude(@Nullable Double lastLatitude) {
-		this.lastLatitude = lastLatitude;
-	}
-
-	@Nullable
-	public Double getLastLongitude() {
-		return lastLongitude;
-	}
-
-	public void setLastLongitude(@Nullable Double lastLongitude) {
-		this.lastLongitude = lastLongitude;
+	public void setLatitude(@Nullable Double latitude) {
+		this.latitude = latitude;
 	}
 
 	@Nullable
-	public String getLastLocationAddress() {
-		return lastLocationAddress;
+	public Double getLongitude() {
+		return longitude;
 	}
 
-	public void setLastLocationAddress(@Nullable String lastLocationAddress) {
-		this.lastLocationAddress = lastLocationAddress;
+	public void setLongitude(@Nullable Double longitude) {
+		this.longitude = longitude;
+	}
+
+	@Nullable
+	public String getLocationAddress() {
+		return locationAddress;
+	}
+
+	public void setLocationAddress(@Nullable String locationAddress) {
+		this.locationAddress = locationAddress;
 	}
 
 	public List<String> getFavoritePosts() {
@@ -117,13 +116,13 @@ public class User {
 		private String email;
 		private String phoneNumber;
 		private String address;
-		private List<String> favoritePosts;
+		private List<String> favoritePosts = new ArrayList<>();
 		@Nullable
-		private Double lastLatitude;
+		private Double latitude;
 		@Nullable
-		private Double lastLongitude;
+		private Double longitude;
 		@Nullable
-		private String lastLocationAddress;
+		private String locationAddress;
 
 		public Builder id(String id) {
 			this.id = id;
@@ -150,26 +149,25 @@ public class User {
 			return this;
 		}
 
-		public Builder favorites(List<String> favoritePosts) {
+		public Builder favoritePosts(List<String> favoritePosts) {
 			this.favoritePosts = favoritePosts;
 			return this;
 		}
 
-		public Builder lastLatitude(@Nullable Double latitude) {
-			this.lastLatitude = latitude;
+		public Builder latitude(@Nullable Double latitude) {
+			this.latitude = latitude;
 			return this;
 		}
 
-		public Builder lastLongitude(@Nullable Double longitude) {
-			this.lastLongitude = longitude;
+		public Builder longitude(@Nullable Double longitude) {
+			this.longitude = longitude;
 			return this;
 		}
 
-		public Builder lastLocationAddress(@Nullable String address) {
-			this.lastLocationAddress = address;
+		public Builder locationAddress(@Nullable String address) {
+			this.locationAddress = address;
 			return this;
 		}
-
 
 		public User build() {
 			return new User(this);

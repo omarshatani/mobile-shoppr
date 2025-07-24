@@ -92,7 +92,6 @@ public class PostFragmentViewModel extends ViewModel {
 		});
 	}
 
-	// --- All your other existing methods remain unchanged ---
 	private void fetchUserPosts(@NonNull String userId) {
 		_isLoading.setValue(true);
 		if (currentPostsSource != null) {

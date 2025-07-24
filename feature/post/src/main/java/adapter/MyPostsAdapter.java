@@ -108,10 +108,10 @@ public class MyPostsAdapter extends ListAdapter<Post, MyPostsAdapter.PostViewHol
 			ImageLoader.loadImage(binding.imagePostItem, imageUrl);
 
 			if (isFavorite) {
-				binding.buttonFavorite.setText("In Favorites");
+				binding.buttonFavorite.setText(com.shoppr.post.R.string.in_favorites);
 				binding.buttonFavorite.setIconResource(R.drawable.ic_favorite_filled);
 			} else {
-				binding.buttonFavorite.setText("Add to favorites");
+				binding.buttonFavorite.setText(com.shoppr.post.R.string.add_to_favorites);
 				binding.buttonFavorite.setIconResource(R.drawable.ic_favorite_outline);
 			}
 			binding.buttonFavorite.setOnClickListener(v -> favoriteClickListener.onFavoriteClick(post));

@@ -64,6 +64,7 @@ public class PostFragment extends BaseFragment implements MyPostsAdapter.OnPostC
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         setupRootViewInsets(view);
         setupRecyclerView();
         setupSwipeToRefresh();
