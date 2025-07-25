@@ -9,42 +9,47 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavDirections;
-import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.shoppr.model.Event;
+import com.shoppr.model.Post;
 import com.shoppr.navigation.NavigationRoute;
 import com.shoppr.navigation.Navigator;
 import com.shoppr.post.databinding.FragmentPostBinding;
 import com.shoppr.ui.BaseFragment;
+import com.shoppr.ui.adapter.MyPostsAdapter;
+import com.shoppr.ui.utils.InsetUtils;
+
+import java.util.Collections;
 
 import javax.inject.Inject;
 
-import adapter.MyPostsAdapter;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class PostFragment extends BaseFragment {
+public class PostFragment extends BaseFragment implements MyPostsAdapter.OnPostClickListener, MyPostsAdapter.OnFavoriteClickListener {
+
     private static final String TAG = "PostFragment";
     private FragmentPostBinding binding;
     private PostFragmentViewModel viewModel;
-    private MyPostsAdapter adapter;
+    private MyPostsAdapter myPostsAdapter;
 
     @Inject
     Navigator navigator;
+
+    public PostFragment() {
+    }
 
     public static PostFragment newInstance() {
         return new PostFragment();
     }
 
-    public PostFragment() {
-        // Required empty public constructor
-    }
-
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         viewModel = new ViewModelProvider(this).get(PostFragmentViewModel.class);
     }
@@ -60,6 +65,7 @@ public class PostFragment extends BaseFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        setupRootViewInsets(view);
         setupRecyclerView();
         setupSwipeToRefresh();
         setupBindings();
@@ -70,9 +76,6 @@ public class PostFragment extends BaseFragment {
     public void onStart() {
         super.onStart();
         viewModel.startObservingUser();
-        // The ViewModel will automatically fetch posts when the user is observed.
-        // An explicit refresh might still be useful here if you want to guarantee fresh data on every start.
-        // viewModel.refreshPosts();
     }
 
     @Override
@@ -81,44 +84,41 @@ public class PostFragment extends BaseFragment {
         viewModel.stopObservingUser();
     }
 
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (binding != null) {
-            binding.recyclerViewMyPosts.setAdapter(null);
-        }
-        adapter = null;
         binding = null;
     }
 
-    private void setupRecyclerView() {
-        adapter = new MyPostsAdapter(post -> {
-            NavDirections action = PostFragmentDirections.actionPostFragmentToPostDetailFragment(post.getId());
-            NavHostFragment.findNavController(this).navigate(action);
-        });
-        binding.recyclerViewMyPosts.setLayoutManager(new LinearLayoutManager(getContext()));
-        binding.recyclerViewMyPosts.setAdapter(adapter);
-    }
-
-    private void setupSwipeToRefresh() {
-        if (binding == null) return;
-        // Set the listener for the swipe gesture
-        binding.swipeRefreshLayoutMyPosts.setOnRefreshListener(() -> {
-            Log.d(TAG, "Swipe to refresh triggered.");
-            viewModel.refreshPosts();
-        });
-    }
-
     private void observeViewModel() {
+        viewModel.getNavigationCommand().observe(getViewLifecycleOwner(), event -> {
+            NavigationRoute route = event.peekContent();
+            if (route instanceof NavigationRoute.PostsToCreatePost) {
+                NavigationRoute consumedRoute = event.getContentIfNotHandled();
+                if (consumedRoute == null) {
+                    return;
+                }
+                navigator.navigate(consumedRoute);
+            }
+        });
+
         viewModel.posts.observe(getViewLifecycleOwner(), posts -> {
             if (posts != null) {
                 Log.d(TAG, "Observed posts. Count: " + posts.size());
-                adapter.submitList(posts);
+                myPostsAdapter.submitList(posts);
                 updateEmptyState(posts.isEmpty());
             } else {
                 Log.d(TAG, "Observed posts list was null.");
                 updateEmptyState(true);
+            }
+        });
+
+        // 2. Add a new observer for the user's profile to get their favorites list
+        viewModel.currentUserProfileLiveData.observe(getViewLifecycleOwner(), user -> {
+            if (user != null && user.getFavoritePosts() != null) {
+                myPostsAdapter.setFavoritePostIds(user.getFavoritePosts());
+            } else {
+                myPostsAdapter.setFavoritePostIds(Collections.emptyList());
             }
         });
 
@@ -137,19 +137,45 @@ public class PostFragment extends BaseFragment {
             Log.e(TAG, "Error message: " + errorMessage);
             Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
         }));
+    }
 
-        viewModel.getNavigationCommand().observe(getViewLifecycleOwner(), event -> {
-            if (event == null) return;
-            NavigationRoute route = event.getContentIfNotHandled();
-            if (route != null) {
-                if (route instanceof NavigationRoute.PostsToCreatePost) {
-                    NavDirections directions = PostFragmentDirections.actionPostFragmentToCreatePostFragment();
-                    NavHostFragment.findNavController(this).navigate(directions);
-                } else {
-                    navigator.navigate(route);
-                }
-            }
+    private void setupSwipeToRefresh() {
+        if (binding == null) return;
+        // Set the listener for the swipe gesture
+        binding.swipeRefreshLayoutMyPosts.setOnRefreshListener(() -> {
+            Log.d(TAG, "Swipe to refresh triggered.");
+            viewModel.refreshPosts();
         });
+    }
+
+    private void setupRootViewInsets(View view) {
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
+            InsetUtils.applyBottomNavPadding(
+                v,
+                windowInsets,
+                com.shoppr.core.ui.R.dimen.bottom_nav_height
+            );
+            return windowInsets;
+        });
+        ViewCompat.requestApplyInsets(view);
+    }
+
+    private void setupRecyclerView() {
+        myPostsAdapter = new MyPostsAdapter(this, this);
+        binding.recyclerViewMyPosts.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.recyclerViewMyPosts.setAdapter(myPostsAdapter);
+    }
+
+    @Override
+    public void onPostClicked(@NonNull Post post) {
+        if (post.getId() == null) return;
+        NavDirections action = PostFragmentDirections.actionPostFragmentToPostDetailFragment(post.getId());
+        Navigation.findNavController(requireView()).navigate(action);
+    }
+
+    @Override
+    public void onFavoriteClick(@NonNull Post post) {
+        viewModel.onFavoriteClicked(post);
     }
 
     private void updateEmptyState(boolean isEmpty) {
@@ -169,4 +195,5 @@ public class PostFragment extends BaseFragment {
         binding.buttonCreateFirstPost.setOnClickListener(v -> viewModel.navigateToCreatePost());
         binding.fabCreatePost.setOnClickListener(v -> viewModel.navigateToCreatePost());
     }
+
 }

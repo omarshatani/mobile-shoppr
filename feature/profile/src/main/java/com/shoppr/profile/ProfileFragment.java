@@ -55,6 +55,7 @@ public class ProfileFragment extends BaseFragment {
 		setupUserName();
 		setupEmail();
 		setupLogoutCta();
+		setupFavoritesCta();
 		observeViewModel();
 	}
 
@@ -68,7 +69,7 @@ public class ProfileFragment extends BaseFragment {
 	private void observeViewModel() {
 		viewModel.getNavigationCommand().observe(getViewLifecycleOwner(), event -> {
 			NavigationRoute route = event.peekContent();
-			if (route instanceof NavigationRoute.ProfileToLogin) {
+			if (route instanceof NavigationRoute.ProfileToLogin || route instanceof NavigationRoute.ProfileToFavorites) {
 				NavigationRoute consumedRoute = event.getContentIfNotHandled();
 				if (consumedRoute == null) {
 					return;
@@ -101,5 +102,10 @@ public class ProfileFragment extends BaseFragment {
 
 	private void setupLogoutCta() {
 		binding.buttonLogout.setOnClickListener(v -> viewModel.onLogoutClicked());
+	}
+
+	private void setupFavoritesCta() {
+		View favoritesRoot = binding.menuItemMyFavorites.findViewById(com.shoppr.core.ui.R.id.menu_item_root);
+		favoritesRoot.setOnClickListener(v -> viewModel.onMyFavoritesClicked());
 	}
 }

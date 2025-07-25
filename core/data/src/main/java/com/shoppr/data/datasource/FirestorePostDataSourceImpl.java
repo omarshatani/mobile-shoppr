@@ -11,6 +11,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.SetOptions;
 import com.shoppr.domain.datasource.FirestorePostDataSource;
 import com.shoppr.model.ListingState;
@@ -140,6 +141,30 @@ public class FirestorePostDataSourceImpl implements FirestorePostDataSource {
 					Log.e(TAG, "Error fetching post by ID: " + postId, e);
 					callbacks.onError(e.getMessage());
 				});
+	}
+
+	@Override
+	public void getPostsByIds(@NonNull List<String> postIds, @NonNull PostsCallbacks callbacks) {
+		if (postIds.isEmpty()) {
+			callbacks.onSuccess(new ArrayList<>()); // Return an empty list immediately
+			return;
+		}
+
+		// A "whereIn" query can only handle up to 30 items at a time.
+		// For a more robust solution, you might need to batch these requests.
+		// For now, we'll assume the list is within Firestore's limits.
+		firestore.collection(POSTS_COLLECTION)
+				.whereIn("id", postIds)
+				.get()
+				.addOnSuccessListener(queryDocumentSnapshots -> {
+					List<Post> posts = new ArrayList<>();
+					for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+						Post post = document.toObject(Post.class);
+						posts.add(post);
+					}
+					callbacks.onSuccess(posts);
+				})
+				.addOnFailureListener(e -> callbacks.onError("Failed to fetch posts: " + e.getMessage()));
 	}
 
 	@Override

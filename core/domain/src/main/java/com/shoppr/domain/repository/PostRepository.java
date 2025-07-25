@@ -52,6 +52,14 @@ public interface PostRepository {
 	void getPostById(@NonNull String postId, @NonNull GetPostByIdCallbacks callbacks);
 
 	/**
+	 * Returns a LiveData object containing a list of posts for the given IDs.
+	 *
+	 * @param postIds The list of post IDs to fetch.
+	 * @return A LiveData object holding the list of posts.
+	 */
+	LiveData<List<Post>> getPostsByIds(List<String> postIds);
+
+	/**
 	 * Retrieves all posts created by a specific user.
 	 *
 	 * @param userId    The ID of the user.

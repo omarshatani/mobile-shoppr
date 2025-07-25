@@ -39,7 +39,6 @@ public class CreatePostViewModel extends AndroidViewModel {
     private final GetCurrentUserUseCase getCurrentUserUseCase;
 
     public final LiveData<User> currentListerLiveData;
-    public final LiveData<Event<String>> currentUserErrorEvents;
 
     // Derived location from the current lister's profile
     private final MutableLiveData<LocationData> _postCreationLocation = new MutableLiveData<>();
@@ -89,7 +88,6 @@ public class CreatePostViewModel extends AndroidViewModel {
         this.getCurrentUserUseCase = getCurrentUserUseCase;
 
         this.currentListerLiveData = this.getCurrentUserUseCase.getFullUserProfile();
-        this.currentUserErrorEvents = this.getCurrentUserUseCase.getProfileErrorEvents();
 
         listerObserver = this::getListerLocation; // Using method reference
         this.currentListerLiveData.observeForever(listerObserver);
@@ -97,11 +95,11 @@ public class CreatePostViewModel extends AndroidViewModel {
     }
 
     private void getListerLocation(User user) {
-        if (user != null && user.getLastLatitude() != null && user.getLastLongitude() != null) {
+        if (user != null && user.getLatitude() != null && user.getLongitude() != null) {
             LocationData newLocation = new LocationData(
-                user.getLastLatitude(),
-                user.getLastLongitude(),
-                user.getLastLocationAddress()
+                user.getLatitude(),
+                user.getLongitude(),
+                user.getLocationAddress()
             );
             boolean changed = isChanged(newLocation);
             if (changed) {

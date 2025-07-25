@@ -37,4 +37,7 @@ public abstract class NavigationRoute {
 	public static final class ProfileToLogin extends NavigationRoute {
 	}
 
+	public static final class ProfileToFavorites extends NavigationRoute {
+	}
+
 }

@@ -30,6 +30,7 @@ public class AppNavigator implements Navigator {
         ROUTES.put(NavigationRoute.Profile.class, R.id.action_global_navigateToProfile);
         ROUTES.put(NavigationRoute.ProfileToLogin.class, R.id.action_profile_to_login);
         ROUTES.put(NavigationRoute.PostsToCreatePost.class, R.id.action_posts_to_create_post);
+        ROUTES.put(NavigationRoute.ProfileToFavorites.class, R.id.action_profileFragment_to_favorites);
     }
 
     @Inject

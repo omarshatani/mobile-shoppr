@@ -5,6 +5,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.shoppr.domain.datasource.FirestorePostDataSource;
 import com.shoppr.domain.repository.PostRepository;
@@ -54,6 +55,24 @@ public class PostRepositoryImpl implements PostRepository {
 			@Override public void onError(@NonNull String message) { callbacks.onError(message); }
 			@Override public void onNotFound() { callbacks.onNotFound(); }
 		});
+	}
+
+	@Override
+	public LiveData<List<Post>> getPostsByIds(List<String> postIds) {
+		MutableLiveData<List<Post>> postsLiveData = new MutableLiveData<>();
+		postDataSource.getPostsByIds(postIds, new FirestorePostDataSource.PostsCallbacks() {
+			@Override
+			public void onSuccess(@NonNull List<Post> posts) {
+				postsLiveData.postValue(posts);
+			}
+
+			@Override
+			public void onError(@NonNull String message) {
+				// You could post an empty list or handle the error in another way
+				postsLiveData.postValue(null);
+			}
+		});
+		return postsLiveData;
 	}
 
 	@Override

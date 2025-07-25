@@ -40,7 +40,6 @@ public class MapViewModel extends AndroidViewModel {
 
     // LiveData for the currently authenticated user (with full profile)
     public final LiveData<User> currentUserProfileLiveData;
-    public final LiveData<Event<String>> currentUserProfileErrorEvents;
 
     // LiveData for posts to be displayed on the map
     // Using MediatorLiveData to combine results from GetMapPostsUseCase based on current user
@@ -95,7 +94,6 @@ public class MapViewModel extends AndroidViewModel {
         this.getPostByIdUseCase = getPostByIdUseCase;
 
         this.currentUserProfileLiveData = this.getCurrentUserUseCase.getFullUserProfile();
-        this.currentUserProfileErrorEvents = this.getCurrentUserUseCase.getProfileErrorEvents();
 
         userProfileAndPostsObserver = user -> {
             String currentUserId = null;
@@ -103,10 +101,10 @@ public class MapViewModel extends AndroidViewModel {
                 currentUserId = user.getId();
                 Log.d(TAG, "UserProfileObserver: User data received - " + user.getName() + " (UID: " + currentUserId + ")");
 
-                if (!initialMapCenterAttempted && user.getLastLatitude() != null && user.getLastLongitude() != null) {
+                if (!initialMapCenterAttempted && user.getLatitude() != null && user.getLongitude() != null) {
                     Log.d(TAG, "UserProfileObserver: User has last known location. Centering map: " +
-                            user.getLastLatitude() + ", " + user.getLastLongitude());
-                    _moveToLocationEvent.postValue(new Event<>(new LatLng(user.getLastLatitude(), user.getLastLongitude())));
+                        user.getLatitude() + ", " + user.getLongitude());
+                    _moveToLocationEvent.postValue(new Event<>(new LatLng(user.getLatitude(), user.getLongitude())));
                     initialMapCenterAttempted = true;
                 } else if (!initialMapCenterAttempted) {
                     Log.d(TAG, "UserProfileObserver: User profile loaded, but no last known location saved, or already attempted center. Will attempt to fetch current device location if permission is granted.");
@@ -123,14 +121,6 @@ public class MapViewModel extends AndroidViewModel {
             loadPostsForMap(currentUserId);
         };
 
-        this.currentUserProfileErrorEvents.observeForever(errorEvent -> { // Use observeForever carefully
-            if (errorEvent == null) return;
-            String errorMessage = errorEvent.getContentIfNotHandled();
-            if (errorMessage != null) {
-                Log.e(TAG, "Error loading user profile: " + errorMessage);
-                _toastMessageEvent.postValue(new Event<>("Error loading user profile: " + errorMessage));
-            }
-        });
     }
 
     private void loadPostsForMap(@Nullable String currentUserId) {
@@ -314,10 +304,6 @@ public class MapViewModel extends AndroidViewModel {
         super.onCleared();
         Log.d(TAG, "MapViewModel onCleared. Removing observers.");
         currentUserProfileLiveData.removeObserver(userProfileAndPostsObserver);
-        // Remove observer from currentUserProfileErrorEvents if observeForever was used
         getCurrentUserUseCase.stopObserving();
-        if (currentMapPostsSource != null) {
-            _mapPosts.removeSource(currentMapPostsSource);
-        }
     }
 }

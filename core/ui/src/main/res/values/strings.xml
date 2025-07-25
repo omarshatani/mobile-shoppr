@@ -3,14 +3,16 @@
     <string name="settings_header">Settings</string>
     <string name="support_header">Support</string>
 
-    <string name="menu_contact">Contact</string>
-    <string name="menu_location">Location</string>
-    <string name="menu_barcode">Barcode</string>
-
-    <string name="menu_likes_coffee">Likes Coffee With Milk</string>
-    <string name="menu_points">Points</string>
-    <string name="menu_visit_history">Visit</string>
-    <string name="menu_calendar">Calendar</string>
+    <string name="menu_personal_information">Personal information</string>">
+    <string name="menu_my_posts">Messages</string>
+    <string name="menu_favorites">Favorites</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_help">Need help?</string>
 
     <string name="logout">Logout</string>
+
+    <string name="add_to_favorites">Add to favorites</string>
+    <string name="favorite">Favorite</string>
+    <string name="post_image">Post image</string>
+    <string name="in_favorites">In Favorites</string>
 </resources>

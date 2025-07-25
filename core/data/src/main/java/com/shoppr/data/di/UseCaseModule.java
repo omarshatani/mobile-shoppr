@@ -4,6 +4,7 @@ import com.shoppr.data.usecase.CheckInitialNavigationUseCaseImpl;
 import com.shoppr.data.usecase.CreateUserProfileUseCaseImpl;
 import com.shoppr.data.usecase.GetCurrentDeviceLocationUseCaseImpl;
 import com.shoppr.data.usecase.GetCurrentUserUseCaseImpl;
+import com.shoppr.data.usecase.GetFavoritePostsUseCaseImpl;
 import com.shoppr.data.usecase.GetLLMSuggestionsUseCaseImpl;
 import com.shoppr.data.usecase.GetMapPostsUseCaseImpl;
 import com.shoppr.data.usecase.GetMyPostsUseCaseImpl;
@@ -12,11 +13,13 @@ import com.shoppr.data.usecase.HandleSignInResultUseCaseImpl;
 import com.shoppr.data.usecase.LogoutUseCaseImpl;
 import com.shoppr.data.usecase.ObserveAuthStateUseCaseImpl;
 import com.shoppr.data.usecase.SavePostUseCaseImpl;
+import com.shoppr.data.usecase.ToggleFavoriteUseCaseImpl;
 import com.shoppr.data.usecase.UpdateUserDefaultLocationUseCaseImpl;
 import com.shoppr.domain.usecase.CheckInitialNavigationUseCase;
 import com.shoppr.domain.usecase.CreateUserProfileUseCase;
 import com.shoppr.domain.usecase.GetCurrentDeviceLocationUseCase;
 import com.shoppr.domain.usecase.GetCurrentUserUseCase;
+import com.shoppr.domain.usecase.GetFavoritePostsUseCase;
 import com.shoppr.domain.usecase.GetLLMSuggestionsUseCase;
 import com.shoppr.domain.usecase.GetMapPostsUseCase;
 import com.shoppr.domain.usecase.GetMyPostsUseCase;
@@ -25,6 +28,7 @@ import com.shoppr.domain.usecase.HandleSignInResultUseCase;
 import com.shoppr.domain.usecase.LogoutUseCase;
 import com.shoppr.domain.usecase.ObserveAuthStateUseCase;
 import com.shoppr.domain.usecase.SavePostUseCase;
+import com.shoppr.domain.usecase.ToggleFavoriteUseCase;
 import com.shoppr.domain.usecase.UpdateUserDefaultLocationUseCase;
 
 import javax.inject.Singleton;
@@ -84,6 +88,15 @@ public abstract class UseCaseModule {
     @Binds
     @Singleton
     public abstract GetPostByIdUseCase bindGetPostByIdUseCase(GetPostByIdUseCaseImpl impl);
+
+    @Binds
+    @Singleton
+    public abstract ToggleFavoriteUseCase bindToggleFavoriteUseCase(ToggleFavoriteUseCaseImpl impl);
+
+    @Binds
+    public abstract GetFavoritePostsUseCase bindGetFavoritePostsUseCase(
+        GetFavoritePostsUseCaseImpl getFavoritePostsUseCaseImpl
+    );
 
     @Binds
     @Singleton

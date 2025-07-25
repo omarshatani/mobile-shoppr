@@ -5,10 +5,15 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.Transaction;
 import com.shoppr.domain.datasource.FirestoreUserDataSource;
 import com.shoppr.model.User;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -17,7 +22,7 @@ import javax.inject.Singleton;
 public class FirestoreUserDataSourceImpl implements FirestoreUserDataSource {
 	private static final String TAG = "FirestoreUserDSImpl";
 	private final FirebaseFirestore firestore;
-	private static final String USERS_COLLECTION = "users"; // Or from a constants file
+	private static final String USERS_COLLECTION = "users";
 
 	@Inject
 	public FirestoreUserDataSourceImpl(FirebaseFirestore firestore) {
@@ -37,8 +42,8 @@ public class FirestoreUserDataSourceImpl implements FirestoreUserDataSource {
 					if (documentSnapshot.exists()) {
 						User user = documentSnapshot.toObject(User.class);
 						if (user != null) {
-							user.setId(documentSnapshot.getId()); // Ensure ID is set
-							Log.d(TAG, "User profile found in Firestore. UID: " + user.getId() + ", Name: " + user.getName());
+							user.setId(documentSnapshot.getId());
+							Log.d(TAG, "User profile found in Firestore. UID: " + user.getId());
 							callbacks.onSuccess(user);
 						} else {
 							Log.e(TAG, "Failed to map Firestore document to User object for UID: " + uid);
@@ -64,7 +69,7 @@ public class FirestoreUserDataSourceImpl implements FirestoreUserDataSource {
 			return;
 		}
 		DocumentReference userDocRef = firestore.collection(USERS_COLLECTION).document(user.getId());
-		userDocRef.set(user) // Set the entire user object for creation
+		userDocRef.set(user)
 				.addOnSuccessListener(aVoid -> {
 					Log.d(TAG, "User profile successfully created in Firestore for UID: " + user.getId());
 					callbacks.onSuccess(user);
@@ -83,16 +88,76 @@ public class FirestoreUserDataSourceImpl implements FirestoreUserDataSource {
 			return;
 		}
 		firestore.collection(USERS_COLLECTION).document(user.getId())
-				.set(user, SetOptions.merge()) // Use merge to update fields without overwriting everything else
+				.set(user, SetOptions.merge())
 				.addOnSuccessListener(aVoid -> {
 					Log.d(TAG, "User profile successfully updated in Firestore: " + user.getId());
-					// Firestore's set with merge doesn't return the object, so we return the one we passed in.
-					// For a more robust approach, you might re-fetch the document or trust the input `user` object.
 					callbacks.onSuccess(user);
 				})
 				.addOnFailureListener(e -> {
 					Log.e(TAG, "Error updating user profile in Firestore for UID: " + user.getId(), e);
 					callbacks.onError("Error updating user profile: " + e.getMessage());
 				});
+	}
+
+	@Override
+	public void updateUserFavorites(
+			@NonNull String uid,
+			@NonNull String postId,
+			boolean shouldAdd,
+			@NonNull FavoriteUpdateCallbacks callbacks
+	) {
+		final DocumentReference userDocRef = firestore.collection(USERS_COLLECTION).document(uid);
+
+		firestore.runTransaction((Transaction.Function<Void>) transaction -> {
+			DocumentSnapshot snapshot = transaction.get(userDocRef);
+			User user = snapshot.toObject(User.class);
+
+			if (user == null) {
+				// This case should be rare if the user is logged in, but it's good practice.
+				throw new IllegalStateException("User document not found for UID: " + uid);
+			}
+
+			List<String> favorites = user.getFavoritePosts();
+			if (favorites == null) {
+				favorites = new ArrayList<>();
+			}
+
+			// Perform the add or remove operation on the list in memory
+			if (shouldAdd) {
+				if (!favorites.contains(postId)) {
+					favorites.add(postId);
+				}
+			} else {
+				favorites.remove(postId);
+			}
+
+			// Update the field in the transaction
+			transaction.update(userDocRef, "favoritePosts", favorites);
+
+			// The transaction will return null on success. We handle the callback outside.
+			return null;
+		}).addOnSuccessListener(aVoid -> {
+			Log.d(TAG, "Transaction success: Favorites updated for user " + uid);
+			// We now need to re-fetch the user to get the guaranteed latest state
+			getUser(uid, new FirestoreOperationCallbacks() {
+				@Override
+				public void onSuccess(@NonNull User updatedUser) {
+					callbacks.onSuccess(updatedUser.getFavoritePosts());
+				}
+
+				@Override
+				public void onError(@NonNull String message) {
+					callbacks.onError(message);
+				}
+
+				@Override
+				public void onNotFound() {
+					callbacks.onError("User not found after favorite update.");
+				}
+			});
+		}).addOnFailureListener(e -> {
+			Log.e(TAG, "Transaction failure: " + e.getMessage());
+			callbacks.onError("Failed to update favorites: " + e.getMessage());
+		});
 	}
 }

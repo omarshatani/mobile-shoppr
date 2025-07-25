@@ -2,22 +2,26 @@ package com.shoppr.model;
 
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class User {
 	private String id;
 	private String name;
 	private String email;
 	private String phoneNumber;
-	private String address; // General address string
+	private String address;
+	private List<String> favoritePosts;
 
-	// New fields for last known/default posting location
 	@Nullable
-	private Double lastLatitude;
+	private Double latitude;
 	@Nullable
-	private Double lastLongitude;
+	private Double longitude;
 	@Nullable
-	private String lastLocationAddress; // Optional: A reverse-geocoded address for this lat/lon
+	private String locationAddress;
 
-	public User() {}
+	public User() {
+	}
 
 	private User(Builder builder) {
 		this.id = builder.id;
@@ -25,12 +29,12 @@ public class User {
 		this.email = builder.email;
 		this.phoneNumber = builder.phoneNumber;
 		this.address = builder.address;
-		this.lastLatitude = builder.lastLatitude;
-		this.lastLongitude = builder.lastLongitude;
-		this.lastLocationAddress = builder.lastLocationAddress;
+		this.latitude = builder.latitude;
+		this.longitude = builder.longitude;
+		this.locationAddress = builder.locationAddress;
+		this.favoritePosts = builder.favoritePosts != null ? new ArrayList<>(builder.favoritePosts) : new ArrayList<>();
 	}
 
-	// Existing getters and setters...
 	public String getId() {
 		return id;
 	}
@@ -71,34 +75,40 @@ public class User {
 		this.address = address;
 	}
 
-	// Getters and Setters for new location fields
 	@Nullable
-	public Double getLastLatitude() {
-		return lastLatitude;
+	public Double getLatitude() {
+		return latitude;
 	}
 
-	public void setLastLatitude(@Nullable Double lastLatitude) {
-		this.lastLatitude = lastLatitude;
-	}
-
-	@Nullable
-	public Double getLastLongitude() {
-		return lastLongitude;
-	}
-
-	public void setLastLongitude(@Nullable Double lastLongitude) {
-		this.lastLongitude = lastLongitude;
+	public void setLatitude(@Nullable Double latitude) {
+		this.latitude = latitude;
 	}
 
 	@Nullable
-	public String getLastLocationAddress() {
-		return lastLocationAddress;
+	public Double getLongitude() {
+		return longitude;
 	}
 
-	public void setLastLocationAddress(@Nullable String lastLocationAddress) {
-		this.lastLocationAddress = lastLocationAddress;
+	public void setLongitude(@Nullable Double longitude) {
+		this.longitude = longitude;
 	}
 
+	@Nullable
+	public String getLocationAddress() {
+		return locationAddress;
+	}
+
+	public void setLocationAddress(@Nullable String locationAddress) {
+		this.locationAddress = locationAddress;
+	}
+
+	public List<String> getFavoritePosts() {
+		return favoritePosts;
+	}
+
+	public void setFavoritePosts(List<String> favoritePosts) {
+		this.favoritePosts = favoritePosts;
+	}
 
 	public static class Builder {
 		private String id;
@@ -106,12 +116,13 @@ public class User {
 		private String email;
 		private String phoneNumber;
 		private String address;
+		private List<String> favoritePosts = new ArrayList<>();
 		@Nullable
-		private Double lastLatitude;
+		private Double latitude;
 		@Nullable
-		private Double lastLongitude;
+		private Double longitude;
 		@Nullable
-		private String lastLocationAddress;
+		private String locationAddress;
 
 		public Builder id(String id) {
 			this.id = id;
@@ -138,21 +149,25 @@ public class User {
 			return this;
 		}
 
-		public Builder lastLatitude(@Nullable Double latitude) {
-			this.lastLatitude = latitude;
+		public Builder favoritePosts(List<String> favoritePosts) {
+			this.favoritePosts = favoritePosts;
 			return this;
 		}
 
-		public Builder lastLongitude(@Nullable Double longitude) {
-			this.lastLongitude = longitude;
+		public Builder latitude(@Nullable Double latitude) {
+			this.latitude = latitude;
 			return this;
 		}
 
-		public Builder lastLocationAddress(@Nullable String address) {
-			this.lastLocationAddress = address;
+		public Builder longitude(@Nullable Double longitude) {
+			this.longitude = longitude;
 			return this;
 		}
 
+		public Builder locationAddress(@Nullable String address) {
+			this.locationAddress = address;
+			return this;
+		}
 
 		public User build() {
 			return new User(this);
