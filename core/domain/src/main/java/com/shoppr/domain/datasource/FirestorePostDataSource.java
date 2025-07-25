@@ -43,6 +43,21 @@ public interface FirestorePostDataSource {
 
     void getPostById(@NonNull String postId, @NonNull FirestoreGetPostByIdCallbacks callbacks);
 
+    /**
+     * Fetches a list of posts based on a list of post IDs.
+     *
+     * @param postIds   The list of post IDs to fetch.
+     * @param callbacks The callbacks to be invoked on completion.
+     */
+    void getPostsByIds(@NonNull List<String> postIds, @NonNull PostsCallbacks callbacks);
+
+    // Assuming you have an interface like this for post list results
+    interface PostsCallbacks {
+        void onSuccess(@NonNull List<Post> posts);
+
+        void onError(@NonNull String message);
+    }
+
 
     /**
      * Updates an existing post in Firestore.

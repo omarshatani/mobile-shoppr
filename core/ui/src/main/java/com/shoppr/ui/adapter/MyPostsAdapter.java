@@ -1,4 +1,4 @@
-package adapter;
+package com.shoppr.ui.adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,8 +11,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.chip.Chip;
 import com.shoppr.core.ui.R;
+import com.shoppr.core.ui.databinding.ListItemPostBinding;
 import com.shoppr.model.Post;
-import com.shoppr.post.databinding.ListItemPostBinding;
 import com.shoppr.ui.utils.ImageLoader;
 
 import java.util.Collections;
@@ -108,10 +108,10 @@ public class MyPostsAdapter extends ListAdapter<Post, MyPostsAdapter.PostViewHol
 			ImageLoader.loadImage(binding.imagePostItem, imageUrl);
 
 			if (isFavorite) {
-				binding.buttonFavorite.setText(com.shoppr.post.R.string.in_favorites);
+				binding.buttonFavorite.setText(R.string.in_favorites);
 				binding.buttonFavorite.setIconResource(R.drawable.ic_favorite_filled);
 			} else {
-				binding.buttonFavorite.setText(com.shoppr.post.R.string.add_to_favorites);
+				binding.buttonFavorite.setText(R.string.add_to_favorites);
 				binding.buttonFavorite.setIconResource(R.drawable.ic_favorite_outline);
 			}
 			binding.buttonFavorite.setOnClickListener(v -> favoriteClickListener.onFavoriteClick(post));

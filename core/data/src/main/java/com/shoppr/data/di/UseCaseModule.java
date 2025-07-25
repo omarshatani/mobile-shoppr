@@ -4,6 +4,7 @@ import com.shoppr.data.usecase.CheckInitialNavigationUseCaseImpl;
 import com.shoppr.data.usecase.CreateUserProfileUseCaseImpl;
 import com.shoppr.data.usecase.GetCurrentDeviceLocationUseCaseImpl;
 import com.shoppr.data.usecase.GetCurrentUserUseCaseImpl;
+import com.shoppr.data.usecase.GetFavoritePostsUseCaseImpl;
 import com.shoppr.data.usecase.GetLLMSuggestionsUseCaseImpl;
 import com.shoppr.data.usecase.GetMapPostsUseCaseImpl;
 import com.shoppr.data.usecase.GetMyPostsUseCaseImpl;
@@ -18,6 +19,7 @@ import com.shoppr.domain.usecase.CheckInitialNavigationUseCase;
 import com.shoppr.domain.usecase.CreateUserProfileUseCase;
 import com.shoppr.domain.usecase.GetCurrentDeviceLocationUseCase;
 import com.shoppr.domain.usecase.GetCurrentUserUseCase;
+import com.shoppr.domain.usecase.GetFavoritePostsUseCase;
 import com.shoppr.domain.usecase.GetLLMSuggestionsUseCase;
 import com.shoppr.domain.usecase.GetMapPostsUseCase;
 import com.shoppr.domain.usecase.GetMyPostsUseCase;
@@ -90,6 +92,11 @@ public abstract class UseCaseModule {
     @Binds
     @Singleton
     public abstract ToggleFavoriteUseCase bindToggleFavoriteUseCase(ToggleFavoriteUseCaseImpl impl);
+
+    @Binds
+    public abstract GetFavoritePostsUseCase bindGetFavoritePostsUseCase(
+        GetFavoritePostsUseCaseImpl getFavoritePostsUseCaseImpl
+    );
 
     @Binds
     @Singleton

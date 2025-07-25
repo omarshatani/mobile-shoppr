@@ -21,13 +21,13 @@ import com.shoppr.navigation.NavigationRoute;
 import com.shoppr.navigation.Navigator;
 import com.shoppr.post.databinding.FragmentPostBinding;
 import com.shoppr.ui.BaseFragment;
+import com.shoppr.ui.adapter.MyPostsAdapter;
 import com.shoppr.ui.utils.InsetUtils;
 
 import java.util.Collections;
 
 import javax.inject.Inject;
 
-import adapter.MyPostsAdapter;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint

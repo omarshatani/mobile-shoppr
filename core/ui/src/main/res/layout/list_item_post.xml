@@ -17,7 +17,7 @@
             android:id="@+id/image_post_item"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:contentDescription="@string/post_image"
+            android:contentDescription="Post image"
             android:scaleType="centerCrop"
             app:layout_constraintDimensionRatio="H,16:9"
             app:layout_constraintEnd_toEndOf="parent"

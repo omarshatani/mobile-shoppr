@@ -10,4 +10,9 @@
     <string name="menu_help">Need help?</string>
 
     <string name="logout">Logout</string>
+
+    <string name="add_to_favorites">Add to favorites</string>
+    <string name="favorite">Favorite</string>
+    <string name="post_image">Post image</string>
+    <string name="in_favorites">In Favorites</string>
 </resources>
