@@ -29,7 +29,7 @@ import javax.inject.Singleton;
 @Singleton
 public class GetCurrentDeviceLocationUseCaseImpl implements GetCurrentDeviceLocationUseCase {
     private static final String TAG = "GetDeviceLocationUCImpl";
-    private final Application application; // For context to get FusedLocationProviderClient & Geocoder
+	private final Application application;
     private final FusedLocationProviderClient fusedLocationClient;
 
     @Inject

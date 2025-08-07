@@ -23,12 +23,11 @@ import javax.inject.Singleton;
 @Singleton
 public class LLMRepositoryImpl implements LLMRepository {
     private static final String TAG = "LLMRepositoryImpl";
-    // Name of your Cloud Function that generates suggestions (and dynamically creates prompts)
     private static final String CLOUD_FUNCTION_NAME = "generatePostSuggestions";
     private final FirebaseFunctions functions;
 
     @Inject
-    public LLMRepositoryImpl(FirebaseFunctions functions) { // FirebaseFunctions provided by Hilt
+    public LLMRepositoryImpl(FirebaseFunctions functions) {
         this.functions = functions;
     }
 
@@ -129,17 +128,14 @@ public class LLMRepositoryImpl implements LLMRepository {
         String title = (String) map.get("suggestedTitle");
         String description = (String) map.get("suggestedDescription");
         String itemName = (String) map.get("extractedItemName");
-        String currency = (String) map.get("currency"); // Corrected to match your existing logic
+        String currency = (String) map.get("currency");
 
-        // --- THIS IS THE UPDATED SECTION ---
         List<String> categories = new ArrayList<>();
         if (map.get("suggestedCategories") instanceof List) {
             categories = (List<String>) map.get("suggestedCategories");
         } else if (map.get("suggestedCategory") instanceof String) {
-            // Added for backward compatibility in case the old field is still sent
             categories.add((String) map.get("suggestedCategory"));
         }
-        // --- END OF UPDATED SECTION ---
 
         Double price = null;
         if (map.get("price") instanceof Number) {
@@ -153,9 +149,9 @@ public class LLMRepositoryImpl implements LLMRepository {
             title != null ? title : "Untitled Post",
             description != null ? description : "",
             itemName != null ? itemName : "N/A",
-            price, // Corrected to pass the price
+            price,
             currency != null ? currency : "USD",
-            categories // Pass the list of categories
+            categories
         );
     }
 }

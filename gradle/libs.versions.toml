@@ -2,10 +2,12 @@
 agp = "8.8.2"
 androidMapsUtils = "3.8.0"
 compiler = "4.16.0"
-firebaseBom = "33.12.0"
+firebaseAdmin = "9.5.0"
+firebaseBom = "34.0.0"
 firebaseBomVersion = "..."
+firebaseFirestore = "26.0.0"
 firebaseFunctionsKtx = "21.2.1"
-firebaseFunctionsKtxVersion = "21.0.0"
+firebaseFunctionsKtxVersion = "21.2.1"
 firebaseUiAuth = "9.0.0"
 flexbox = "3.0.0"
 glide = "4.16.0"
@@ -35,17 +37,18 @@ recyclerview = "1.4.0"
 secretsGradlePlugin = "2.0.1"
 googleAndroidLibrariesMapsplatformSecretsGradlePlugin = "2.0.1"
 lifecycleLivedataCore = "2.9.0"
-firebaseFirestore = "25.1.4"
 baselibrary = "3.2.0-alpha11"
 
 [libraries]
 android-maps-utils = { module = "com.google.maps.android:android-maps-utils", version.ref = "androidMapsUtils" }
 com-google-firebase-firebase-auth = { module = "com.google.firebase:firebase-auth" }
 compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "compiler" }
+firebase-admin = { module = "com.google.firebase:firebase-admin", version.ref = "firebaseAdmin" }
 firebase-auth = { module = "com.google.firebase:firebase-auth" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-bom-vx = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBomVersion" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
+firebase-storage = { module = "com.google.firebase:firebase-storage" }
 firebase-functions-ktx = { module = "com.google.firebase:firebase-functions-ktx", version.ref = "firebaseFunctionsKtx" }
 firebase-functions-ktx-v2100 = { module = "com.google.firebase:firebase-functions-ktx", version.ref = "firebaseFunctionsKtxVersion" }
 firebase-ui-auth = { module = "com.firebaseui:firebase-ui-auth", version.ref = "firebaseUiAuth" }

@@ -2,7 +2,7 @@
   "project_info": {
     "project_number": "92024457014",
     "project_id": "shoppr-1b445",
-    "storage_bucket": "shoppr-1b445.firebasestorage.app"
+    "storage_bucket": "shoppr-1b445.appspot.com"
   },
   "client": [
     {
@@ -19,6 +19,14 @@
           "android_info": {
             "package_name": "com.shoppr",
             "certificate_hash": "10a92959b671354818d31d02fddcfe56710ca0d5"
+          }
+        },
+        {
+          "client_id": "92024457014-60b6q4kdj50616m1l0oq4hnb5srg56cp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.shoppr",
+            "certificate_hash": "339b0b06d52f2058b2cc27f00a6cae2269d88320"
           }
         },
         {

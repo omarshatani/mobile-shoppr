@@ -53,7 +53,8 @@ public class PostFragmentViewModel extends ViewModel {
 	public PostFragmentViewModel(
 			GetCurrentUserUseCase getCurrentUserUseCase,
 			GetMyPostsUseCase getMyPostsUseCase,
-			ToggleFavoriteUseCase toggleFavoriteUseCase) {
+			ToggleFavoriteUseCase toggleFavoriteUseCase
+	) {
 		this.getCurrentUserUseCase = getCurrentUserUseCase;
 		this.getMyPostsUseCase = getMyPostsUseCase;
 		this.toggleFavoriteUseCase = toggleFavoriteUseCase;
@@ -62,32 +63,11 @@ public class PostFragmentViewModel extends ViewModel {
 
 		_posts.addSource(this.currentUserProfileLiveData, user -> {
 			if (user != null && user.getId() != null) {
+				Log.d(TAG, "User profile updated. Fetching posts for UID: " + user.getId());
 				fetchUserPosts(user.getId());
 			} else {
+				Log.d(TAG, "User is null. Clearing posts.");
 				_posts.setValue(new ArrayList<>());
-			}
-		});
-	}
-
-	public void onFavoriteClicked(@NonNull Post post) {
-		User currentUser = currentUserProfileLiveData.getValue();
-		if (currentUser == null || post.getId() == null) {
-			_errorMessage.postValue(new Event<>("You must be logged in to add favorites."));
-			return;
-		}
-
-		List<String> favorites = currentUser.getFavoritePosts();
-		boolean isCurrentlyFavorite = favorites != null && favorites.contains(post.getId());
-
-		toggleFavoriteUseCase.execute(post.getId(), isCurrentlyFavorite, new ToggleFavoriteUseCase.FavoriteToggleCallbacks() {
-			@Override
-			public void onSuccess(boolean isNowFavorite) {
-				Log.d(TAG, "Favorite status toggled successfully for post: " + post.getId());
-			}
-
-			@Override
-			public void onError(@NonNull String message) {
-				_errorMessage.postValue(new Event<>(message));
 			}
 		});
 	}
@@ -104,12 +84,29 @@ public class PostFragmentViewModel extends ViewModel {
 		});
 	}
 
+	public void onFavoriteClicked(@NonNull Post post) {
+		if (post.getId() == null) {
+			_errorMessage.postValue(new Event<>("Cannot favorite post with no ID."));
+			return;
+		}
+
+		toggleFavoriteUseCase.execute(post.getId(), new ToggleFavoriteUseCase.FavoriteToggleCallbacks() {
+			@Override
+			public void onSuccess() {
+				Log.d(TAG, "Successfully toggled favorite for post: " + post.getId());
+			}
+
+			@Override
+			public void onError(@NonNull String message) {
+				_errorMessage.postValue(new Event<>(message));
+			}
+		});
+	}
+
 	public void refreshPosts() {
 		User currentUser = currentUserProfileLiveData.getValue();
 		if (currentUser != null && currentUser.getId() != null) {
 			fetchUserPosts(currentUser.getId());
-		} else {
-			_posts.setValue(new ArrayList<>());
 		}
 	}
 
@@ -118,10 +115,12 @@ public class PostFragmentViewModel extends ViewModel {
 	}
 
 	public void startObservingUser() {
+		Log.d(TAG, "ViewModel starting to observe user.");
 		getCurrentUserUseCase.startObserving();
 	}
 
 	public void stopObservingUser() {
+		Log.d(TAG, "ViewModel stopping user observation.");
 		getCurrentUserUseCase.stopObserving();
 		if (currentPostsSource != null) {
 			_posts.removeSource(currentPostsSource);

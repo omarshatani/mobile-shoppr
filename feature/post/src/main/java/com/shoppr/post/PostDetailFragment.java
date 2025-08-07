@@ -55,13 +55,13 @@ public class PostDetailFragment extends BaseFragment {
 	@Override
 	public void onStart() {
 		super.onStart();
-		viewModel.onStart();
+		viewModel.onFragmentStarted();
 	}
 
 	@Override
 	public void onStop() {
 		super.onStop();
-		viewModel.onStop();
+		viewModel.onFragmentStopped();
 	}
 
 	private void setupToolbar() {
@@ -98,7 +98,7 @@ public class PostDetailFragment extends BaseFragment {
 				}
 
 				if (post.getLister() != null) {
-					binding.detailListerName.setText("by " + post.getLister().getName());
+					binding.detailListerName.setText(String.format("by %s", post.getLister().getName()));
 					binding.detailListerName.setVisibility(View.VISIBLE);
 				} else {
 					binding.detailListerName.setVisibility(View.GONE);

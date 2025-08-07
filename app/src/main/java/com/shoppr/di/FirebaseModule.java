@@ -3,6 +3,7 @@ package com.shoppr.di;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.functions.FirebaseFunctions;
+import com.google.firebase.storage.FirebaseStorage;
 
 import javax.inject.Singleton;
 
@@ -31,4 +32,10 @@ public class FirebaseModule {
     public FirebaseFunctions provideFirebaseFunctions() {
 			return FirebaseFunctions.getInstance();
 		}
+
+	@Provides
+	@Singleton
+	public FirebaseStorage provideFirebaseStorage() {
+		return FirebaseStorage.getInstance("gs://shoppr-1b445.appspot.com");
+	}
 }

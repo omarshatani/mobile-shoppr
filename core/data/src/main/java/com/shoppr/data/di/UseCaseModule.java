@@ -1,6 +1,5 @@
 package com.shoppr.data.di;
 
-import com.shoppr.data.usecase.CheckInitialNavigationUseCaseImpl;
 import com.shoppr.data.usecase.CreateUserProfileUseCaseImpl;
 import com.shoppr.data.usecase.GetCurrentDeviceLocationUseCaseImpl;
 import com.shoppr.data.usecase.GetCurrentUserUseCaseImpl;
@@ -9,13 +8,10 @@ import com.shoppr.data.usecase.GetLLMSuggestionsUseCaseImpl;
 import com.shoppr.data.usecase.GetMapPostsUseCaseImpl;
 import com.shoppr.data.usecase.GetMyPostsUseCaseImpl;
 import com.shoppr.data.usecase.GetPostByIdUseCaseImpl;
-import com.shoppr.data.usecase.HandleSignInResultUseCaseImpl;
 import com.shoppr.data.usecase.LogoutUseCaseImpl;
-import com.shoppr.data.usecase.ObserveAuthStateUseCaseImpl;
 import com.shoppr.data.usecase.SavePostUseCaseImpl;
 import com.shoppr.data.usecase.ToggleFavoriteUseCaseImpl;
 import com.shoppr.data.usecase.UpdateUserDefaultLocationUseCaseImpl;
-import com.shoppr.domain.usecase.CheckInitialNavigationUseCase;
 import com.shoppr.domain.usecase.CreateUserProfileUseCase;
 import com.shoppr.domain.usecase.GetCurrentDeviceLocationUseCase;
 import com.shoppr.domain.usecase.GetCurrentUserUseCase;
@@ -24,81 +20,75 @@ import com.shoppr.domain.usecase.GetLLMSuggestionsUseCase;
 import com.shoppr.domain.usecase.GetMapPostsUseCase;
 import com.shoppr.domain.usecase.GetMyPostsUseCase;
 import com.shoppr.domain.usecase.GetPostByIdUseCase;
-import com.shoppr.domain.usecase.HandleSignInResultUseCase;
 import com.shoppr.domain.usecase.LogoutUseCase;
-import com.shoppr.domain.usecase.ObserveAuthStateUseCase;
 import com.shoppr.domain.usecase.SavePostUseCase;
 import com.shoppr.domain.usecase.ToggleFavoriteUseCase;
 import com.shoppr.domain.usecase.UpdateUserDefaultLocationUseCase;
 
-import javax.inject.Singleton;
-
 import dagger.Binds;
 import dagger.Module;
 import dagger.hilt.InstallIn;
-import dagger.hilt.components.SingletonComponent;
+import dagger.hilt.android.components.ViewModelComponent;
 
 @Module
-@InstallIn(SingletonComponent.class)
+@InstallIn(ViewModelComponent.class)
 public abstract class UseCaseModule {
-    @Binds
-    @Singleton
-    public abstract ObserveAuthStateUseCase bindObserveAuthStateUseCase(ObserveAuthStateUseCaseImpl impl);
 
-    @Binds
-    @Singleton
-    public abstract HandleSignInResultUseCase bindHandleSignInResultUseCase(HandleSignInResultUseCaseImpl impl);
+	@Binds
+	public abstract CreateUserProfileUseCase bindCreateUserProfileUseCase(
+			CreateUserProfileUseCaseImpl createUserProfileUseCaseImpl
+	);
 
-    @Binds
-    @Singleton
-    public abstract CreateUserProfileUseCase bindCreateUserProfileUseCase(CreateUserProfileUseCaseImpl impl);
+	@Binds
+	public abstract GetCurrentUserUseCase bindGetCurrentUserUseCase(
+			GetCurrentUserUseCaseImpl getCurrentUserUseCaseImpl
+	);
 
-    @Binds
-    @Singleton
-    public abstract CheckInitialNavigationUseCase bindCheckInitialNavigationUseCase(CheckInitialNavigationUseCaseImpl impl);
+	@Binds
+	public abstract GetLLMSuggestionsUseCase bindGetLLMSuggestionsUseCase(
+			GetLLMSuggestionsUseCaseImpl getLLMSuggestionsUseCaseImpl
+	);
 
-    @Binds
-    @Singleton
-    public abstract GetCurrentUserUseCase bindGetCurrentUserUseCase(GetCurrentUserUseCaseImpl impl);
+	@Binds
+	public abstract GetCurrentDeviceLocationUseCase bindGetCurrentDeviceLocationUseCase(GetCurrentDeviceLocationUseCaseImpl impl);
 
-    @Binds
-    @Singleton
-    public abstract SavePostUseCase bindSavePostUseCase(SavePostUseCaseImpl impl);
+	@Binds
+	public abstract UpdateUserDefaultLocationUseCase bindUpdateUserDefaultLocationUseCase(
+			UpdateUserDefaultLocationUseCaseImpl updateUserDefaultLocationUseCaseImpl
+	);
 
-    @Binds
-    @Singleton
-    public abstract GetLLMSuggestionsUseCase bindAnalyzePostTextUseCase(GetLLMSuggestionsUseCaseImpl impl);
+	@Binds
+	public abstract GetMyPostsUseCase bindGetMyPostsUseCase(
+			GetMyPostsUseCaseImpl getMyPostsUseCaseImpl
+	);
 
-    @Binds
-    @Singleton
-    public abstract GetCurrentDeviceLocationUseCase bindGetCurrentDeviceLocationUseCase(GetCurrentDeviceLocationUseCaseImpl impl);
+	@Binds
+	public abstract GetMapPostsUseCase bindGetMapPostsUseCase(
+			GetMapPostsUseCaseImpl getMapPostsUseCaseImpl
+	);
 
-    @Binds
-    @Singleton
-    public abstract UpdateUserDefaultLocationUseCase bindUpdateUserDefaultLocationUseCase(UpdateUserDefaultLocationUseCaseImpl impl);
+	@Binds
+	public abstract GetPostByIdUseCase bindGetPostByIdUseCase(
+			GetPostByIdUseCaseImpl getPostByIdUseCaseImpl
+	);
 
-    @Binds
-    @Singleton
-    public abstract GetMapPostsUseCase bindGetMapPostsUseCase(GetMapPostsUseCaseImpl impl);
+	@Binds
+	public abstract SavePostUseCase bindSavePostUseCase(
+			SavePostUseCaseImpl savePostUseCaseImpl
+	);
 
-    @Binds
-    @Singleton
-    public abstract GetMyPostsUseCase bindGetMyPostsUseCase(GetMyPostsUseCaseImpl impl);
+	@Binds
+	public abstract ToggleFavoriteUseCase bindToggleFavoriteUseCase(
+			ToggleFavoriteUseCaseImpl toggleFavoriteUseCaseImpl
+	);
 
-    @Binds
-    @Singleton
-    public abstract GetPostByIdUseCase bindGetPostByIdUseCase(GetPostByIdUseCaseImpl impl);
+	@Binds
+	public abstract GetFavoritePostsUseCase bindGetFavoritePostsUseCase(
+			GetFavoritePostsUseCaseImpl getFavoritePostsUseCaseImpl
+	);
 
-    @Binds
-    @Singleton
-    public abstract ToggleFavoriteUseCase bindToggleFavoriteUseCase(ToggleFavoriteUseCaseImpl impl);
-
-    @Binds
-    public abstract GetFavoritePostsUseCase bindGetFavoritePostsUseCase(
-        GetFavoritePostsUseCaseImpl getFavoritePostsUseCaseImpl
-    );
-
-    @Binds
-    @Singleton
-    public abstract LogoutUseCase bindLogoutUseCase(LogoutUseCaseImpl impl);
+	@Binds
+	public abstract LogoutUseCase bindLogoutUseCase(
+			LogoutUseCaseImpl logoutUseCaseImpl
+	);
 }

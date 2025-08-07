@@ -4,8 +4,8 @@ import androidx.lifecycle.LiveData;
 
 import com.shoppr.model.User;
 
-public interface FirebaseAuthDataSource { // This is the interface for the domain to depend on
-    LiveData<User> getDomainUserAuthStateLiveData(); // Exposes domain User
+public interface FirebaseAuthDataSource {
+    LiveData<User> getDomainUserAuthStateLiveData();
 
     void startObserving();
 
@@ -13,5 +13,5 @@ public interface FirebaseAuthDataSource { // This is the interface for the domai
 
     void signOut();
 
-    boolean isCurrentUserLoggedIn(); // For synchronous check
+    boolean isCurrentUserLoggedIn();
 }

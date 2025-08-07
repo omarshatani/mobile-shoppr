@@ -48,7 +48,6 @@ public class SplashFragment extends Fragment {
 
 	private void observeNavigation() {
 		viewModel.navigation.observe(getViewLifecycleOwner(), new Event.EventObserver<>(content -> {
-			// This lambda is only called once per event
 			Log.d(TAG, "Received navigation command: " + content.getClass().getSimpleName());
 			if (navigator != null) {
 				navigator.navigate(content);

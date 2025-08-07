@@ -2,6 +2,7 @@ package com.shoppr.data.di;
 
 import com.google.firebase.functions.FirebaseFunctions;
 import com.shoppr.data.datasource.FirebaseAuthDataSourceImpl;
+import com.shoppr.data.datasource.FirebaseStorageDataSourceImpl;
 import com.shoppr.data.datasource.FirestorePostDataSourceImpl;
 import com.shoppr.data.datasource.FirestoreUserDataSourceImpl;
 import com.shoppr.data.repository.AuthenticationRepositoryImpl;
@@ -38,8 +39,8 @@ public class RepositoryModule {
 
 	@Provides
 	@Singleton
-	public PostRepository providePostRepository(FirestorePostDataSourceImpl firestoreUserDataSourceImpl) {
-		return new PostRepositoryImpl(firestoreUserDataSourceImpl);
+	public PostRepository providePostRepository(FirestorePostDataSourceImpl firestoreUserDataSourceImpl, FirebaseStorageDataSourceImpl firebaseStorageDataSourceImpl) {
+		return new PostRepositoryImpl(firestoreUserDataSourceImpl, firebaseStorageDataSourceImpl);
 	}
 
 	@Provides

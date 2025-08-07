@@ -80,9 +80,9 @@ public class MyPostsAdapter extends ListAdapter<Post, MyPostsAdapter.PostViewHol
 
 			if (post.getPrice() != null && !post.getPrice().isEmpty()) {
 				binding.textPostItemPrice.setText(String.format("%s %s", post.getPrice(), post.getCurrency()));
-				binding.textPostItemPrice.setVisibility(View.VISIBLE);
 			} else {
 				binding.textPostItemPrice.setVisibility(View.GONE);
+				binding.textPostItemBaseOffer.setVisibility(View.GONE);
 			}
 
 			binding.chipGroupCategory.removeAllViews();

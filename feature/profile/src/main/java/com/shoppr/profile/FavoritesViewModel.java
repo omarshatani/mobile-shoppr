@@ -1,5 +1,6 @@
 package com.shoppr.profile; // Or your preferred package
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 
@@ -72,16 +73,14 @@ public class FavoritesViewModel extends ViewModel {
 	public void unfavoritePost(Post post) {
 		if (post == null || post.getId() == null) return;
 
-		toggleFavoriteUseCase.execute(post.getId(), true, new ToggleFavoriteUseCase.FavoriteToggleCallbacks() {
+		toggleFavoriteUseCase.execute(post.getId(), new ToggleFavoriteUseCase.FavoriteToggleCallbacks() {
 			@Override
-			public void onSuccess(boolean isNowFavorite) {
-				// The UI will update automatically because the LiveData from the
-				// GetCurrentUserUseCase will fire, which in turn triggers the
-				// GetFavoritePostsUseCase to refetch the list.
+			public void onSuccess() {
+
 			}
 
 			@Override
-			public void onError(String message) {
+			public void onError(@NonNull String message) {
 				// Optionally, you can expose an error LiveData to the fragment
 				// to show a Toast or a Snackbar.
 			}

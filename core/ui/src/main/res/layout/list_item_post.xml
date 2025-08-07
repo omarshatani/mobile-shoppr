@@ -17,7 +17,7 @@
             android:id="@+id/image_post_item"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:contentDescription="Post image"
+            android:contentDescription="@string/post_image"
             android:scaleType="centerCrop"
             app:layout_constraintDimensionRatio="H,16:9"
             app:layout_constraintEnd_toEndOf="parent"
@@ -42,6 +42,12 @@
                 android:textAppearance="?attr/textAppearanceTitleMedium"
                 tools:text="Sleek Modern Laptop for Sale" />
 
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chip_group_category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" />
+
             <TextView
                 android:id="@+id/text_post_item_description"
                 android:layout_width="wrap_content"
@@ -54,18 +60,21 @@
                 tools:text="This is a great laptop for students and professionals. It has a fast processor, a long-lasting battery, and a lightweight design. Comes with a charger and a protective sleeve." />
 
             <TextView
-                android:id="@+id/text_post_item_price"
+                android:id="@+id/text_post_item_base_offer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:textAppearance="?attr/textAppearanceTitleSmall"
-                tools:text="$950 USD" />
+                android:textAppearance="?attr/textAppearanceSubtitle2"
+                tools:text="Base offer"
+                android:text="Base offer" />
 
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chip_group_category"
+            <TextView
+                android:id="@+id/text_post_item_price"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp" />
+                android:layout_marginTop="4dp"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
+                tools:text="$950 USD" />
 
         </LinearLayout>
 

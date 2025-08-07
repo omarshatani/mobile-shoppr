@@ -9,10 +9,11 @@ import java.util.List;
 
 public interface LLMRepository {
     interface LLMAnalysisCallbacks {
-        void onSuccess(@NonNull SuggestedPostDetails suggestions); // Returns domain model
+        void onSuccess(@NonNull SuggestedPostDetails suggestions);
         void onError(@NonNull String message);
     }
-    void getPostSuggestionsFromLLM( // Renamed for clarity
+
+    void getPostSuggestionsFromLLM(
         @NonNull String text,
         @Nullable List<String> imageUrls,
         @Nullable String baseOfferPrice,

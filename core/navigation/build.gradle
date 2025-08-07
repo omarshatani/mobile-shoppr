@@ -16,6 +16,8 @@ android {
 dependencies {
     implementation libs.appcompat
     implementation libs.material
+    implementation libs.navigation.fragment
+    implementation libs.navigation.ui
 
     androidTestImplementation(project(":app")) {
         exclude group: 'junit', module: 'junit'

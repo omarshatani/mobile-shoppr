@@ -1,7 +1,5 @@
 package com.shoppr.data.usecase;
 
-import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -12,7 +10,7 @@ import com.shoppr.model.User;
 import javax.inject.Inject;
 
 public class CreateUserProfileUseCaseImpl implements CreateUserProfileUseCase {
-	private static final String TAG = "CreateUserProfileUC";
+
 	private final UserRepository userRepository;
 
 	@Inject
@@ -21,18 +19,24 @@ public class CreateUserProfileUseCaseImpl implements CreateUserProfileUseCase {
 	}
 
 	@Override
-	public void execute(String uid, @Nullable String displayName, @Nullable String email, @Nullable String photoUrl,
-											ProfileCreationCallbacks callbacks) {
-		Log.d(TAG, "Executing for UID: " + uid);
+	public void execute(
+			@NonNull String uid,
+			@Nullable String displayName,
+			@Nullable String email,
+			@Nullable String photoUrl,
+			@NonNull ProfileOperationCallbacks callbacks
+	) {
+		// The use case's job is to simply call the repository.
 		userRepository.getOrCreateUserProfile(uid, displayName, email, photoUrl, new UserRepository.ProfileOperationCallbacks() {
 			@Override
 			public void onSuccess(@NonNull User user) {
-				callbacks.onProfileReadyOrExists(user);
+				callbacks.onSuccess(user);
+
 			}
 
 			@Override
 			public void onError(@NonNull String message) {
-				callbacks.onProfileCreationError(message);
+				callbacks.onError(message);
 			}
 		});
 	}
