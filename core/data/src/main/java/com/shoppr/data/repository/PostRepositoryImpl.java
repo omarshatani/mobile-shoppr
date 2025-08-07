@@ -1,12 +1,12 @@
 package com.shoppr.data.repository;
 
-import android.util.Log;
+import android.net.Uri;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
 
+import com.shoppr.domain.datasource.FirebaseStorageDataSource;
 import com.shoppr.domain.datasource.FirestorePostDataSource;
 import com.shoppr.domain.repository.PostRepository;
 import com.shoppr.model.Post;
@@ -14,91 +14,86 @@ import com.shoppr.model.Post;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class PostRepositoryImpl implements PostRepository {
-	private static final String TAG = "PostRepositoryImpl";
-	private final FirestorePostDataSource postDataSource;
+
+	private final FirestorePostDataSource firestorePostDataSource;
+	private final FirebaseStorageDataSource firebaseStorageDataSource;
 
 	@Inject
-	public PostRepositoryImpl(FirestorePostDataSource postDataSource) {
-		this.postDataSource = postDataSource;
+	public PostRepositoryImpl(
+			FirestorePostDataSource firestorePostDataSource,
+			FirebaseStorageDataSource firebaseStorageDataSource
+	) {
+		this.firestorePostDataSource = firestorePostDataSource;
+		this.firebaseStorageDataSource = firebaseStorageDataSource;
 	}
 
 	@Override
-	public void savePost(@NonNull Post post, @NonNull final SavePostCallbacks callbacks) {
-		Log.d(TAG, "Saving post: " + post.getTitle());
-		// Here you would add any necessary fields before saving, e.g.,
-		// if post.getId() is null, generate one.
-		// if post.getCreatedAt() is null, set it to ServerTimestamp.
-		// For simplicity, assuming Post object is ready.
+	public LiveData<List<Post>> getFeedPosts(@Nullable String currentUserIdToExclude) {
+		return firestorePostDataSource.getFeedPosts(currentUserIdToExclude);
+	}
 
-		postDataSource.savePost(post, new FirestorePostDataSource.FirestorePostCallbacks() {
+	@Override
+	public LiveData<List<Post>> getPostsForUser(@NonNull String userId) {
+		return firestorePostDataSource.getPostsForUser(userId);
+	}
+
+	@Override
+	public LiveData<List<Post>> getPostsByIds(@NonNull List<String> postIds) {
+		return firestorePostDataSource.getPostsByIds(postIds);
+	}
+
+	@Override
+	public void getPostById(@NonNull String postId, @NonNull PostCallbacks callbacks) {
+		firestorePostDataSource.getPostById(postId, new FirestorePostDataSource.PostOperationCallbacks() {
 			@Override
-			public void onSuccess() {
-				Log.d(TAG, "Post saved successfully via DataSource.");
-				callbacks.onSaveSuccess();
+			public void onSuccess(@NonNull Post post) {
+				callbacks.onSuccess(post);
 			}
 
 			@Override
 			public void onError(@NonNull String message) {
-				Log.e(TAG, "Error saving post via DataSource: " + message);
-				callbacks.onSaveError(message);
+				callbacks.onError(message);
+			}
+
+			@Override
+			public void onNotFound() {
+				callbacks.onNotFound();
 			}
 		});
 	}
 
 	@Override
-	public void getPostById(@NonNull String postId, @NonNull final GetPostByIdCallbacks callbacks) {
-		Log.d(TAG, "getPostById called for postId: " + postId);
-		postDataSource.getPostById(postId, new FirestorePostDataSource.FirestoreGetPostByIdCallbacks() {
-			@Override public void onSuccess(@NonNull Post post) { callbacks.onSuccess(post); }
-			@Override public void onError(@NonNull String message) { callbacks.onError(message); }
-			@Override public void onNotFound() { callbacks.onNotFound(); }
-		});
-	}
-
-	@Override
-	public LiveData<List<Post>> getPostsByIds(List<String> postIds) {
-		MutableLiveData<List<Post>> postsLiveData = new MutableLiveData<>();
-		postDataSource.getPostsByIds(postIds, new FirestorePostDataSource.PostsCallbacks() {
+	public void createPost(Post post, List<Uri> imageUris, PostCreationCallbacks callback) {
+		firebaseStorageDataSource.uploadImages(imageUris, new FirebaseStorageDataSource.UploadCallbacks() {
 			@Override
-			public void onSuccess(@NonNull List<Post> posts) {
-				postsLiveData.postValue(posts);
+			public void onSuccess(@NonNull List<String> imageUrls) {
+				post.setImageUrl(imageUrls);
+				firestorePostDataSource.createPost(post, new FirestorePostDataSource.PostOperationCallbacks() {
+					@Override
+					public void onSuccess(@NonNull Post createdPost) {
+						callback.onSuccess(createdPost);
+					}
+
+					@Override
+					public void onError(@NonNull String message) {
+						callback.onError(message);
+					}
+
+					@Override
+					public void onNotFound() {
+						// This case is not applicable for create
+					}
+				});
 			}
 
 			@Override
 			public void onError(@NonNull String message) {
-				// You could post an empty list or handle the error in another way
-				postsLiveData.postValue(null);
+				callback.onError(message);
 			}
 		});
-		return postsLiveData;
-	}
-
-	@Override
-	public void getPostsByUser(@NonNull String userId, @NonNull GetPostsCallbacks callbacks) {
-		// TODO: Implement
-	}
-
-	@Override
-	public void getAllPosts(@NonNull GetPostsCallbacks callbacks) {
-		// TODO: Implement
-	}
-
-	@Override
-	public void deletePost(@NonNull String postId, @NonNull DeletePostCallbacks callbacks) {
-		// TODO: Implement
-	}
-
-	@Override
-	public LiveData<List<Post>> getPostsForMap(@Nullable String currentUserId) {
-		Log.d(TAG, "getPostsForMap called. Excluding user: " + currentUserId);
-		return postDataSource.getPostsForMap(currentUserId);
-	}
-
-	@Override
-	public LiveData<List<Post>> getPostsCreatedByUser(@NonNull String currentUserId) {
-		Log.d(TAG, "getPostsCreatedByUser called for user ID: " + currentUserId);
-		return postDataSource.getPostsCreatedByUser(currentUserId);
 	}
 }

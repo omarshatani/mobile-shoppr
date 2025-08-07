@@ -13,6 +13,7 @@ import com.google.android.material.chip.Chip;
 import com.shoppr.core.ui.R;
 import com.shoppr.core.ui.databinding.ListItemPostBinding;
 import com.shoppr.model.Post;
+import com.shoppr.ui.utils.FormattingUtils;
 import com.shoppr.ui.utils.ImageLoader;
 
 import java.util.Collections;
@@ -79,10 +80,10 @@ public class MyPostsAdapter extends ListAdapter<Post, MyPostsAdapter.PostViewHol
 			binding.textPostItemDescription.setText(post.getDescription());
 
 			if (post.getPrice() != null && !post.getPrice().isEmpty()) {
-				binding.textPostItemPrice.setText(String.format("%s %s", post.getPrice(), post.getCurrency()));
-				binding.textPostItemPrice.setVisibility(View.VISIBLE);
+				binding.textPostItemPrice.setText(String.format("%s %s", FormattingUtils.formatPrice(post.getPrice()), post.getCurrency()));
 			} else {
 				binding.textPostItemPrice.setVisibility(View.GONE);
+				binding.textPostItemBaseOffer.setVisibility(View.GONE);
 			}
 
 			binding.chipGroupCategory.removeAllViews();

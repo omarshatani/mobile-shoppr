@@ -38,12 +38,6 @@ public class FirebaseAuthDataSourceImpl implements FirebaseAuthDataSource {
 		return domainUserAuthStateLiveData;
 	}
 
-	// This internal method can be used by AuthenticationRepositoryImpl if it needs the raw FirebaseUser
-	// but it's not part of the FirebaseAuthDataSource *interface* for the domain.
-	public FirebaseUser getCurrentFirebaseUser() {
-		return firebaseAuthSdk.getCurrentUser();
-	}
-
 	@Override
 	public boolean isCurrentUserLoggedIn() {
 		return firebaseAuthSdk.getCurrentUser() != null;
@@ -59,7 +53,7 @@ public class FirebaseAuthDataSourceImpl implements FirebaseAuthDataSource {
 	@Override
 	public void startObserving() {
 		if (authStateListener == null) {
-			authStateListener = authSdk -> { // authSdk is FirebaseAuth instance
+			authStateListener = authSdk -> {
 				FirebaseUser fUser = authSdk.getCurrentUser();
 				Log.d(TAG, "Firebase AuthStateListener triggered. FirebaseUser: " + (fUser != null ? fUser.getUid() : "null"));
 				domainUserAuthStateLiveData.postValue(userMapper.toUser(fUser));

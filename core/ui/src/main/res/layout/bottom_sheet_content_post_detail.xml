@@ -30,9 +30,10 @@
             android:id="@+id/detail_post_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="56dp"
             android:textAppearance="?attr/textAppearanceHeadline6"
             android:textColor="?attr/colorOnSurface"
-            tools:text="Sleek Laptop" />
+            tools:text="Sleek Laptop With a Really Long Title to Test Wrapping" />
 
         <LinearLayout
             android:id="@+id/chips_container"
@@ -140,6 +141,16 @@
             android:text="Make an offer" />
 
     </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/button_favorite"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/add_to_favorites"
+        android:src="@drawable/ic_favorite_outline"
+        app:layout_constraintEnd_toEndOf="@id/detail_content_container"
+        app:layout_constraintTop_toTopOf="@id/detail_content_container" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

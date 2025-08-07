@@ -52,29 +52,50 @@ public class ProfileFragment extends BaseFragment {
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 		setupRootViewInsets(view);
-		setupUserName();
-		setupEmail();
-		setupLogoutCta();
-		setupFavoritesCta();
+		setupClickListeners();
 		observeViewModel();
 	}
 
+	@Override
+	public void onStart() {
+		super.onStart();
+		viewModel.onFragmentStarted();
+	}
 
 	@Override
-	public void onDestroy() {
-		super.onDestroy();
+	public void onStop() {
+		super.onStop();
+		viewModel.onFragmentStopped();
+	}
+
+	@Override
+	public void onDestroyView() {
+		super.onDestroyView();
 		binding = null;
 	}
 
 	private void observeViewModel() {
+		// Observer for the user's profile information
+		viewModel.currentUserProfile.observe(getViewLifecycleOwner(), user -> {
+			if (user != null) {
+				// User is logged in, display their info
+				binding.profileName.setText(user.getName());
+				binding.profileEmail.setText(user.getEmail());
+				// You could also load the profile image here using Glide
+				binding.buttonLogout.setVisibility(View.VISIBLE);
+			} else {
+				// User is logged out, show guest info
+				binding.profileName.setText(R.string.guest);
+				binding.profileEmail.setText(R.string.user_logged_out_interaction_label);
+				binding.buttonLogout.setVisibility(View.GONE);
+			}
+		});
+
+		// Observer for navigation commands
 		viewModel.getNavigationCommand().observe(getViewLifecycleOwner(), event -> {
-			NavigationRoute route = event.peekContent();
-			if (route instanceof NavigationRoute.ProfileToLogin || route instanceof NavigationRoute.ProfileToFavorites) {
-				NavigationRoute consumedRoute = event.getContentIfNotHandled();
-				if (consumedRoute == null) {
-					return;
-				}
-				navigator.navigate(consumedRoute);
+			NavigationRoute route = event.getContentIfNotHandled();
+			if (route != null) {
+				navigator.navigate(route);
 			}
 		});
 	}
@@ -91,21 +112,9 @@ public class ProfileFragment extends BaseFragment {
 		ViewCompat.requestApplyInsets(view);
 	}
 
-	private void setupUserName() {
-		binding.profileName.setText("Omar");
-
-	}
-
-	private void setupEmail() {
-		binding.profileEmail.setText("omar.shatani@gmail.com");
-	}
-
-	private void setupLogoutCta() {
+	private void setupClickListeners() {
 		binding.buttonLogout.setOnClickListener(v -> viewModel.onLogoutClicked());
-	}
-
-	private void setupFavoritesCta() {
-		View favoritesRoot = binding.menuItemMyFavorites.findViewById(com.shoppr.core.ui.R.id.menu_item_root);
-		favoritesRoot.setOnClickListener(v -> viewModel.onMyFavoritesClicked());
+		binding.menuItemMyFavorites.setOnClickListener(v -> viewModel.onMyFavoritesClicked());
+		// Add other listeners for settings, contact, etc. as needed
 	}
 }

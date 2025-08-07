@@ -45,14 +45,15 @@ public class PostDetailViewModel extends ViewModel {
         this.toggleFavoriteUseCase = toggleFavoriteUseCase;
         this.getCurrentUserUseCase = getCurrentUserUseCase;
 
+			// The Mediator now observes the single source of truth for the user's profile.
         _isFavorite.addSource(getCurrentUserUseCase.getFullUserProfile(), this::updateFavoriteStatus);
     }
 
-    public void onStart() {
+	public void onFragmentStarted() {
         getCurrentUserUseCase.startObserving();
     }
 
-    public void onStop() {
+	public void onFragmentStopped() {
         getCurrentUserUseCase.stopObserving();
     }
 
@@ -62,14 +63,18 @@ public class PostDetailViewModel extends ViewModel {
             @Override
             public void onSuccess(@NonNull Post post) {
                 _selectedPost.setValue(post);
+							// After the post is loaded, check the favorite status against the current user.
                 updateFavoriteStatus(getCurrentUserUseCase.getFullUserProfile().getValue());
             }
 
             @Override
             public void onError(@NonNull String message) {
+							// Handle error
             }
+
             @Override
             public void onNotFound() {
+							// Handle not found
             }
         });
     }
@@ -81,26 +86,26 @@ public class PostDetailViewModel extends ViewModel {
         }
 
         if (user != null && user.getFavoritePosts() != null) {
-            boolean isFavorite = user.getFavoritePosts().contains(currentPostId);
-            _isFavorite.setValue(isFavorite);
+					boolean isFavorited = user.getFavoritePosts().contains(currentPostId);
+					_isFavorite.setValue(isFavorited);
         } else {
             _isFavorite.setValue(false);
         }
     }
 
     public void toggleFavorite() {
-        User currentUser = getCurrentUserUseCase.getFullUserProfile().getValue();
-        if (currentPostId == null || currentUser == null) {
-            return;
-        }
+			if (currentPostId == null) return;
 
-        boolean currentlyFavorite = _isFavorite.getValue() != null && _isFavorite.getValue();
-        toggleFavoriteUseCase.execute(currentPostId, currentlyFavorite, new ToggleFavoriteUseCase.FavoriteToggleCallbacks() {
+			toggleFavoriteUseCase.execute(currentPostId, new ToggleFavoriteUseCase.FavoriteToggleCallbacks() {
             @Override
-            public void onSuccess(boolean isNowFavorite) {
+						public void onSuccess() {
+							// No action needed. The UI will update automatically because the
+							// getFullUserProfile() LiveData will emit a new value.
             }
-            @Override
+
+				@Override
             public void onError(@NonNull String message) {
+					// Optionally show an error message.
             }
         });
     }

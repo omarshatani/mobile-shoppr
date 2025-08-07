@@ -4,15 +4,19 @@ import androidx.annotation.NonNull;
 
 public interface ToggleFavoriteUseCase {
 
+	/**
+	 * Toggles a post's status in the user's favorites list.
+	 *
+	 * @param postId    The ID of the post to add or remove from favorites.
+	 * @param callbacks The callbacks to be invoked on completion.
+	 */
 	void execute(
 			@NonNull String postId,
-			boolean isCurrentlyFavorite,
 			@NonNull FavoriteToggleCallbacks callbacks
 	);
 
 	interface FavoriteToggleCallbacks {
-		void onSuccess(boolean isNowFavorite);
-
+		void onSuccess();
 		void onError(@NonNull String message);
 	}
 }

@@ -28,6 +28,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.chip.Chip;
 import com.google.maps.android.clustering.Cluster;
+import com.shoppr.core.ui.R;
 import com.shoppr.core.ui.databinding.BottomSheetContentPostDetailBinding;
 import com.shoppr.map.databinding.FragmentMapBinding;
 import com.shoppr.model.Event;
@@ -68,26 +69,23 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
             }
         });
 
-    public MapFragment() {
-    }
+	public MapFragment() {
+	}
 
     @Override
-    protected boolean shouldApplyBaseInsetPadding() {
-        return false;
-    }
+		protected boolean shouldApplyBaseInsetPadding() {
+			return false;
+		}
 
     @Override
-    protected boolean isLightStatusBarRequired() {
-        return true;
-    }
+		protected boolean isLightStatusBarRequired() {
+			return true;
+		}
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         viewModel = new ViewModelProvider(this).get(MapViewModel.class);
-        if (getContext() != null) {
-            viewModel.onLocationPermissionResult(hasFineLocationPermission());
-        }
     }
 
     @Nullable
@@ -100,14 +98,10 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(com.shoppr.map.R.id.map);
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
-        } else {
-            Log.e(TAG, "SupportMapFragment NOT found!");
         }
-
         setupBottomSheet();
         setupFabClickListener();
         observeViewModel();
@@ -116,7 +110,9 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
     @Override
     public void onStart() {
         super.onStart();
+			viewModel.onLocationPermissionResult(hasFineLocationPermission());
         viewModel.onMapFragmentStarted();
+
     }
 
     @Override
@@ -128,22 +124,18 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         this.googleMap = googleMap;
-        Log.d(TAG, "onMapReady called. Map is ready.");
-
         if (getContext() != null) {
             postClusterManager = new PostClusterManager(getContext(), googleMap,
                 post -> viewModel.onPostMarkerClicked(post.getId()),
                 new PostClusterManager.OnPostClusterClickListener() {
                     @Override
                     public void onSameLocationClusterClicked(@NonNull List<Post> posts) {
-                        Log.d(TAG, "Handling click for cluster with items at same location.");
                         viewModel.onSameLocationClusterClicked(posts);
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
                     }
 
                     @Override
                     public void onDifferentLocationClusterClicked(@NonNull Cluster<PostClusterItem> cluster) {
-                        Log.d(TAG, "Handling click for cluster with items at different locations (zooming).");
                         LatLngBounds.Builder builder = LatLngBounds.builder();
                         for (PostClusterItem item : cluster.getItems()) {
                             builder.include(item.getPosition());
@@ -153,10 +145,8 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
                 }
             );
         }
-
         googleMap.setOnCameraMoveStartedListener(this);
         updateMapMyLocationUI(viewModel.locationPermissionGranted.getValue());
-
         viewModel.mapPosts.observe(getViewLifecycleOwner(), posts -> {
             if (postClusterManager != null) {
                 postClusterManager.setPosts(posts);
@@ -196,9 +186,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
         emptyStateNearbyView = nearbyListView.findViewById(com.shoppr.core.ui.R.id.layout_empty_state_nearby);
 
         RecyclerView nearbyPostsRecyclerView = nearbyListView.findViewById(com.shoppr.core.ui.R.id.recycler_view_nearby_posts);
-        nearbyPostsAdapter = new NearbyPostsAdapter(post -> {
-            viewModel.onPostMarkerClicked(post.getId());
-        });
+			nearbyPostsAdapter = new NearbyPostsAdapter(post -> viewModel.onPostMarkerClicked(post.getId()));
         nearbyPostsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         nearbyPostsRecyclerView.setAdapter(nearbyPostsAdapter);
 
@@ -210,7 +198,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
                     viewModel.clearSelectedPost();
                 }
             }
-
             @Override
             public void onSlide(@NonNull View bottomSheet, float slideOffset) {
                 moveFabWithBottomSheet(bottomSheet);
@@ -224,7 +211,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
         if (binding == null || getContext() == null) return;
         final float fabHeight = binding.fabMyLocation.getHeight();
         if (fabHeight == 0) return;
-
         final float fabMargin = getResources().getDimension(com.shoppr.core.ui.R.dimen.fab_margin);
         float halfExpandedRatio = bottomSheetBehavior.getHalfExpandedRatio();
         float parentHeight = ((View) bottomSheet.getParent()).getHeight();
@@ -236,41 +222,28 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 
     private void observeViewModel() {
         viewModel.locationPermissionGranted.observe(getViewLifecycleOwner(), this::updateMapMyLocationUI);
-
         viewModel.fabIconResId.observe(getViewLifecycleOwner(), iconResId -> {
             if (binding != null && iconResId != null) {
                 binding.fabMyLocation.setImageResource(iconResId);
             }
         });
-
         viewModel.moveToLocationEvent.observe(getViewLifecycleOwner(), new Event.EventObserver<>(latLng -> {
             if (googleMap != null && latLng != null) {
                 googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f));
             }
         }));
-
         viewModel.requestPermissionEvent.observe(getViewLifecycleOwner(), new Event.EventObserver<>(shouldRequest -> {
             if (shouldRequest) {
                 requestLocationPermission();
             }
         }));
-
         viewModel.toastMessageEvent.observe(getViewLifecycleOwner(), new Event.EventObserver<>(message -> {
             if (getContext() != null && message != null) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
             }
         }));
-
-        viewModel.mapPosts.observe(getViewLifecycleOwner(), posts -> {
-            if (postClusterManager != null) {
-                Log.d(TAG, "Updating MAP MARKERS with " + (posts != null ? posts.size() : 0) + " posts.");
-                postClusterManager.setPosts(posts);
-            }
-        });
-
         viewModel.bottomSheetPosts.observe(getViewLifecycleOwner(), posts -> {
             if (nearbyPostsAdapter != null) {
-                Log.d(TAG, "Updating BOTTOM SHEET LIST with " + (posts != null ? posts.size() : 0) + " posts.");
                 nearbyPostsAdapter.submitList(posts);
                 RecyclerView nearbyRecyclerView = nearbyListView.findViewById(com.shoppr.core.ui.R.id.recycler_view_nearby_posts);
                 if (posts == null || posts.isEmpty()) {
@@ -296,11 +269,17 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
                 nearbyListView.setVisibility(View.VISIBLE);
                 binding.bottomSheetNearby.findViewById(com.shoppr.core.ui.R.id.text_bottom_sheet_title).setVisibility(View.VISIBLE);
                 postDetailView.setVisibility(View.GONE);
-
             }
         });
 
-        viewModel.isDetailLoading.observe(getViewLifecycleOwner(), isLoading -> {
+			viewModel.isFavorite().observe(getViewLifecycleOwner(), isFavorite -> {
+				if (detailViewBinding != null && isFavorite != null) {
+					if (isFavorite) {
+						detailViewBinding.buttonFavorite.setImageResource(R.drawable.ic_favorite_filled);
+					} else {
+						detailViewBinding.buttonFavorite.setImageResource(R.drawable.ic_favorite_outline);
+					}
+				}
         });
     }
 
@@ -309,24 +288,21 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
         detailViewBinding.detailPostPrice.setText(String.format("%s %s", post.getPrice(), post.getCurrency()));
         detailViewBinding.detailPostDescription.setText(post.getDescription());
 
-        // --- This is the new logic for category chips ---
-        detailViewBinding.chipsContainer.removeAllViews(); // Clear previous chips
+			detailViewBinding.chipsContainer.removeAllViews();
         List<String> categories = post.getCategories();
         if (categories != null && !categories.isEmpty()) {
             detailViewBinding.chipsContainer.setVisibility(View.VISIBLE);
             for (String categoryName : categories) {
                 Chip chip = new Chip(getContext());
                 chip.setText(categoryName);
-                // You can customize the chip style here if needed
                 detailViewBinding.chipsContainer.addView(chip);
             }
         } else {
             detailViewBinding.chipsContainer.setVisibility(View.GONE);
         }
-        // --- End of new logic ---
 
         if (post.getLister() != null) {
-            detailViewBinding.detailListerName.setText("by " + post.getLister().getName());
+					detailViewBinding.detailListerName.setText(String.format("by %s", post.getLister().getName()));
             detailViewBinding.detailListerName.setVisibility(View.VISIBLE);
         } else {
             detailViewBinding.detailListerName.setVisibility(View.GONE);
@@ -334,6 +310,8 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 
         String imageUrl = (post.getImageUrl() != null && !post.getImageUrl().isEmpty()) ? post.getImageUrl().get(0) : null;
         ImageLoader.loadImage(detailViewBinding.detailPostImage, imageUrl);
+
+			detailViewBinding.buttonFavorite.setOnClickListener(v -> viewModel.onFavoriteClicked());
     }
 
     @SuppressLint("MissingPermission")
@@ -353,9 +331,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 
     private void setupFabClickListener() {
         if (binding != null) {
-            binding.fabMyLocation.setOnClickListener(v -> {
-                viewModel.onMyLocationButtonClicked();
-            });
+					binding.fabMyLocation.setOnClickListener(v -> viewModel.onMyLocationButtonClicked());
         }
     }
 
@@ -366,9 +342,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 
     private boolean hasFineLocationPermission() {
         if (getContext() == null) return false;
-        return ContextCompat.checkSelfPermission(
-            requireContext(),
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED;
+			return ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 }

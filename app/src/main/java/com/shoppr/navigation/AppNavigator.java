@@ -1,14 +1,10 @@
 package com.shoppr.navigation;
 
 import android.util.Log;
-
 import androidx.navigation.NavController;
-
 import com.shoppr.R;
-
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -36,6 +32,7 @@ public class AppNavigator implements Navigator {
     @Inject
     public AppNavigator() {}
 
+    @Override
     public void setNavController(NavController navController) {
         this.navController = navController;
     }
@@ -65,14 +62,12 @@ public class AppNavigator implements Navigator {
         } catch (IllegalArgumentException exception) {
             Log.e(TAG, "Navigation failed for actionId " + actionId + ". Destination not found?", exception);
         }
-
     }
-
 
     @Override
     public void goBack() {
         if (navController != null) {
-            navController.navigateUp();
+            navController.popBackStack();
         }
     }
 }
