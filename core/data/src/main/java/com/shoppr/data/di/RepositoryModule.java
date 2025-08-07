@@ -1,7 +1,7 @@
 package com.shoppr.data.di;
 
-import com.google.firebase.functions.FirebaseFunctions;
 import com.shoppr.data.datasource.FirebaseAuthDataSourceImpl;
+import com.shoppr.data.datasource.FirebaseFunctionsDataSourceImpl;
 import com.shoppr.data.datasource.FirebaseStorageDataSourceImpl;
 import com.shoppr.data.datasource.FirestorePostDataSourceImpl;
 import com.shoppr.data.datasource.FirestoreUserDataSourceImpl;
@@ -45,8 +45,8 @@ public class RepositoryModule {
 
 	@Provides
 	@Singleton
-	public LLMRepository provideLLMRepository() {
-		return new LLMRepositoryImpl(FirebaseFunctions.getInstance());
+	public LLMRepository provideLLMRepository(FirebaseFunctionsDataSourceImpl firebaseFunctionsDataSourceImpl) {
+		return new LLMRepositoryImpl(firebaseFunctionsDataSourceImpl);
 	}
 
 }

@@ -7,8 +7,6 @@ import com.shoppr.domain.repository.LLMRepository;
 import com.shoppr.domain.usecase.GetLLMSuggestionsUseCase;
 import com.shoppr.model.SuggestedPostDetails;
 
-import java.util.List;
-
 import javax.inject.Inject;
 
 public class GetLLMSuggestionsUseCaseImpl implements GetLLMSuggestionsUseCase {
@@ -23,14 +21,12 @@ public class GetLLMSuggestionsUseCaseImpl implements GetLLMSuggestionsUseCase {
 	@Override
 	public void execute(
 			@NonNull String text,
-			@Nullable List<String> imageUrls,
 			@Nullable String baseOfferPrice,
 			@Nullable String baseOfferCurrency,
 			@NonNull LLMAnalysisCallbacks callbacks
 	) {
 		llmRepository.getPostSuggestionsFromLLM(
 				text,
-				imageUrls,
 				baseOfferPrice,
 				baseOfferCurrency,
 				new LLMRepository.LLMAnalysisCallbacks() {

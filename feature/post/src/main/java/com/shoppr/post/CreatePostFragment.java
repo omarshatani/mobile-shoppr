@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -18,6 +19,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
+
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.carousel.CarouselLayoutManager;
 import com.google.android.material.carousel.CarouselSnapHelper;
@@ -26,9 +28,12 @@ import com.shoppr.navigation.Navigator;
 import com.shoppr.post.databinding.FragmentCreatePostBinding;
 import com.shoppr.ui.BaseFragment;
 import com.shoppr.ui.adapter.SelectedImagesCarouselAdapter;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.inject.Inject;
+
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
@@ -119,7 +124,7 @@ public class CreatePostFragment extends BaseFragment {
 
 	private void setupCurrencySpinner() {
 		if (binding == null || getContext() == null) return;
-		String[] currencies = new String[]{"USD", "EUR", "CHF", "GBP", "JPY", "CAD"};
+		String[] currencies = new String[]{"USD", "EUR", "CHF"};
 		ArrayAdapter<String> adapter = new ArrayAdapter<>(
 				requireContext(),
 				android.R.layout.simple_dropdown_item_1line,

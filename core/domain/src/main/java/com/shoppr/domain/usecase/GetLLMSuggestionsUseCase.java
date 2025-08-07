@@ -5,8 +5,6 @@ import androidx.annotation.Nullable;
 
 import com.shoppr.model.SuggestedPostDetails;
 
-import java.util.List;
-
 public interface GetLLMSuggestionsUseCase {
 
 	interface LLMAnalysisCallbacks {
@@ -17,7 +15,6 @@ public interface GetLLMSuggestionsUseCase {
 
 	void execute(
 			@NonNull String text,
-			@Nullable List<String> imageUrls,
 			@Nullable String baseOfferPrice,
 			@Nullable String baseOfferCurrency,
 			@NonNull LLMAnalysisCallbacks callbacks
