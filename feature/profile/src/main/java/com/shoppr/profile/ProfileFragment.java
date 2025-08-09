@@ -7,14 +7,12 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.view.ViewCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.shoppr.navigation.NavigationRoute;
 import com.shoppr.navigation.Navigator;
 import com.shoppr.profile.databinding.FragmentProfileBinding;
 import com.shoppr.ui.BaseFragment;
-import com.shoppr.ui.utils.InsetUtils;
 
 import javax.inject.Inject;
 
@@ -51,9 +49,14 @@ public class ProfileFragment extends BaseFragment {
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
-		setupRootViewInsets(view);
+
 		setupClickListeners();
 		observeViewModel();
+	}
+
+	@Override
+	public InsetType getInsetType() {
+		return InsetType.TOP_AND_BOTTOM;
 	}
 
 	@Override
@@ -98,18 +101,6 @@ public class ProfileFragment extends BaseFragment {
 				navigator.navigate(route);
 			}
 		});
-	}
-
-	private void setupRootViewInsets(View view) {
-		ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
-			InsetUtils.applyBottomNavPadding(
-					v,
-					windowInsets,
-					com.shoppr.core.ui.R.dimen.bottom_nav_height
-			);
-			return windowInsets;
-		});
-		ViewCompat.requestApplyInsets(view);
 	}
 
 	private void setupClickListeners() {

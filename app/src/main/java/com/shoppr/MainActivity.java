@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
@@ -33,6 +34,9 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
 		binding = ActivityMainBinding.inflate(getLayoutInflater());
 		setContentView(binding.getRoot());
 		viewModel = new ViewModelProvider(this).get(MainViewModel.class);
@@ -72,6 +76,13 @@ public class MainActivity extends AppCompatActivity {
 				navigator.navigate(route);
 			}
 		});
+	}
+
+	public int getBottomNavHeight() {
+		if (binding != null) {
+			return binding.bottomNavigation.getHeight();
+		}
+		return 0;
 	}
 
 	@Override

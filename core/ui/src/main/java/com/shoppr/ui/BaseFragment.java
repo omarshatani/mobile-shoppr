@@ -8,36 +8,32 @@ import android.view.Window;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleEventObserver;
-import androidx.lifecycle.LifecycleOwner;
 
 import com.shoppr.ui.utils.InsetUtils;
 
 public abstract class BaseFragment extends Fragment {
-
-	private static final String BASE_TAG = "BaseFragmentInsets";
-
-	private androidx.core.view.OnApplyWindowInsetsListener decorViewListener = null;
+	public final static String TAG = "BaseFragment";
 
 	/**
-	 * Subclasses should override this method and return false if they want to
-	 * handle window inset padding themselves (e.g., MapFragment applying padding
-	 * directly to the GoogleMap object). If true (default), the BaseFragment
-	 * will apply padding to the fragment's root view.
-	 *
-	 * @return true if the BaseFragment should apply padding, false otherwise.
+	 * Defines the type of system padding a fragment needs.
+	 * This allows for a consistent approach to handling screen insets.
 	 */
-	protected boolean shouldApplyBaseInsetPadding() {
-		// Default behavior is to apply padding
-		return true;
+	public enum InsetType {
+		NONE,           // For edge-to-edge screens like the map
+		TOP,            // For screens that only need padding for the status bar
+		BOTTOM,         // For screens that only need padding for the navigation bar
+		TOP_AND_BOTTOM  // For standard screens that need both
 	}
+
+	/**
+	 * Subclasses must override this method to declare what kind of insets they need.
+	 *
+	 * @return The InsetType for the fragment.
+	 */
+	protected abstract InsetType getInsetType();
 
 	protected boolean isLightStatusBarRequired() {
 		// Default behavior:
@@ -56,92 +52,62 @@ public abstract class BaseFragment extends Fragment {
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
-		// Only set up the listener if the subclass wants the base padding behavior
-		if (shouldApplyBaseInsetPadding()) {
-			setupEdgeToEdgeInsets();
-		} else {
-			Log.d(BASE_TAG, "Skipping base inset padding for: " + getClass().getSimpleName());
-		}
+		// Automatically apply the correct insets based on the fragment's declaration.
+		applyInsets(view);
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
-		Log.d(BASE_TAG, "onResume for: " + getClass().getSimpleName() + ", setting status bar appearance.");
+		Log.d(TAG, "onResume for: " + getClass().getSimpleName() + ", setting status bar appearance.");
 		// Set the status bar appearance when the fragment becomes visible
 		setSystemBarAppearance();
 	}
 
-	private void setupEdgeToEdgeInsets() {
-		final String fragmentClassName = getClass().getSimpleName();
-		final View decorView = requireActivity().getWindow().getDecorView();
-
-		Log.d(BASE_TAG, "Setting up DecorView inset listener for: " + fragmentClassName);
-
-		decorViewListener = (v, windowInsets) -> {
-			View currentFragmentRootView = getView();
-			if (currentFragmentRootView != null) {
-				Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-				Log.d(BASE_TAG, "Listener on DecorView CALLED for " + fragmentClassName + "! Applying padding. Bottom: " + systemBars.bottom);
-				// Apply padding to THIS FRAGMENT's root view
-				InsetUtils.applySystemBarsAndImePadding(currentFragmentRootView, windowInsets);
-				// currentFragmentRootView.requestLayout(); // Optional
-			} else {
-				Log.w(BASE_TAG, "Fragment view was null in DecorView listener for " + fragmentClassName);
-			}
-			return windowInsets;
-		};
-
-		ViewCompat.setOnApplyWindowInsetsListener(decorView, decorViewListener);
-
-		getViewLifecycleOwner().getLifecycle().addObserver(new LifecycleEventObserver() {
-			@Override
-			public void onStateChanged(@NonNull LifecycleOwner source, @NonNull Lifecycle.Event event) {
-				if (event == Lifecycle.Event.ON_DESTROY) {
-					if (decorViewListener != null) {
-						Log.d(BASE_TAG, "Removing DecorView inset listener for: " + fragmentClassName);
-						ViewCompat.setOnApplyWindowInsetsListener(decorView, null);
-						decorViewListener = null;
-					}
-					source.getLifecycle().removeObserver(this);
-				}
-			}
-		});
-
-		Log.d(BASE_TAG, "Requesting apply insets on DecorView for: " + fragmentClassName);
-		ViewCompat.requestApplyInsets(decorView);
-
+	private void applyInsets(@NonNull View view) {
+		switch (getInsetType()) {
+			case TOP:
+				applyTopInsets(view);
+				break;
+			case BOTTOM:
+				applyBottomInsets(view);
+				break;
+			case TOP_AND_BOTTOM:
+				applyTopAndBottomInsets(view);
+				break;
+			case NONE:
+			default:
+				break;
+		}
 	}
 
+	private void applyTopInsets(@NonNull View view) {
+		InsetUtils.applyTopInsets(view);
+	}
+
+	private void applyBottomInsets(@NonNull View view) {
+		InsetUtils.applyBottomInsets(view);
+	}
+
+	private void applyTopAndBottomInsets(@NonNull View view) {
+		InsetUtils.applyTopAndBottomInsets(view);
+	}
 
 	private void setSystemBarAppearance() {
 		if (getActivity() != null) {
 			Window window = getActivity().getWindow();
-			// WindowInsetsControllerCompat requires API 16+ (getView() requires API 1)
-			// Need a view to get the controller, use the fragment's view
 			View view = getView();
 			if (view != null) {
 				WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, view);
 				boolean lightStatusBar = isLightStatusBarRequired();
 				controller.setAppearanceLightStatusBars(lightStatusBar);
 				controller.setAppearanceLightNavigationBars(lightStatusBar);
-				Log.d(BASE_TAG, "Set AppearanceLightStatusBars to: " + lightStatusBar + " for " + getClass().getSimpleName());
+				Log.d(TAG, "Set AppearanceLightStatusBars to: " + lightStatusBar + " for " + getClass().getSimpleName());
 			} else {
-				Log.w(BASE_TAG, "Fragment view was null in setSystemBarAppearance for " + getClass().getSimpleName());
+				Log.w(TAG, "Fragment view was null in setSystemBarAppearance for " + getClass().getSimpleName());
 			}
 		} else {
-			Log.w(BASE_TAG, "Activity was null in setSystemBarAppearance for " + getClass().getSimpleName());
+			Log.w(TAG, "Activity was null in setSystemBarAppearance for " + getClass().getSimpleName());
 		}
-	}
-
-	@Override
-	public void onDestroyView() {
-		// Safeguard cleanup
-		if (decorViewListener != null && getActivity() != null) {
-			View decorView = getActivity().getWindow().getDecorView();
-			ViewCompat.setOnApplyWindowInsetsListener(decorView, null);
-			decorViewListener = null;
-		}
-		super.onDestroyView();
 	}
 }

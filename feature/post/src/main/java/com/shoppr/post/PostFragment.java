@@ -9,7 +9,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.view.ViewCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
@@ -22,7 +21,6 @@ import com.shoppr.navigation.Navigator;
 import com.shoppr.post.databinding.FragmentPostBinding;
 import com.shoppr.ui.BaseFragment;
 import com.shoppr.ui.adapter.MyPostsAdapter;
-import com.shoppr.ui.utils.InsetUtils;
 
 import java.util.Collections;
 
@@ -65,11 +63,15 @@ public class PostFragment extends BaseFragment implements MyPostsAdapter.OnPostC
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        setupRootViewInsets(view);
         setupRecyclerView();
         setupSwipeToRefresh();
         setupBindings();
         observeViewModel();
+    }
+
+    @Override
+    protected InsetType getInsetType() {
+        return InsetType.TOP_AND_BOTTOM;
     }
 
     @Override
@@ -146,18 +148,6 @@ public class PostFragment extends BaseFragment implements MyPostsAdapter.OnPostC
             Log.d(TAG, "Swipe to refresh triggered.");
             viewModel.refreshPosts();
         });
-    }
-
-    private void setupRootViewInsets(View view) {
-        ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
-            InsetUtils.applyBottomNavPadding(
-                v,
-                windowInsets,
-                com.shoppr.core.ui.R.dimen.bottom_nav_height
-            );
-            return windowInsets;
-        });
-        ViewCompat.requestApplyInsets(view);
     }
 
     private void setupRecyclerView() {

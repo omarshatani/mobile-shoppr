@@ -49,7 +49,8 @@ public class CreatePostFragment extends BaseFragment {
 	private SelectedImagesCarouselAdapter selectedImagesAdapter;
 	private ActivityResultLauncher<Intent> pickImagesLauncher;
 
-	public CreatePostFragment() { /* Required empty public constructor */ }
+	public CreatePostFragment() {
+	}
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -100,6 +101,11 @@ public class CreatePostFragment extends BaseFragment {
 		setupCurrencySpinner();
 		setupButtonListeners();
 		observeViewModel();
+	}
+
+	@Override
+	protected InsetType getInsetType() {
+		return InsetType.TOP;
 	}
 
 	private void setupCarousel() {

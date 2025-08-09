@@ -5,22 +5,22 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/colorSurfaceContainerLowest"
-    android:fitsSystemWindows="true"
     tools:context=".PostFragment">
+
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresh_layout_my_posts"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingHorizontal="8dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_view_my_posts"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingVertical="16dp"
             android:clipToPadding="false"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:listitem="@layout/list_item_post" />
@@ -28,7 +28,6 @@
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 
-    <!-- Empty State Layout -->
     <LinearLayout
         android:id="@+id/layout_empty_state_my_posts"
         android:layout_width="wrap_content"
@@ -55,7 +54,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:text="You Haven't Posted Anything Yet"
+            android:text="@string/you_haven_t_posted_anything_yet"
             android:textAppearance="?attr/textAppearanceHeadline6"
             android:textColor="?attr/colorOnSurface" />
 
@@ -64,7 +63,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
-            android:text="Tap the button below to create your first post and share it with others!"
+            android:text="@string/tap_the_button_below_to_create_your_first_post_and_share_it_with_others"
             android:textAlignment="center"
             android:textAppearance="?attr/textAppearanceBody2"
             android:textColor="?attr/colorOnSurfaceVariant" />
@@ -82,11 +81,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="32dp"
-        android:contentDescription="Create New Post"
+        android:layout_marginBottom="16dp"
+        android:contentDescription="@string/create_new_post"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/swipe_refresh_layout_my_posts"
+        app:layout_constraintEnd_toEndOf="@id/swipe_refresh_layout_my_posts"
         app:srcCompat="@drawable/ic_add" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

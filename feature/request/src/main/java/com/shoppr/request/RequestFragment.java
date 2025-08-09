@@ -7,13 +7,10 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.view.ViewCompat;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.shoppr.request.databinding.FragmentRequestBinding;
 import com.shoppr.ui.BaseFragment;
-import com.shoppr.ui.utils.InsetUtils;
 
 public class RequestFragment extends BaseFragment {
 
@@ -43,6 +40,11 @@ public class RequestFragment extends BaseFragment {
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
+	}
+
+	@Override
+	public InsetType getInsetType() {
+		return InsetType.TOP_AND_BOTTOM;
 	}
 
 	@Override

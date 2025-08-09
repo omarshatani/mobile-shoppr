@@ -7,7 +7,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.shoppr.checkout.databinding.FragmentCheckoutBinding;
@@ -42,6 +41,11 @@ public class CheckoutFragment extends BaseFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+    }
+
+    @Override
+    protected InsetType getInsetType() {
+        return InsetType.TOP_AND_BOTTOM;
     }
 
     @Override

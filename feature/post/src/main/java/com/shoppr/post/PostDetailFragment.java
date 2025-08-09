@@ -53,6 +53,11 @@ public class PostDetailFragment extends BaseFragment {
 	}
 
 	@Override
+	protected InsetType getInsetType() {
+		return InsetType.TOP;
+	}
+
+	@Override
 	public void onStart() {
 		super.onStart();
 		viewModel.onFragmentStarted();

@@ -30,11 +30,6 @@ public class FavoritesFragment extends BaseFragment implements MyPostsAdapter.On
 	private MyPostsAdapter favoritesAdapter;
 
 	@Override
-	protected boolean shouldApplyBaseInsetPadding() {
-		return false;
-	}
-
-	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		viewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
@@ -53,6 +48,11 @@ public class FavoritesFragment extends BaseFragment implements MyPostsAdapter.On
 		setupToolbar();
 		setupRecyclerView();
 		observeViewModel();
+	}
+
+	@Override
+	protected InsetType getInsetType() {
+		return InsetType.TOP_AND_BOTTOM;
 	}
 
 	@Override

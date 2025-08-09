@@ -2,5 +2,8 @@
     <string name="app_name">post</string>
 <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="create_new_post">Create New Post</string>
+    <string name="tap_the_button_below_to_create_your_first_post_and_share_it_with_others">Tap the button below to create your first post and share it with others!</string>
+    <string name="you_haven_t_posted_anything_yet">You Haven\'t Posted Anything Yet</string>
 
 </resources>

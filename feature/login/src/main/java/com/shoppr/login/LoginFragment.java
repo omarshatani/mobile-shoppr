@@ -66,6 +66,11 @@ public class LoginFragment extends BaseFragment {
 		observeViewModel();
 	}
 
+	@Override
+	protected InsetType getInsetType() {
+		return InsetType.TOP;
+	}
+
 	private void observeViewModel() {
 		viewModel.authState.observe(getViewLifecycleOwner(), user -> {
 			if (user != null) {
