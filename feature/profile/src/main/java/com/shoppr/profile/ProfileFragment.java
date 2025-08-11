@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.shoppr.navigation.NavigationRoute;
 import com.shoppr.navigation.Navigator;
@@ -50,13 +51,14 @@ public class ProfileFragment extends BaseFragment {
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 
+		setupNavigation();
 		setupClickListeners();
 		observeViewModel();
 	}
 
 	@Override
 	public InsetType getInsetType() {
-		return InsetType.TOP_AND_BOTTOM;
+		return InsetType.TOP;
 	}
 
 	@Override
@@ -75,6 +77,10 @@ public class ProfileFragment extends BaseFragment {
 	public void onDestroyView() {
 		super.onDestroyView();
 		binding = null;
+	}
+
+	private void setupNavigation() {
+		navigator.setNavController(NavHostFragment.findNavController(this));
 	}
 
 	private void observeViewModel() {
@@ -106,6 +112,5 @@ public class ProfileFragment extends BaseFragment {
 	private void setupClickListeners() {
 		binding.buttonLogout.setOnClickListener(v -> viewModel.onLogoutClicked());
 		binding.menuItemMyFavorites.setOnClickListener(v -> viewModel.onMyFavoritesClicked());
-		// Add other listeners for settings, contact, etc. as needed
 	}
 }

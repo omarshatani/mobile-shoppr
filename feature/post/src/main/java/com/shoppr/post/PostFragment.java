@@ -10,8 +10,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
-import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.shoppr.model.Event;
@@ -35,6 +36,7 @@ public class PostFragment extends BaseFragment implements MyPostsAdapter.OnPostC
     private FragmentPostBinding binding;
     private PostFragmentViewModel viewModel;
     private MyPostsAdapter myPostsAdapter;
+    private NavController navController;
 
     @Inject
     Navigator navigator;
@@ -63,6 +65,7 @@ public class PostFragment extends BaseFragment implements MyPostsAdapter.OnPostC
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        setupNavigation();
         setupRecyclerView();
         setupSwipeToRefresh();
         setupBindings();
@@ -92,15 +95,20 @@ public class PostFragment extends BaseFragment implements MyPostsAdapter.OnPostC
         binding = null;
     }
 
+    private void setupNavigation() {
+        navController = NavHostFragment.findNavController(this);
+        navigator.setNavController(navController);
+    }
+
     private void observeViewModel() {
         viewModel.getNavigationCommand().observe(getViewLifecycleOwner(), event -> {
             NavigationRoute route = event.peekContent();
-            if (route instanceof NavigationRoute.PostsToCreatePost) {
+            if (route instanceof NavigationRoute.CreateNewPost) {
                 NavigationRoute consumedRoute = event.getContentIfNotHandled();
                 if (consumedRoute == null) {
                     return;
                 }
-                navigator.navigate(consumedRoute);
+                navigator.navigate(route);
             }
         });
 
@@ -159,8 +167,8 @@ public class PostFragment extends BaseFragment implements MyPostsAdapter.OnPostC
     @Override
     public void onPostClicked(@NonNull Post post) {
         if (post.getId() == null) return;
-        NavDirections action = PostFragmentDirections.actionPostFragmentToPostDetailFragment(post.getId());
-        Navigation.findNavController(requireView()).navigate(action);
+        NavDirections action = PostFragmentDirections.actionPostToPostDetail(post.getId());
+        navController.navigate(action);
     }
 
     @Override

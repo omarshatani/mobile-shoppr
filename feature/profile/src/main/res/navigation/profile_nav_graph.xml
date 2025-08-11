@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/profile_nav_graph"
     app:startDestination="@id/profile_fragment">
     <fragment
@@ -11,8 +11,12 @@
         tools:layout="@layout/fragment_profile">
 
         <action
-            android:id="@+id/action_profileFragment_to_favoritesFragment"
+            android:id="@+id/action_profile_to_favorites"
             app:destination="@id/favorites_fragment" />
+
+        <action
+            android:id="@+id/action_profile_to_login"
+            app:destination="@id/login_fragment" />
 
     </fragment>
 

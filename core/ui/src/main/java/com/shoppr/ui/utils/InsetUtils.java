@@ -7,8 +7,6 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.shoppr.core.ui.R;
-
 public class InsetUtils {
 
     /**
@@ -24,8 +22,6 @@ public class InsetUtils {
         final int initialPaddingRight = view.getPaddingRight();
         final int initialPaddingBottom = view.getPaddingBottom();
 
-        final int bottomNavHeight = view.getResources().getDimensionPixelSize(R.dimen.bottom_nav_height);
-
         ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
             Insets systemBarInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
 
@@ -34,7 +30,7 @@ public class InsetUtils {
                 initialPaddingTop + systemBarInsets.top,
                 initialPaddingRight,
                 // The final padding is the original + system nav bar + your app's nav bar
-                initialPaddingBottom + systemBarInsets.bottom + bottomNavHeight
+								initialPaddingBottom
             );
 
             return WindowInsetsCompat.CONSUMED;
@@ -67,15 +63,12 @@ public class InsetUtils {
         final int initialPaddingRight = view.getPaddingRight();
         final int initialPaddingBottom = view.getPaddingBottom();
 
-        final int bottomNavHeight = view.getResources().getDimensionPixelSize(R.dimen.bottom_nav_height);
-
         ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
-            Insets systemBarInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(
                 initialPaddingLeft,
                 initialPaddingTop, // No top padding
                 initialPaddingRight,
-                initialPaddingBottom + systemBarInsets.bottom + bottomNavHeight
+								initialPaddingBottom
             );
             return WindowInsetsCompat.CONSUMED;
         });

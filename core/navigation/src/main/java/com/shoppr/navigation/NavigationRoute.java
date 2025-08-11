@@ -8,7 +8,7 @@ public abstract class NavigationRoute {
 	public static final class SplashToLogin extends NavigationRoute {
 	}
 
-	public static final class SplashToMap extends NavigationRoute {
+	public static final class SplashToMain extends NavigationRoute {
 	}
 
 	public static final class Login extends NavigationRoute {
@@ -17,27 +17,17 @@ public abstract class NavigationRoute {
 	public static final class LoginToMap extends NavigationRoute {
 	}
 
-	public static final class Checkout extends NavigationRoute {
-	}
 
 	public static final class Map extends NavigationRoute {
 	}
 
-	public static final class Posts extends NavigationRoute {
-	}
-
-	public static final class PostsToCreatePost extends NavigationRoute {}
-
-	public static final class Requests extends NavigationRoute {
-	}
-
-	public static final class Profile extends NavigationRoute {
+	public static final class CreateNewPost extends NavigationRoute {
 	}
 
 	public static final class ProfileToLogin extends NavigationRoute {
 	}
 
-	public static final class ProfileToFavorites extends NavigationRoute {
+	public static final class Favorites extends NavigationRoute {
 	}
 
 }

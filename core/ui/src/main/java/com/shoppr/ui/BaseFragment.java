@@ -12,6 +12,7 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 
+import com.shoppr.navigation.BottomNavManager;
 import com.shoppr.ui.utils.InsetUtils;
 
 public abstract class BaseFragment extends Fragment {
@@ -49,11 +50,33 @@ public abstract class BaseFragment extends Fragment {
 		return true;
 	}
 
+	protected boolean shouldHideBottomNav() {
+		return false;
+	}
+
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
-		// Automatically apply the correct insets based on the fragment's declaration.
 		applyInsets(view);
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		BottomNavManager manager = findParentBottomNavManager();
+		if (manager != null && shouldHideBottomNav()) {
+			manager.setBottomNavVisibility(false);
+		}
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+		// Always ensure the nav bar is visible when leaving a full-screen fragment
+		BottomNavManager manager = findParentBottomNavManager();
+		if (manager != null && shouldHideBottomNav()) {
+			manager.setBottomNavVisibility(true);
+		}
 	}
 
 	@Override
@@ -109,5 +132,19 @@ public abstract class BaseFragment extends Fragment {
 		} else {
 			Log.w(TAG, "Activity was null in setSystemBarAppearance for " + getClass().getSimpleName());
 		}
+	}
+
+	private BottomNavManager findParentBottomNavManager() {
+		Fragment parent = getParentFragment();
+		while (parent != null) {
+			if (parent instanceof BottomNavManager) {
+				return (BottomNavManager) parent;
+			}
+			parent = parent.getParentFragment();
+		}
+		if (getActivity() instanceof BottomNavManager) {
+			return (BottomNavManager) getActivity();
+		}
+		return null;
 	}
 }

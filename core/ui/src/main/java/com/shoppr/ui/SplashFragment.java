@@ -10,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
 import com.shoppr.core.ui.R;
 import com.shoppr.model.Event;
@@ -23,6 +25,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class SplashFragment extends Fragment {
 	private static final String TAG = "SplashFragment";
 	private SplashViewModel viewModel;
+	private NavController navController;
 	@Inject
 	Navigator navigator;
 
@@ -43,7 +46,14 @@ public class SplashFragment extends Fragment {
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
+
+		setupNavigation(view);
 		observeNavigation();
+	}
+
+	private void setupNavigation(View view) {
+		navController = Navigation.findNavController(view);
+		navigator.setNavController(navController);
 	}
 
 	private void observeNavigation() {

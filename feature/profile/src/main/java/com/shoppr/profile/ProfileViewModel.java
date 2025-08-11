@@ -33,10 +33,10 @@ public class ProfileViewModel extends ViewModel {
 	@Inject
 	public ProfileViewModel(
 			GetCurrentUserUseCase getCurrentUserUseCase,
-			LogoutUseCase logoutUseCase // Inject it
+			LogoutUseCase logoutUseCase
 	) {
 		this.getCurrentUserUseCase = getCurrentUserUseCase;
-		this.logoutUseCase = logoutUseCase; // Initialize it
+		this.logoutUseCase = logoutUseCase;
 		this.currentUserProfile = this.getCurrentUserUseCase.getFullUserProfile();
 	}
 
@@ -50,13 +50,13 @@ public class ProfileViewModel extends ViewModel {
 
 	public void onLogoutClicked() {
 		Log.d(TAG, "Logout button clicked. Invoking LogoutUseCase.");
-		logoutUseCase.invoke(); // Call the use case
-		_navigationCommand.setValue(new Event<>(new NavigationRoute.ProfileToLogin()));
+		logoutUseCase.invoke();
+		_navigationCommand.setValue(new Event<>(new NavigationRoute.Login()));
 	}
 
 	public void onMyFavoritesClicked() {
 		Log.d(TAG, "My Favorites clicked. Navigating to ProfileToFavorites.");
-		_navigationCommand.setValue(new Event<>(new NavigationRoute.ProfileToFavorites()));
+		_navigationCommand.setValue(new Event<>(new NavigationRoute.Favorites()));
 	}
 
 	@Override

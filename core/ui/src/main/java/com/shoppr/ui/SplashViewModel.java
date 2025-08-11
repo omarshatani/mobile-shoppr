@@ -25,7 +25,7 @@ public class SplashViewModel extends ViewModel {
 	public SplashViewModel(AuthenticationRepository authenticationRepository) {
 		if (authenticationRepository.isUserLoggedIn()) {
 			Log.d(TAG, String.valueOf(authenticationRepository.isUserLoggedIn()));
-			_navigationCommand.postValue(new Event<>(new NavigationRoute.SplashToMap()));
+			_navigationCommand.postValue(new Event<>(new NavigationRoute.SplashToMain()));
 		} else {
 			_navigationCommand.postValue(new Event<>(new NavigationRoute.SplashToLogin()));
 		}
