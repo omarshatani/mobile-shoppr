@@ -21,7 +21,7 @@ public class ProfileViewModel extends ViewModel {
 	private static final String TAG = "ProfileViewModel";
 
 	private final GetCurrentUserUseCase getCurrentUserUseCase;
-	private final LogoutUseCase logoutUseCase; // Inject the use case
+	private final LogoutUseCase logoutUseCase;
 
 	public final LiveData<User> currentUserProfile;
 

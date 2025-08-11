@@ -18,7 +18,6 @@
     <fragment
         android:id="@+id/post_detail_fragment"
         android:name="com.shoppr.post.PostDetailFragment"
-        android:label="PostDetailFragment"
         tools:layout="@layout/fragment_post_detail">
         <argument
             android:name="postId"
