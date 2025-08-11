@@ -121,7 +121,7 @@ public class CreatePostViewModel extends ViewModel {
 			public void onSuccess(@NonNull Post createdPost) {
 				isLoading.postValue(false);
 				successMessage.postValue(new Event<>("Post created successfully!"));
-				navigationCommand.postValue(new Event<>(new NavigationRoute.Map()));
+				navigationCommand.postValue(new Event<>(new NavigationRoute.CreatePostToMap()));
 			}
 
 			@Override

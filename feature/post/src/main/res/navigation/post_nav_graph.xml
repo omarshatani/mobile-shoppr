@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -6,29 +7,21 @@
 
     <fragment
         android:id="@+id/post_fragment"
-        android:name="com.shoppr.post.PostFragment">
-
+        android:name="com.shoppr.post.PostFragment"
+        android:label="Post"
+        tools:layout="@layout/fragment_post">
         <action
             android:id="@+id/action_post_to_post_detail"
             app:destination="@id/post_detail_fragment" />
-
-        <action
-            android:id="@+id/action_post_to_create_post"
-            app:destination="@id/create_post_fragment" />
     </fragment>
 
     <fragment
-        android:id="@+id/create_post_fragment"
-        android:name="com.shoppr.post.CreatePostFragment"
-        android:label="New Post"
-        tools:layout="@layout/fragment_create_post" />
-
-    <fragment
         android:id="@+id/post_detail_fragment"
-        android:name="com.shoppr.post.PostDetailFragment">
+        android:name="com.shoppr.post.PostDetailFragment"
+        android:label="PostDetailFragment"
+        tools:layout="@layout/fragment_post_detail">
         <argument
             android:name="postId"
             app:argType="string" />
     </fragment>
-
 </navigation>

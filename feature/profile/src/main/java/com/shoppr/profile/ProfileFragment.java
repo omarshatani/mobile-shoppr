@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.shoppr.navigation.NavigationRoute;
@@ -24,6 +25,7 @@ public class ProfileFragment extends BaseFragment {
 	private static final String TAG = "ProfileFragment";
 	private FragmentProfileBinding binding;
 	private ProfileViewModel viewModel;
+	private NavController localNavigator;
 	@Inject
 	Navigator navigator;
 
@@ -51,7 +53,7 @@ public class ProfileFragment extends BaseFragment {
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 
-		setupNavigation();
+		setupLocalNavigation();
 		setupClickListeners();
 		observeViewModel();
 	}
@@ -79,8 +81,8 @@ public class ProfileFragment extends BaseFragment {
 		binding = null;
 	}
 
-	private void setupNavigation() {
-		navigator.setNavController(NavHostFragment.findNavController(this));
+	private void setupLocalNavigation() {
+		localNavigator = NavHostFragment.findNavController(this);
 	}
 
 	private void observeViewModel() {
@@ -100,11 +102,15 @@ public class ProfileFragment extends BaseFragment {
 			}
 		});
 
-		// Observer for navigation commands
 		viewModel.getNavigationCommand().observe(getViewLifecycleOwner(), event -> {
 			NavigationRoute route = event.getContentIfNotHandled();
-			if (route != null) {
+			if (route == null) {
+				return;
+			}
+			if (route instanceof NavigationRoute.ProfileToLogin) {
 				navigator.navigate(route);
+			} else if (route instanceof NavigationRoute.ProfileToFavorites) {
+				localNavigator.navigate(route);
 			}
 		});
 	}

@@ -51,12 +51,12 @@ public class ProfileViewModel extends ViewModel {
 	public void onLogoutClicked() {
 		Log.d(TAG, "Logout button clicked. Invoking LogoutUseCase.");
 		logoutUseCase.invoke();
-		_navigationCommand.setValue(new Event<>(new NavigationRoute.Login()));
+		_navigationCommand.setValue(new Event<>(new NavigationRoute.ProfileToLogin()));
 	}
 
 	public void onMyFavoritesClicked() {
 		Log.d(TAG, "My Favorites clicked. Navigating to ProfileToFavorites.");
-		_navigationCommand.setValue(new Event<>(new NavigationRoute.Favorites()));
+		_navigationCommand.setValue(new Event<>(new NavigationRoute.ProfileToFavorites()));
 	}
 
 	@Override

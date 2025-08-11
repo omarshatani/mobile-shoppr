@@ -89,7 +89,7 @@ public class LoginViewModel extends AndroidViewModel {
 					@Override
 					public void onSuccess(@NonNull User fullUserProfile) {
 						_loggedInUserWithProfile.postValue(fullUserProfile);
-						_navigationCommand.postValue(new Event<>(new NavigationRoute.Map()));
+						_navigationCommand.postValue(new Event<>(new NavigationRoute.LoginToMap()));
 					}
 
 					@Override

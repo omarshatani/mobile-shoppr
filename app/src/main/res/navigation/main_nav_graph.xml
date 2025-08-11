@@ -28,7 +28,17 @@
         android:label="MainFragment"
         tools:layout="@layout/fragment_main" />
 
+    <fragment
+        android:id="@+id/create_post_fragment"
+        android:name="com.shoppr.post.CreatePostFragment"
+        android:label="CreatePostFragment"
+        tools:layout="@layout/fragment_create_post" />
+
     <include app:graph="@navigation/login_nav_graph" />
+    <include app:graph="@navigation/post_nav_graph" />
+    <include app:graph="@navigation/checkout_nav_graph" />
+    <include app:graph="@navigation/request_nav_graph" />
+    <include app:graph="@navigation/profile_nav_graph" />
 
     <action
         android:id="@+id/action_login_to_main"
@@ -37,7 +47,17 @@
         app:popUpToInclusive="true" />
 
     <action
+        android:id="@+id/action_global_navigate_to_create_post"
+        app:destination="@id/create_post_fragment" />
+
+    <action
+        android:id="@+id/action_global_create_post_to_map"
+        app:destination="@id/map_nav_graph" />
+
+    <action
         android:id="@+id/action_global_navigate_to_login"
-        app:destination="@id/login_nav_graph" />
+        app:destination="@id/login_nav_graph"
+        app:popUpTo="@id/main_nav_graph"
+        app:popUpToInclusive="true" />
 
 </navigation>

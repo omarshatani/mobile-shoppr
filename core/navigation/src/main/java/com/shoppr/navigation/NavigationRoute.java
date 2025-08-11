@@ -1,33 +1,36 @@
 package com.shoppr.navigation;
 
-public abstract class NavigationRoute {
+public interface NavigationRoute {
+	// Sealed interface is a modern Java feature for creating restricted class hierarchies.
+	// It's like an advanced enum.
 
-	private NavigationRoute() {
+	// --- Initial App Flow ---
+	// From Splash screen to the two possible starting points.
+	final class SplashToLogin implements NavigationRoute {
 	}
 
-	public static final class SplashToLogin extends NavigationRoute {
-	}
+	final class SplashToMap implements NavigationRoute {
+	} // Note: In our refactor, this now goes to MainFragment
 
-	public static final class SplashToMain extends NavigationRoute {
-	}
+	// --- Login Flow ---
+	// From the Login screen to the main part of the app.
+	final class LoginToMap implements NavigationRoute {
+	} // This also goes to MainFragment
 
-	public static final class Login extends NavigationRoute {
-	}
+	// --- Global Actions from Anywhere ---
+	// These routes correspond to global actions in your main_nav_graph.
+	// They can be called from any screen to navigate to a top-level destination.
 
-	public static final class LoginToMap extends NavigationRoute {
-	}
+	final class ProfileToLogin implements NavigationRoute {
+	} // For handling logout
 
+	final class CreatePost implements NavigationRoute {
+	} // To open the create post screen
 
-	public static final class Map extends NavigationRoute {
-	}
+	final class CreatePostToMap implements NavigationRoute {
+	} // To return to the map screen
 
-	public static final class CreateNewPost extends NavigationRoute {
-	}
-
-	public static final class ProfileToLogin extends NavigationRoute {
-	}
-
-	public static final class Favorites extends NavigationRoute {
+	final class ProfileToFavorites implements NavigationRoute {
 	}
 
 }
