@@ -12,6 +12,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.shoppr.core.ui.R;
 import com.shoppr.navigation.NavigationRoute;
 import com.shoppr.navigation.Navigator;
 import com.shoppr.profile.databinding.FragmentProfileBinding;
@@ -33,10 +34,6 @@ public class ProfileFragment extends BaseFragment {
 	public ProfileFragment() {
 	}
 
-	public static ProfileFragment newInstance() {
-		return new ProfileFragment();
-	}
-
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -55,6 +52,7 @@ public class ProfileFragment extends BaseFragment {
 		super.onViewCreated(view, savedInstanceState);
 
 		setupLocalNavigation();
+		setupMenuViews();
 		setupClickListeners();
 		observeViewModel();
 	}
@@ -86,6 +84,23 @@ public class ProfileFragment extends BaseFragment {
 		localNavigator = NavHostFragment.findNavController(this);
 	}
 
+	private void setupMenuViews() {
+		binding.menuPersonalInformation.menuItemIcon.setImageResource(R.drawable.ic_account_circle);
+		binding.menuPersonalInformation.menuItemText.setText(R.string.menu_personal_information);
+
+		binding.menuItemMyMessages.menuItemIcon.setImageResource(R.drawable.ic_inbox);
+		binding.menuItemMyMessages.menuItemText.setText(R.string.menu_my_posts);
+
+		binding.menuItemMyFavorites.menuItemIcon.setImageResource(R.drawable.ic_favorite_outline);
+		binding.menuItemMyFavorites.menuItemText.setText(R.string.menu_favorites);
+
+		binding.menuItemSettings.menuItemIcon.setImageResource(R.drawable.ic_settings);
+		binding.menuItemSettings.menuItemText.setText(R.string.menu_settings);
+
+		binding.menuItemHelp.menuItemIcon.setImageResource(R.drawable.ic_help);
+		binding.menuItemHelp.menuItemText.setText(R.string.menu_help);
+	}
+
 	private void observeViewModel() {
 		viewModel.currentUserProfile.observe(getViewLifecycleOwner(), user -> {
 			if (user != null) {
@@ -94,7 +109,7 @@ public class ProfileFragment extends BaseFragment {
 				binding.buttonLogout.setVisibility(View.VISIBLE);
 			} else {
 				binding.profileName.setText(R.string.guest);
-				binding.profileEmail.setText(R.string.user_logged_out_interaction_label);
+				binding.profileEmail.setText(com.shoppr.profile.R.string.user_logged_out_interaction_label);
 				binding.buttonLogout.setVisibility(View.GONE);
 			}
 		});
@@ -115,6 +130,8 @@ public class ProfileFragment extends BaseFragment {
 
 	private void setupClickListeners() {
 		binding.buttonLogout.setOnClickListener(v -> viewModel.onLogoutClicked());
-		binding.menuItemMyFavorites.setOnClickListener(v -> viewModel.onMyFavoritesClicked());
+
+		// Set the listener on the root of the included layout. This will work.
+		binding.menuItemMyFavorites.menuItemRoot.setOnClickListener(v -> viewModel.onMyFavoritesClicked());
 	}
 }
