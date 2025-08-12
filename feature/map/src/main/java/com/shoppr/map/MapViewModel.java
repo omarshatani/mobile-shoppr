@@ -161,8 +161,8 @@ public class MapViewModel extends AndroidViewModel {
         }
     }
 
-    public void onFavoriteClicked() {
-        Post selectedPost = _selectedPostDetails.getValue();
+    public void onFavoriteClicked(Post post) {
+        Post selectedPost = post != null ? post : _selectedPostDetails.getValue();
         if (selectedPost == null || selectedPost.getId() == null) return;
         toggleFavoriteUseCase.execute(selectedPost.getId(), new ToggleFavoriteUseCase.FavoriteToggleCallbacks() {
             @Override

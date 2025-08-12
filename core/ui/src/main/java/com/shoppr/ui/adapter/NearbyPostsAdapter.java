@@ -15,37 +15,50 @@ import com.shoppr.core.ui.databinding.ListItemNearbyPostBinding;
 import com.shoppr.model.Post;
 import com.shoppr.ui.utils.ImageLoader;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 public class NearbyPostsAdapter extends ListAdapter<Post, NearbyPostsAdapter.PostViewHolder> {
 
-	private final OnPostClickListener listener;
+	private final OnPostClickListener postClickListener;
+	private final OnFavoriteClickListener favoriteClickListener;
+	private List<String> favoritePostIds = Collections.emptyList();
 
 	public interface OnPostClickListener {
 		void onPostClick(Post post);
 	}
 
-	public NearbyPostsAdapter(OnPostClickListener listener) {
+	public interface OnFavoriteClickListener {
+		void onFavoriteClick(Post post);
+	}
+
+	public NearbyPostsAdapter(OnPostClickListener postClickListener, OnFavoriteClickListener favoriteClickListener) {
 		super(PostDiffCallback.INSTANCE);
-		this.listener = listener;
+		this.postClickListener = postClickListener;
+		this.favoriteClickListener = favoriteClickListener;
+	}
+
+	public void setFavoritePostIds(List<String> favoritePostIds) {
+		this.favoritePostIds = favoritePostIds != null ? favoritePostIds : Collections.emptyList();
+		notifyDataSetChanged();
 	}
 
 	@NonNull
 	@Override
 	public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 		ListItemNearbyPostBinding binding = ListItemNearbyPostBinding.inflate(
-				LayoutInflater.from(parent.getContext()),
-				parent,
-				false
-		);
+				LayoutInflater.from(parent.getContext()), parent, false);
 		return new PostViewHolder(binding);
 	}
 
 	@Override
 	public void onBindViewHolder(@NonNull PostViewHolder holder, int position) {
 		Post post = getItem(position);
-		holder.bind(post, listener);
+		if (post != null) {
+			boolean isFavorite = favoritePostIds.contains(post.getId());
+			holder.bind(post, isFavorite, postClickListener, favoriteClickListener);
+		}
 	}
 
 	static class PostViewHolder extends RecyclerView.ViewHolder {
@@ -56,16 +69,9 @@ public class NearbyPostsAdapter extends ListAdapter<Post, NearbyPostsAdapter.Pos
 			this.binding = binding;
 		}
 
-		public void bind(final Post post, final OnPostClickListener listener) {
+		public void bind(final Post post, boolean isFavorite, final OnPostClickListener postClickListener, final OnFavoriteClickListener favoriteClickListener) {
 			binding.textNearbyPostTitle.setText(post.getTitle());
-
-			if (post.getPrice() != null && !post.getPrice().isEmpty()) {
-				binding.textNearbyPostPrice.setText(String.format("%s %s", post.getPrice(), post.getCurrency()));
-				binding.textNearbyPostPrice.setVisibility(View.VISIBLE);
-			} else {
-				binding.textNearbyPostPrice.setVisibility(View.GONE);
-			}
-
+			binding.textNearbyPostPrice.setText(String.format("%s %s", post.getPrice(), post.getCurrency()));
 			String imageUrl = (post.getImageUrl() != null && !post.getImageUrl().isEmpty()) ? post.getImageUrl().get(0) : null;
 			ImageLoader.loadImage(binding.imageNearbyPost, imageUrl);
 
@@ -81,32 +87,40 @@ public class NearbyPostsAdapter extends ListAdapter<Post, NearbyPostsAdapter.Pos
 			} else {
 				binding.chipGroupNearbyCategory.setVisibility(View.GONE);
 			}
-
 			if (post.getLister() != null) {
 				binding.listerInfoContainer.setVisibility(View.VISIBLE);
-				binding.textListerName.setText(String.format("by %s", post.getLister().getName()));
-
-				// --- THIS IS THE FIX ---
-				// Always load the default person icon for the avatar
+				binding.textListerName.setText("by " + post.getLister().getName());
 				binding.imageListerAvatar.setImageResource(R.drawable.ic_person_24);
-				// -----------------------
-
 			} else {
 				binding.listerInfoContainer.setVisibility(View.GONE);
 			}
 
-			itemView.setOnClickListener(v -> listener.onPostClick(post));
+			if (post.getRequests() != null && !post.getRequests().isEmpty()) {
+				String offersText = post.getRequests().size() + " Offer" + (post.getRequests().size() > 1 ? "s" : "");
+				binding.textPostItemOffersCount.setText(offersText);
+			} else {
+				binding.textPostItemOffersCount.setText("0 Offers");
+			}
+
+			if (isFavorite) {
+				binding.buttonFavorite.setText("In Favorites");
+				binding.buttonFavorite.setIconResource(R.drawable.ic_favorite_filled);
+			} else {
+				binding.buttonFavorite.setText("Add to favorites");
+				binding.buttonFavorite.setIconResource(R.drawable.ic_favorite_outline);
+			}
+
+			binding.buttonFavorite.setOnClickListener(v -> favoriteClickListener.onFavoriteClick(post));
+			itemView.setOnClickListener(v -> postClickListener.onPostClick(post));
 		}
 	}
 
 	private static class PostDiffCallback extends DiffUtil.ItemCallback<Post> {
 		public static final PostDiffCallback INSTANCE = new PostDiffCallback();
-
 		@Override
 		public boolean areItemsTheSame(@NonNull Post oldItem, @NonNull Post newItem) {
 			return Objects.equals(oldItem.getId(), newItem.getId());
 		}
-
 		@Override
 		public boolean areContentsTheSame(@NonNull Post oldItem, @NonNull Post newItem) {
 			return Objects.equals(oldItem, newItem);

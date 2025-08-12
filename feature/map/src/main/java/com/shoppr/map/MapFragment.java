@@ -38,13 +38,14 @@ import com.shoppr.ui.BaseFragment;
 import com.shoppr.ui.adapter.NearbyPostsAdapter;
 import com.shoppr.ui.utils.ImageLoader;
 
+import java.util.Collections;
 import java.util.List;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class MapFragment extends BaseFragment implements OnMapReadyCallback,
-		GoogleMap.OnCameraMoveStartedListener {
+		GoogleMap.OnCameraMoveStartedListener, NearbyPostsAdapter.OnFavoriteClickListener {
 	private static final String TAG = "MapFragment";
 	private FragmentMapBinding binding;
 	private MapViewModel viewModel;
@@ -163,6 +164,12 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	}
 
 	@Override
+	public void onFavoriteClick(Post post) {
+		viewModel.onFavoriteClicked(post);
+	}
+
+
+	@Override
 	public void onDestroyView() {
 		super.onDestroyView();
 		if (googleMap != null) {
@@ -195,7 +202,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 				manager.setBottomNavVisibility(false);
 			}
 			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-		});
+		}, this);
 
 		nearbyPostsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 		nearbyPostsRecyclerView.setAdapter(nearbyPostsAdapter);
@@ -235,6 +242,13 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	}
 
 	private void observeViewModel() {
+		viewModel.currentUserProfileLiveData.observe(getViewLifecycleOwner(), user -> {
+			if (user != null && user.getFavoritePosts() != null) {
+				nearbyPostsAdapter.setFavoritePostIds(user.getFavoritePosts());
+			} else {
+				nearbyPostsAdapter.setFavoritePostIds(Collections.emptyList());
+			}
+		});
 		viewModel.locationPermissionGranted.observe(getViewLifecycleOwner(), this::updateMapMyLocationUI);
 		viewModel.fabIconResId.observe(getViewLifecycleOwner(), iconResId -> {
 			if (binding != null && iconResId != null) {
@@ -269,7 +283,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 				}
 			}
 		});
-
 		viewModel.selectedPostDetails.observe(getViewLifecycleOwner(), selectedPost -> {
 			if (selectedPost != null) {
 				nearbyListView.setVisibility(View.GONE);
@@ -285,14 +298,11 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 				postDetailView.setVisibility(View.GONE);
 			}
 		});
-
 		viewModel.isFavorite().observe(getViewLifecycleOwner(), isFavorite -> {
 			if (detailViewBinding != null && isFavorite != null) {
-				if (isFavorite) {
-					detailViewBinding.buttonFavorite.setImageResource(R.drawable.ic_favorite_filled);
-				} else {
-					detailViewBinding.buttonFavorite.setImageResource(R.drawable.ic_favorite_outline);
-				}
+				detailViewBinding.buttonFavorite.setImageResource(
+						isFavorite ? R.drawable.ic_favorite_filled : R.drawable.ic_favorite_outline
+				);
 			}
 		});
 	}
@@ -325,7 +335,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		String imageUrl = (post.getImageUrl() != null && !post.getImageUrl().isEmpty()) ? post.getImageUrl().get(0) : null;
 		ImageLoader.loadImage(detailViewBinding.detailPostImage, imageUrl);
 
-		detailViewBinding.buttonFavorite.setOnClickListener(v -> viewModel.onFavoriteClicked());
+		detailViewBinding.buttonFavorite.setOnClickListener(v -> viewModel.onFavoriteClicked(post));
 	}
 
 	@SuppressLint("MissingPermission")

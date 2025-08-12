@@ -15,9 +15,9 @@
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:scaleType="centerCrop"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
             tools:srcCompat="@tools:sample/backgrounds/scenic" />
 
         <LinearLayout
@@ -26,17 +26,17 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp"
-            app:layout_constraintStart_toEndOf="@id/image_nearby_post"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/image_nearby_post"
             app:layout_constraintTop_toTopOf="parent">
 
             <TextView
                 android:id="@+id/text_nearby_post_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="?attr/textAppearanceTitleMedium"
-                android:maxLines="2"
                 android:ellipsize="end"
+                android:maxLines="2"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
                 tools:text="Vintage Leather Jacket" />
 
             <TextView
@@ -44,7 +44,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:textAppearance="?attr/textAppearanceLabelLarge"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
                 android:textColor="?attr/colorPrimary"
                 tools:text="$150 USD" />
 
@@ -55,39 +55,66 @@
                 android:layout_marginTop="8dp"
                 app:chipSpacingHorizontal="4dp" />
 
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/lister_info_container"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="8dp"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="16dp"
-            app:layout_constraintStart_toEndOf="@id/image_nearby_post"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/content_container">
-
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/image_lister_avatar"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-                tools:src="@tools:sample/avatars" />
-
-            <TextView
-                android:id="@+id/text_lister_name"
+            <LinearLayout
+                android:id="@+id/lister_info_container"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:textAppearance="?attr/textAppearanceLabelMedium"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                tools:text="by Jane Doe" />
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/image_lister_avatar"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+                    tools:src="@tools:sample/avatars" />
+
+                <TextView
+                    android:id="@+id/text_lister_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    tools:text="by Jane Doe" />
+            </LinearLayout>
         </LinearLayout>
+
+        <View
+            android:id="@+id/divider"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:background="?attr/dividerHorizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/image_nearby_post"
+            app:layout_constraintTop_toBottomOf="@+id/content_container" />
+
+        <TextView
+            android:id="@+id/text_post_item_offers_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:drawablePadding="8dp"
+            android:gravity="center_vertical"
+            android:textAppearance="?attr/textAppearanceLabelLarge"
+            android:textColor="?attr/colorPrimary"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/image_nearby_post"
+            app:layout_constraintTop_toBottomOf="@+id/divider"
+            tools:text="3 offers" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_favorite"
+            style="@style/Widget.Material3.Button.TextButton.Icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="Add to favorites"
+            app:icon="@drawable/ic_favorite_outline"
+            app:layout_constraintBottom_toBottomOf="@+id/text_post_item_offers_count"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/text_post_item_offers_count" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

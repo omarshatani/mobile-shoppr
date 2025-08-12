@@ -74,10 +74,8 @@ public class LoginFragment extends BaseFragment {
 	private void observeViewModel() {
 		viewModel.authState.observe(getViewLifecycleOwner(), user -> {
 			if (user != null) {
-				// A user is logged in, trigger the profile creation/check
 				viewModel.onUserAuthenticated(user);
 			} else {
-				// No user is logged in, launch the sign-in flow
 				if (!hasLaunchedSignIn) {
 					launchSignInFlow();
 				}

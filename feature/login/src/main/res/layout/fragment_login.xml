@@ -4,7 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".LoginFragment">
+    android:fitsSystemWindows="true"
+    tools:context=".LoginFragment"
+    android:paddingVertical="16dp">
 
     <ProgressBar
         android:id="@+id/login_progress_bar"
