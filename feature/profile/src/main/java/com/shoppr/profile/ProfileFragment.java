@@ -8,6 +8,9 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.NavDirections;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.shoppr.navigation.NavigationRoute;
 import com.shoppr.navigation.Navigator;
@@ -23,6 +26,7 @@ public class ProfileFragment extends BaseFragment {
 	private static final String TAG = "ProfileFragment";
 	private FragmentProfileBinding binding;
 	private ProfileViewModel viewModel;
+	private NavController localNavigator;
 	@Inject
 	Navigator navigator;
 
@@ -50,13 +54,14 @@ public class ProfileFragment extends BaseFragment {
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 
+		setupLocalNavigation();
 		setupClickListeners();
 		observeViewModel();
 	}
 
 	@Override
 	public InsetType getInsetType() {
-		return InsetType.TOP_AND_BOTTOM;
+		return InsetType.TOP;
 	}
 
 	@Override
@@ -77,28 +82,33 @@ public class ProfileFragment extends BaseFragment {
 		binding = null;
 	}
 
+	private void setupLocalNavigation() {
+		localNavigator = NavHostFragment.findNavController(this);
+	}
+
 	private void observeViewModel() {
-		// Observer for the user's profile information
 		viewModel.currentUserProfile.observe(getViewLifecycleOwner(), user -> {
 			if (user != null) {
-				// User is logged in, display their info
 				binding.profileName.setText(user.getName());
 				binding.profileEmail.setText(user.getEmail());
-				// You could also load the profile image here using Glide
 				binding.buttonLogout.setVisibility(View.VISIBLE);
 			} else {
-				// User is logged out, show guest info
 				binding.profileName.setText(R.string.guest);
 				binding.profileEmail.setText(R.string.user_logged_out_interaction_label);
 				binding.buttonLogout.setVisibility(View.GONE);
 			}
 		});
 
-		// Observer for navigation commands
 		viewModel.getNavigationCommand().observe(getViewLifecycleOwner(), event -> {
 			NavigationRoute route = event.getContentIfNotHandled();
-			if (route != null) {
+			if (route == null) {
+				return;
+			}
+			if (route instanceof NavigationRoute.ProfileToLogin) {
 				navigator.navigate(route);
+			} else if (route instanceof NavigationRoute.ProfileToFavorites) {
+				NavDirections directions = ProfileFragmentDirections.actionProfileToFavorites();
+				localNavigator.navigate(directions);
 			}
 		});
 	}
@@ -106,6 +116,5 @@ public class ProfileFragment extends BaseFragment {
 	private void setupClickListeners() {
 		binding.buttonLogout.setOnClickListener(v -> viewModel.onLogoutClicked());
 		binding.menuItemMyFavorites.setOnClickListener(v -> viewModel.onMyFavoritesClicked());
-		// Add other listeners for settings, contact, etc. as needed
 	}
 }

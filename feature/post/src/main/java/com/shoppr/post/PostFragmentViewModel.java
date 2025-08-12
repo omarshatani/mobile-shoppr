@@ -111,7 +111,7 @@ public class PostFragmentViewModel extends ViewModel {
 	}
 
 	public void navigateToCreatePost() {
-		_navigationCommand.setValue(new Event<>(new NavigationRoute.PostsToCreatePost()));
+		_navigationCommand.setValue(new Event<>(new NavigationRoute.CreatePost()));
 	}
 
 	public void startObservingUser() {

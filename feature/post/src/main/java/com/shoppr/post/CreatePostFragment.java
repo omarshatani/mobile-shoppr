@@ -53,6 +53,11 @@ public class CreatePostFragment extends BaseFragment {
 	}
 
 	@Override
+	protected boolean shouldHideBottomNav() {
+		return true;
+	}
+
+	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		viewModel = new ViewModelProvider(this).get(CreatePostViewModel.class);

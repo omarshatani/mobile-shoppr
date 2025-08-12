@@ -4,6 +4,8 @@ import androidx.navigation.NavController;
 
 public interface Navigator {
 	void setNavController(NavController navController);
-    void navigate(NavigationRoute route);
-    void goBack();
+
+	void navigate(NavigationRoute route);
+
+	void goBack();
 }

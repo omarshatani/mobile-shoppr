@@ -21,7 +21,7 @@ public class ProfileViewModel extends ViewModel {
 	private static final String TAG = "ProfileViewModel";
 
 	private final GetCurrentUserUseCase getCurrentUserUseCase;
-	private final LogoutUseCase logoutUseCase; // Inject the use case
+	private final LogoutUseCase logoutUseCase;
 
 	public final LiveData<User> currentUserProfile;
 
@@ -33,10 +33,10 @@ public class ProfileViewModel extends ViewModel {
 	@Inject
 	public ProfileViewModel(
 			GetCurrentUserUseCase getCurrentUserUseCase,
-			LogoutUseCase logoutUseCase // Inject it
+			LogoutUseCase logoutUseCase
 	) {
 		this.getCurrentUserUseCase = getCurrentUserUseCase;
-		this.logoutUseCase = logoutUseCase; // Initialize it
+		this.logoutUseCase = logoutUseCase;
 		this.currentUserProfile = this.getCurrentUserUseCase.getFullUserProfile();
 	}
 
@@ -50,7 +50,7 @@ public class ProfileViewModel extends ViewModel {
 
 	public void onLogoutClicked() {
 		Log.d(TAG, "Logout button clicked. Invoking LogoutUseCase.");
-		logoutUseCase.invoke(); // Call the use case
+		logoutUseCase.invoke();
 		_navigationCommand.setValue(new Event<>(new NavigationRoute.ProfileToLogin()));
 	}
 
