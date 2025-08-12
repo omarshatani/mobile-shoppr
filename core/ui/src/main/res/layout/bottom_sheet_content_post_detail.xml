@@ -33,33 +33,13 @@
             android:layout_marginEnd="56dp"
             android:textAppearance="?attr/textAppearanceHeadline6"
             android:textColor="?attr/colorOnSurface"
-            tools:text="Sleek Laptop With a Really Long Title to Test Wrapping" />
+            tools:text="Sleek Laptop" />
 
-        <LinearLayout
+        <com.google.android.material.chip.ChipGroup
             android:id="@+id/chips_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal">
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/detail_post_category_chip"
-                style="@style/Widget.Material3.Chip.Suggestion"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:clickable="false"
-                tools:text="Electronics" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/detail_post_type_chip"
-                style="@style/Widget.Material3.Chip.Assist"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:clickable="false"
-                tools:text="Selling Item" />
-
-        </LinearLayout>
+            android:layout_marginTop="8dp" />
 
         <TextView
             android:id="@+id/detail_post_description"
@@ -68,7 +48,7 @@
             android:layout_marginTop="12dp"
             android:textAppearance="?attr/textAppearanceBodyLarge"
             android:textColor="?attr/colorOnSurfaceVariant"
-            tools:text="This sleek laptop features a powerful processor, a vibrant display, and a lightweight design. Perfect for work or entertainment on the go. Includes a long-lasting battery and ample storage." />
+            tools:text="This sleek laptop features a powerful processor..." />
 
         <TextView
             android:id="@+id/label_price"
@@ -130,7 +110,6 @@
                     tools:text="Ethan Harper" />
 
             </LinearLayout>
-
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
@@ -139,7 +118,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="Make an offer" />
-
     </LinearLayout>
 
     <ImageButton
@@ -147,10 +125,9 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/add_to_favorites"
+        android:contentDescription="Add to favorites"
         android:src="@drawable/ic_favorite_outline"
         app:layout_constraintEnd_toEndOf="@id/detail_content_container"
         app:layout_constraintTop_toTopOf="@id/detail_content_container" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

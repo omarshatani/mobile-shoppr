@@ -37,6 +37,11 @@ public class MainActivity extends AppCompatActivity {
 		setupNavigation();
 	}
 
+	@Override
+	public boolean onSupportNavigateUp() {
+		return navController.navigateUp() || super.onSupportNavigateUp();
+	}
+
 	private void setupNavigation() {
 		NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_main);
 		navController = navHostFragment.getNavController();
@@ -46,8 +51,4 @@ public class MainActivity extends AppCompatActivity {
 		}
 	}
 
-	@Override
-	public boolean onSupportNavigateUp() {
-		return navController.navigateUp() || super.onSupportNavigateUp();
-	}
 }

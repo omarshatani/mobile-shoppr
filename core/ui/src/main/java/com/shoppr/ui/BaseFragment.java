@@ -54,6 +54,20 @@ public abstract class BaseFragment extends Fragment {
 		return false;
 	}
 
+	protected BottomNavManager findParentBottomNavManager() {
+		Fragment parent = getParentFragment();
+		while (parent != null) {
+			if (parent instanceof BottomNavManager) {
+				return (BottomNavManager) parent;
+			}
+			parent = parent.getParentFragment();
+		}
+		if (getActivity() instanceof BottomNavManager) {
+			return (BottomNavManager) getActivity();
+		}
+		return null;
+	}
+
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
@@ -134,17 +148,4 @@ public abstract class BaseFragment extends Fragment {
 		}
 	}
 
-	private BottomNavManager findParentBottomNavManager() {
-		Fragment parent = getParentFragment();
-		while (parent != null) {
-			if (parent instanceof BottomNavManager) {
-				return (BottomNavManager) parent;
-			}
-			parent = parent.getParentFragment();
-		}
-		if (getActivity() instanceof BottomNavManager) {
-			return (BottomNavManager) getActivity();
-		}
-		return null;
-	}
 }

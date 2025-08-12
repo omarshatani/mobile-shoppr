@@ -70,12 +70,6 @@
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:layout_marginTop="4dp" />
         </LinearLayout>
-
-        <View
-            android:id="@+id/bottom_sheet_nav_bar_spacer"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/bottom_sheet_peek_height"
-            android:background="@android:color/transparent" />
     </LinearLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout

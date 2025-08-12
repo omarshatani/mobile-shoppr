@@ -33,6 +33,7 @@ import com.shoppr.core.ui.databinding.BottomSheetContentPostDetailBinding;
 import com.shoppr.map.databinding.FragmentMapBinding;
 import com.shoppr.model.Event;
 import com.shoppr.model.Post;
+import com.shoppr.navigation.BottomNavManager;
 import com.shoppr.ui.BaseFragment;
 import com.shoppr.ui.adapter.NearbyPostsAdapter;
 import com.shoppr.ui.utils.ImageLoader;
@@ -186,15 +187,27 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 		emptyStateNearbyView = nearbyListView.findViewById(com.shoppr.core.ui.R.id.layout_empty_state_nearby);
 
 		RecyclerView nearbyPostsRecyclerView = nearbyListView.findViewById(com.shoppr.core.ui.R.id.recycler_view_nearby_posts);
-		nearbyPostsAdapter = new NearbyPostsAdapter(post -> viewModel.onPostMarkerClicked(post.getId()));
+
+		nearbyPostsAdapter = new NearbyPostsAdapter(post -> {
+			viewModel.onPostMarkerClicked(post.getId());
+			BottomNavManager manager = findParentBottomNavManager();
+			if (manager != null) {
+				manager.setBottomNavVisibility(false);
+			}
+			bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+		});
+
 		nearbyPostsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 		nearbyPostsRecyclerView.setAdapter(nearbyPostsAdapter);
-
 
 		bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
 			@Override
 			public void onStateChanged(@NonNull View bottomSheet, int newState) {
-				if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
+				if (newState == BottomSheetBehavior.STATE_COLLAPSED || newState == BottomSheetBehavior.STATE_HALF_EXPANDED) {
+					BottomNavManager manager = findParentBottomNavManager();
+					if (manager != null) {
+						manager.setBottomNavVisibility(true);
+					}
 					viewModel.clearSelectedPost();
 				}
 			}
