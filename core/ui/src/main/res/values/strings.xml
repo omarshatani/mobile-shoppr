@@ -15,4 +15,5 @@
     <string name="favorite">Favorite</string>
     <string name="post_image">Post image</string>
     <string name="in_favorites">In Favorites</string>
+    <string name="guest">Guest</string>
 </resources>

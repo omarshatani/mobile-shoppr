@@ -1,39 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fillViewport="true"
     tools:context=".ProfileFragment">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/app_bar_layout"
+    <LinearLayout
+        android:id="@+id/profile_root_container"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar_profile"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            app:title="Profile" />
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <androidx.core.widget.NestedScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/profile_root_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingBottom="24dp">
+            android:padding="24dp">
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/profile_image"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
-                android:layout_marginTop="24dp"
                 android:src="@mipmap/ic_launcher_round"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -51,6 +39,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/profile_image"
+                app:layout_constraintVertical_chainStyle="packed"
                 tools:text="Alex Richards" />
 
             <TextView
@@ -61,108 +50,104 @@
                 android:gravity="center_horizontal"
                 android:textAppearance="?attr/textAppearanceBodyMedium"
                 android:textColor="?attr/colorOnSurfaceVariant"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/profile_name"
                 tools:text="alex.richards@example.com" />
-
-            <TextView
-                android:id="@+id/settings_header_text"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="24dp"
-                android:layout_marginEnd="16dp"
-                android:text="@string/general"
-                android:textAppearance="?attr/textAppearanceTitleMedium"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/profile_email" />
-
-            <com.shoppr.ui.MenuItemView
-                android:id="@+id/menu_personal_information"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:menuItemIcon="@drawable/ic_account_circle"
-                app:menuItemText="@string/menu_personal_information"
-                app:layout_constraintTop_toBottomOf="@id/settings_header_text"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-            <com.shoppr.ui.MenuItemView
-                android:id="@+id/menu_item_my_messages"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:menuItemIcon="@drawable/ic_inbox"
-                app:menuItemText="@string/menu_my_posts"
-                app:layout_constraintTop_toBottomOf="@id/menu_personal_information"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-            <com.shoppr.ui.MenuItemView
-                android:id="@+id/menu_item_my_favorites"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:menuItemIcon="@drawable/ic_favorite_filled"
-                app:menuItemText="@string/menu_favorites"
-                app:layout_constraintTop_toBottomOf="@id/menu_item_my_messages"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-            <TextView
-                android:id="@+id/support_header_text"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="24dp"
-                android:layout_marginEnd="16dp"
-                android:text="@string/support_header"
-                android:textAppearance="?attr/textAppearanceTitleMedium"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/menu_item_my_favorites" />
-
-            <com.shoppr.ui.MenuItemView
-                android:id="@+id/menu_item_settings"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:menuItemIcon="@drawable/ic_settings"
-                app:menuItemText="@string/menu_settings"
-                app:layout_constraintTop_toBottomOf="@id/support_header_text"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-            <com.shoppr.ui.MenuItemView
-                android:id="@+id/menu_item_help"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:menuItemIcon="@drawable/ic_help"
-                app:menuItemText="@string/menu_help"
-                app:layout_constraintTop_toBottomOf="@id/menu_item_settings"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_logout"
-                style="?attr/materialButtonOutlinedStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="24dp"
-                android:text="@string/logout"
-                android:textColor="@color/md_theme_light_error"
-                app:strokeColor="@color/md_theme_light_error"
-                app:iconTint="@color/md_theme_light_error"
-                app:icon="@drawable/ic_logout"
-                app:layout_constraintTop_toBottomOf="@id/menu_item_help"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-
         </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.core.widget.NestedScrollView>
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+        <TextView
+            android:id="@+id/settings_header_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="8dp"
+            android:text="@string/settings_header"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/bg_rounded_surface_container"
+            android:elevation="1dp"
+            android:orientation="vertical"
+            android:paddingVertical="8dp"
+            android:divider="@drawable/divider"
+            android:showDividers="middle">
+
+            <include
+                android:id="@+id/menu_personal_information"
+                layout="@layout/layout_menu_item" />
+
+            <include
+                android:id="@+id/menu_item_my_messages"
+                layout="@layout/layout_menu_item" />
+
+            <include
+                android:id="@+id/menu_item_my_favorites"
+                layout="@layout/layout_menu_item" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:background="@android:color/transparent" />
+
+        <TextView
+            android:id="@+id/support_header_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="8dp"
+            android:text="@string/support_header"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/bg_rounded_surface_container"
+            android:elevation="1dp"
+            android:orientation="vertical"
+            android:paddingVertical="8dp"
+            android:divider="@drawable/divider"
+            android:showDividers="middle">
+
+            <include
+                android:id="@+id/menu_item_settings"
+                layout="@layout/layout_menu_item" />
+
+            <include
+                android:id="@+id/menu_item_help"
+                layout="@layout/layout_menu_item" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_logout"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="16dp"
+            android:text="@string/logout"
+            android:textColor="@color/md_theme_light_error"
+            app:icon="@drawable/ic_logout"
+            app:iconTint="@color/md_theme_light_error"
+            app:strokeColor="@color/md_theme_light_error" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
