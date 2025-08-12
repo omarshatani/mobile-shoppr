@@ -1,6 +1,5 @@
 package com.shoppr.data.di;
 
-import com.shoppr.data.usecase.CreateUserProfileUseCaseImpl;
 import com.shoppr.data.usecase.GetCurrentDeviceLocationUseCaseImpl;
 import com.shoppr.data.usecase.GetCurrentUserUseCaseImpl;
 import com.shoppr.data.usecase.GetFavoritePostsUseCaseImpl;
@@ -12,7 +11,6 @@ import com.shoppr.data.usecase.LogoutUseCaseImpl;
 import com.shoppr.data.usecase.SavePostUseCaseImpl;
 import com.shoppr.data.usecase.ToggleFavoriteUseCaseImpl;
 import com.shoppr.data.usecase.UpdateUserDefaultLocationUseCaseImpl;
-import com.shoppr.domain.usecase.CreateUserProfileUseCase;
 import com.shoppr.domain.usecase.GetCurrentDeviceLocationUseCase;
 import com.shoppr.domain.usecase.GetCurrentUserUseCase;
 import com.shoppr.domain.usecase.GetFavoritePostsUseCase;
@@ -33,12 +31,6 @@ import dagger.hilt.android.components.ViewModelComponent;
 @Module
 @InstallIn(ViewModelComponent.class)
 public abstract class UseCaseModule {
-
-	@Binds
-	public abstract CreateUserProfileUseCase bindCreateUserProfileUseCase(
-			CreateUserProfileUseCaseImpl createUserProfileUseCaseImpl
-	);
-
 	@Binds
 	public abstract GetCurrentUserUseCase bindGetCurrentUserUseCase(
 			GetCurrentUserUseCaseImpl getCurrentUserUseCaseImpl
