@@ -16,6 +16,7 @@ import com.google.android.material.chip.Chip;
 import com.shoppr.core.ui.R;
 import com.shoppr.post.databinding.FragmentPostDetailBinding;
 import com.shoppr.ui.BaseFragment;
+import com.shoppr.ui.utils.FormattingUtils;
 import com.shoppr.ui.utils.ImageLoader;
 
 import java.util.List;
@@ -87,7 +88,7 @@ public class PostDetailFragment extends BaseFragment {
 			if (post != null) {
 				binding.detailPostHeadline.setText(post.getTitle());
 				binding.detailPostDescription.setText(post.getDescription());
-				binding.detailPostPrice.setText(String.format("%s %s", post.getPrice(), post.getCurrency()));
+				binding.detailPostPrice.setText(String.format("%s %s", FormattingUtils.formatPrice(post.getPrice()), post.getCurrency()));
 
 				binding.detailChipGroupCategory.removeAllViews();
 				List<String> categories = post.getCategories();

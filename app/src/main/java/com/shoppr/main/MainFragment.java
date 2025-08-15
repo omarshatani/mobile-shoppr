@@ -35,8 +35,12 @@ public class MainFragment extends Fragment implements BottomNavManager {
 
 	@Override
 	public void setBottomNavVisibility(boolean isVisible) {
-		if (binding != null) {
-			binding.bottomNavigation.setVisibility(isVisible ? View.VISIBLE : View.GONE);
+		if (binding == null) return;
+
+		if (isVisible) {
+			showBottomNav();
+		} else {
+			hideBottomNav();
 		}
 	}
 
@@ -76,6 +80,22 @@ public class MainFragment extends Fragment implements BottomNavManager {
 		if (menuItemId == R.id.post_nav_graph) return 2;
 		if (menuItemId == R.id.profile_nav_graph) return 3;
 		return 0;
+	}
+
+	private void showBottomNav() {
+		binding.bottomNavigation.clearAnimation();
+		binding.bottomNavigation.animate()
+				.translationY(0)
+				.setDuration(300)
+				.withStartAction(() -> binding.bottomNavigation.setVisibility(View.VISIBLE));
+	}
+
+	private void hideBottomNav() {
+		binding.bottomNavigation.clearAnimation();
+		binding.bottomNavigation.animate()
+				.translationY(binding.bottomNavigation.getHeight())
+				.setDuration(300)
+				.withEndAction(() -> binding.bottomNavigation.setVisibility(View.GONE));
 	}
 
 }
