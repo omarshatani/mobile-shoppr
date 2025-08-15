@@ -16,6 +16,9 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -95,6 +98,13 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
+
+		ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
+			Insets systemBarInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+			BottomSheetBehavior.from(binding.bottomSheetNearby).setExpandedOffset(systemBarInsets.top);
+			return windowInsets;
+		});
+
 		mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(com.shoppr.map.R.id.map);
 		if (mapFragment != null) {
 			mapFragment.getMapAsync(this);
@@ -106,7 +116,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback,
 
 	@Override
 	protected InsetType getInsetType() {
-		return InsetType.BOTTOM;
+		return InsetType.NONE;
 	}
 
 	@Override

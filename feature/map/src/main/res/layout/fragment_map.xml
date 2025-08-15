@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".MapFragment">
 
-    <!-- The Google Map fragment takes up the full space -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
@@ -24,7 +23,6 @@
         app:elevation="6dp"
         app:srcCompat="@drawable/ic_location_disabled" />
 
-    <!-- The Persistent Bottom Sheet -->
     <LinearLayout
         android:id="@+id/bottom_sheet_nearby"
         android:layout_width="match_parent"
@@ -38,9 +36,7 @@
         app:elevation="6dp"
         app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
-        <!-- Include the layout for the bottom sheet's content -->
         <include layout="@layout/bottom_sheet_content_nearby_listings" />
-
 
     </LinearLayout>
 
