@@ -26,7 +26,7 @@
             tools:srcCompat="@tools:sample/backgrounds/scenic" />
 
         <LinearLayout
-            android:id="@+id/linearLayout"
+            android:id="@+id/linear_layout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -85,7 +85,7 @@
             android:background="?attr/dividerHorizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
+            app:layout_constraintTop_toBottomOf="@+id/linear_layout" />
 
         <TextView
             android:id="@+id/text_post_item_offers_count"

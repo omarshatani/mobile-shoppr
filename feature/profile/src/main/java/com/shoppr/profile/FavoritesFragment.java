@@ -14,20 +14,18 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.shoppr.model.Post;
+import com.shoppr.profile.adapter.FavoritesAdapter;
 import com.shoppr.profile.databinding.FragmentFavoritesBinding;
 import com.shoppr.ui.BaseFragment;
-import com.shoppr.ui.adapter.MyPostsAdapter;
-
-import java.util.Collections;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class FavoritesFragment extends BaseFragment implements MyPostsAdapter.OnPostClickListener, MyPostsAdapter.OnFavoriteClickListener {
+public class FavoritesFragment extends BaseFragment implements FavoritesAdapter.OnPostClickListener, FavoritesAdapter.OnFavoriteClickListener {
 
 	private FragmentFavoritesBinding binding;
 	private FavoritesViewModel viewModel;
-	private MyPostsAdapter favoritesAdapter;
+	private FavoritesAdapter favoritesAdapter;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -52,7 +50,7 @@ public class FavoritesFragment extends BaseFragment implements MyPostsAdapter.On
 
 	@Override
 	protected InsetType getInsetType() {
-		return InsetType.TOP_AND_BOTTOM;
+		return InsetType.TOP;
 	}
 
 	@Override
@@ -73,7 +71,7 @@ public class FavoritesFragment extends BaseFragment implements MyPostsAdapter.On
 	}
 
 	private void setupRecyclerView() {
-		favoritesAdapter = new MyPostsAdapter(this, this);
+		favoritesAdapter = new FavoritesAdapter(this, this); // Use the new adapter
 		binding.recyclerViewFavorites.setLayoutManager(new LinearLayoutManager(getContext()));
 		binding.recyclerViewFavorites.setAdapter(favoritesAdapter);
 	}
@@ -83,14 +81,6 @@ public class FavoritesFragment extends BaseFragment implements MyPostsAdapter.On
 			favoritesAdapter.submitList(posts);
 			binding.textViewNoFavorites.setVisibility(posts.isEmpty() ? View.VISIBLE : View.GONE);
 			binding.recyclerViewFavorites.setVisibility(posts.isEmpty() ? View.GONE : View.VISIBLE);
-		});
-
-		viewModel.getCurrentUser().observe(getViewLifecycleOwner(), user -> {
-			if (user != null && user.getFavoritePosts() != null) {
-				favoritesAdapter.setFavoritePostIds(user.getFavoritePosts());
-			} else {
-				favoritesAdapter.setFavoritePostIds(Collections.emptyList());
-			}
 		});
 	}
 

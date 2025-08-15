@@ -1,7 +1,5 @@
 package com.shoppr.post;
 
-import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
@@ -10,7 +8,6 @@ import androidx.lifecycle.ViewModel;
 
 import com.shoppr.domain.usecase.GetCurrentUserUseCase;
 import com.shoppr.domain.usecase.GetMyPostsUseCase;
-import com.shoppr.domain.usecase.ToggleFavoriteUseCase;
 import com.shoppr.model.Event;
 import com.shoppr.model.Post;
 import com.shoppr.model.User;
@@ -29,7 +26,6 @@ public class PostFragmentViewModel extends ViewModel {
 
 	private final GetCurrentUserUseCase getCurrentUserUseCase;
 	private final GetMyPostsUseCase getMyPostsUseCase;
-	private final ToggleFavoriteUseCase toggleFavoriteUseCase;
 
 	public final LiveData<User> currentUserProfileLiveData;
 
@@ -52,21 +48,16 @@ public class PostFragmentViewModel extends ViewModel {
 	@Inject
 	public PostFragmentViewModel(
 			GetCurrentUserUseCase getCurrentUserUseCase,
-			GetMyPostsUseCase getMyPostsUseCase,
-			ToggleFavoriteUseCase toggleFavoriteUseCase
+			GetMyPostsUseCase getMyPostsUseCase
 	) {
 		this.getCurrentUserUseCase = getCurrentUserUseCase;
 		this.getMyPostsUseCase = getMyPostsUseCase;
-		this.toggleFavoriteUseCase = toggleFavoriteUseCase;
-
 		this.currentUserProfileLiveData = this.getCurrentUserUseCase.getFullUserProfile();
 
 		_posts.addSource(this.currentUserProfileLiveData, user -> {
 			if (user != null && user.getId() != null) {
-				Log.d(TAG, "User profile updated. Fetching posts for UID: " + user.getId());
 				fetchUserPosts(user.getId());
 			} else {
-				Log.d(TAG, "User is null. Clearing posts.");
 				_posts.setValue(new ArrayList<>());
 			}
 		});
@@ -84,25 +75,6 @@ public class PostFragmentViewModel extends ViewModel {
 		});
 	}
 
-	public void onFavoriteClicked(@NonNull Post post) {
-		if (post.getId() == null) {
-			_errorMessage.postValue(new Event<>("Cannot favorite post with no ID."));
-			return;
-		}
-
-		toggleFavoriteUseCase.execute(post.getId(), new ToggleFavoriteUseCase.FavoriteToggleCallbacks() {
-			@Override
-			public void onSuccess() {
-				Log.d(TAG, "Successfully toggled favorite for post: " + post.getId());
-			}
-
-			@Override
-			public void onError(@NonNull String message) {
-				_errorMessage.postValue(new Event<>(message));
-			}
-		});
-	}
-
 	public void refreshPosts() {
 		User currentUser = currentUserProfileLiveData.getValue();
 		if (currentUser != null && currentUser.getId() != null) {
@@ -115,12 +87,10 @@ public class PostFragmentViewModel extends ViewModel {
 	}
 
 	public void startObservingUser() {
-		Log.d(TAG, "ViewModel starting to observe user.");
 		getCurrentUserUseCase.startObserving();
 	}
 
 	public void stopObservingUser() {
-		Log.d(TAG, "ViewModel stopping user observation.");
 		getCurrentUserUseCase.stopObserving();
 		if (currentPostsSource != null) {
 			_posts.removeSource(currentPostsSource);

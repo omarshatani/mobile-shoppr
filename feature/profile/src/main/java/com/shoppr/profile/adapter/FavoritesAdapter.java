@@ -1,4 +1,4 @@
-package com.shoppr.ui.adapter;
+package com.shoppr.profile.adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.chip.Chip;
+import com.shoppr.core.ui.R;
 import com.shoppr.core.ui.databinding.ListItemPostBinding;
 import com.shoppr.model.Post;
 import com.shoppr.ui.utils.FormattingUtils;
@@ -18,17 +19,23 @@ import com.shoppr.ui.utils.ImageLoader;
 import java.util.List;
 import java.util.Objects;
 
-public class MyPostsAdapter extends ListAdapter<Post, MyPostsAdapter.PostViewHolder> {
+public class FavoritesAdapter extends ListAdapter<Post, FavoritesAdapter.PostViewHolder> {
 
-	private final OnPostClickListener listener;
+	private final OnPostClickListener postClickListener;
+	private final OnFavoriteClickListener favoriteClickListener;
 
 	public interface OnPostClickListener {
 		void onPostClicked(@NonNull Post post);
 	}
 
-	public MyPostsAdapter(@NonNull OnPostClickListener listener) {
+	public interface OnFavoriteClickListener {
+		void onFavoriteClick(@NonNull Post post);
+	}
+
+	public FavoritesAdapter(@NonNull OnPostClickListener postClickListener, @NonNull OnFavoriteClickListener favoriteClickListener) {
 		super(PostDiffCallback.INSTANCE);
-		this.listener = listener;
+		this.postClickListener = postClickListener;
+		this.favoriteClickListener = favoriteClickListener;
 	}
 
 	@NonNull
@@ -36,7 +43,7 @@ public class MyPostsAdapter extends ListAdapter<Post, MyPostsAdapter.PostViewHol
 	public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 		ListItemPostBinding binding = ListItemPostBinding.inflate(
 				LayoutInflater.from(parent.getContext()), parent, false);
-		return new PostViewHolder(binding, listener);
+		return new PostViewHolder(binding, postClickListener, favoriteClickListener);
 	}
 
 	@Override
@@ -49,23 +56,22 @@ public class MyPostsAdapter extends ListAdapter<Post, MyPostsAdapter.PostViewHol
 
 	static class PostViewHolder extends RecyclerView.ViewHolder {
 		private final ListItemPostBinding binding;
-		private final OnPostClickListener listener;
+		private final OnPostClickListener postClickListener;
+		private final OnFavoriteClickListener favoriteClickListener;
 
-		public PostViewHolder(@NonNull ListItemPostBinding binding, @NonNull OnPostClickListener listener) {
+		public PostViewHolder(@NonNull ListItemPostBinding binding, @NonNull OnPostClickListener postClickListener, @NonNull OnFavoriteClickListener favoriteClickListener) {
 			super(binding.getRoot());
 			this.binding = binding;
-			this.listener = listener;
+			this.postClickListener = postClickListener;
+			this.favoriteClickListener = favoriteClickListener;
 		}
 
 		public void bind(final Post post) {
-			binding.buttonFavorite.setVisibility(View.GONE);
-
 			binding.textPostItemTitle.setText(post.getTitle());
 			binding.textPostItemDescription.setText(post.getDescription());
 
 			if (post.getPrice() != null && !post.getPrice().isEmpty()) {
-				String formattedPrice = FormattingUtils.formatPrice(post.getPrice());
-				binding.textPostItemPrice.setText(String.format("%s %s", formattedPrice, post.getCurrency()));
+				binding.textPostItemPrice.setText(String.format("%s %s", FormattingUtils.formatPrice(post.getPrice()), post.getCurrency()));
 				binding.textPostItemPrice.setVisibility(View.VISIBLE);
 			} else {
 				binding.textPostItemPrice.setVisibility(View.GONE);
@@ -92,10 +98,15 @@ public class MyPostsAdapter extends ListAdapter<Post, MyPostsAdapter.PostViewHol
 				binding.textPostItemOffersCount.setVisibility(View.GONE);
 			}
 
+			binding.buttonFavorite.setVisibility(View.VISIBLE);
+			binding.buttonFavorite.setText("In Favorites");
+			binding.buttonFavorite.setIconResource(R.drawable.ic_favorite_filled);
+			binding.buttonFavorite.setOnClickListener(v -> favoriteClickListener.onFavoriteClick(post));
+
 			String imageUrl = (post.getImageUrl() != null && !post.getImageUrl().isEmpty()) ? post.getImageUrl().get(0) : null;
 			ImageLoader.loadImage(binding.imagePostItem, imageUrl);
 
-			itemView.setOnClickListener(v -> listener.onPostClicked(post));
+			itemView.setOnClickListener(v -> postClickListener.onPostClicked(post));
 		}
 	}
 
@@ -109,12 +120,7 @@ public class MyPostsAdapter extends ListAdapter<Post, MyPostsAdapter.PostViewHol
 
 		@Override
 		public boolean areContentsTheSame(@NonNull Post oldItem, @NonNull Post newItem) {
-			return Objects.equals(oldItem.getTitle(), newItem.getTitle()) &&
-					Objects.equals(oldItem.getPrice(), newItem.getPrice()) &&
-					Objects.equals(oldItem.getCategories(), newItem.getCategories()) &&
-					Objects.equals(oldItem.getImageUrl(), newItem.getImageUrl()) &&
-					(oldItem.getRequests() != null ? oldItem.getRequests().size() : 0) ==
-							(newItem.getRequests() != null ? newItem.getRequests().size() : 0);
+			return Objects.equals(oldItem, newItem);
 		}
 	}
 }

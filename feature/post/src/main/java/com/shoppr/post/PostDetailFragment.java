@@ -13,7 +13,6 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.chip.Chip;
-import com.shoppr.core.ui.R;
 import com.shoppr.post.databinding.FragmentPostDetailBinding;
 import com.shoppr.ui.BaseFragment;
 import com.shoppr.ui.utils.FormattingUtils;
@@ -58,29 +57,9 @@ public class PostDetailFragment extends BaseFragment {
 		return InsetType.TOP;
 	}
 
-	@Override
-	public void onStart() {
-		super.onStart();
-		viewModel.onFragmentStarted();
-	}
-
-	@Override
-	public void onStop() {
-		super.onStop();
-		viewModel.onFragmentStopped();
-	}
-
 	private void setupToolbar() {
 		NavController navController = NavHostFragment.findNavController(this);
 		NavigationUI.setupWithNavController(binding.topAppBar, navController);
-
-		binding.topAppBar.setOnMenuItemClickListener(menuItem -> {
-			if (menuItem.getItemId() == com.shoppr.post.R.id.action_favorite) {
-				viewModel.toggleFavorite();
-				return true;
-			}
-			return false;
-		});
 	}
 
 	private void observeViewModel() {
@@ -112,13 +91,6 @@ public class PostDetailFragment extends BaseFragment {
 
 				String imageUrl = (post.getImageUrl() != null && !post.getImageUrl().isEmpty()) ? post.getImageUrl().get(0) : null;
 				ImageLoader.loadImage(binding.detailPostImage, imageUrl);
-			}
-		});
-
-		viewModel.isFavorite().observe(getViewLifecycleOwner(), isFavorite -> {
-			if (isFavorite != null && binding != null && binding.topAppBar.getMenu().findItem(com.shoppr.post.R.id.action_favorite) != null) {
-				binding.topAppBar.getMenu().findItem(com.shoppr.post.R.id.action_favorite)
-						.setIcon(isFavorite ? R.drawable.ic_favorite_filled : R.drawable.ic_favorite_outline);
 			}
 		});
 	}
