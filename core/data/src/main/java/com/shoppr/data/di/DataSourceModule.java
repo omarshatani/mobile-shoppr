@@ -9,11 +9,13 @@ import com.shoppr.data.datasource.FirebaseAuthDataSourceImpl;
 import com.shoppr.data.datasource.FirebaseFunctionsDataSourceImpl;
 import com.shoppr.data.datasource.FirebaseStorageDataSourceImpl;
 import com.shoppr.data.datasource.FirestorePostDataSourceImpl;
+import com.shoppr.data.datasource.FirestoreRequestDataSourceImpl;
 import com.shoppr.data.datasource.FirestoreUserDataSourceImpl;
 import com.shoppr.domain.datasource.FirebaseAuthDataSource;
 import com.shoppr.domain.datasource.FirebaseFunctionsDataSource;
 import com.shoppr.domain.datasource.FirebaseStorageDataSource;
 import com.shoppr.domain.datasource.FirestorePostDataSource;
+import com.shoppr.domain.datasource.FirestoreRequestDataSource;
 import com.shoppr.domain.datasource.FirestoreUserDataSource;
 
 import javax.inject.Singleton;
@@ -47,6 +49,12 @@ public class DataSourceModule {
 	@Singleton
 	public FirestorePostDataSource provideFirestorePostDataSource() {
 		return new FirestorePostDataSourceImpl(firestore);
+	}
+
+	@Provides
+	@Singleton
+	public FirestoreRequestDataSource provideFirestoreRequestDataSource() {
+		return new FirestoreRequestDataSourceImpl(firestore);
 	}
 
 	@Provides

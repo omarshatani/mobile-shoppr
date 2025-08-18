@@ -8,6 +8,7 @@ import com.shoppr.data.usecase.GetMapPostsUseCaseImpl;
 import com.shoppr.data.usecase.GetMyPostsUseCaseImpl;
 import com.shoppr.data.usecase.GetPostByIdUseCaseImpl;
 import com.shoppr.data.usecase.LogoutUseCaseImpl;
+import com.shoppr.data.usecase.MakeOfferUseCaseImpl;
 import com.shoppr.data.usecase.SavePostUseCaseImpl;
 import com.shoppr.data.usecase.ToggleFavoriteUseCaseImpl;
 import com.shoppr.data.usecase.UpdateUserDefaultLocationUseCaseImpl;
@@ -19,6 +20,7 @@ import com.shoppr.domain.usecase.GetMapPostsUseCase;
 import com.shoppr.domain.usecase.GetMyPostsUseCase;
 import com.shoppr.domain.usecase.GetPostByIdUseCase;
 import com.shoppr.domain.usecase.LogoutUseCase;
+import com.shoppr.domain.usecase.MakeOfferUseCase;
 import com.shoppr.domain.usecase.SavePostUseCase;
 import com.shoppr.domain.usecase.ToggleFavoriteUseCase;
 import com.shoppr.domain.usecase.UpdateUserDefaultLocationUseCase;
@@ -82,5 +84,10 @@ public abstract class UseCaseModule {
 	@Binds
 	public abstract LogoutUseCase bindLogoutUseCase(
 			LogoutUseCaseImpl logoutUseCaseImpl
+	);
+
+	@Binds
+	public abstract MakeOfferUseCase bindMakeOfferUseCase(
+			MakeOfferUseCaseImpl makeOfferUseCaseImpl
 	);
 }
