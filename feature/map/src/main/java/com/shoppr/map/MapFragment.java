@@ -43,7 +43,7 @@ public class MapFragment extends BaseFragment implements
 		GoogleMap.OnCameraMoveStartedListener,
 		MapPostsCarouselAdapter.OnPostClickListener,
 		MapPostsCarouselAdapter.OnFavoriteClickListener,
-		MapPostsCarouselAdapter.OnQuickBuyClickListener,
+		MapPostsCarouselAdapter.OnMakeAnOfferClickListener,
 		PostClusterManager.OnPostMarkerClickListener,
 		PostClusterManager.OnPostClusterClickListener {
 
@@ -201,8 +201,11 @@ public class MapFragment extends BaseFragment implements
 	}
 
 	@Override
-	public void onQuickBuyClick(Post post) {
-		// Show Make an Offer bottom sheet (future implementation)
+	public void onMakeAnOfferClick(Post post) {
+		// Create an instance of the bottom sheet, passing the post data
+		MakeOfferBottomSheet bottomSheet = MakeOfferBottomSheet.newInstance(post);
+		// Show the bottom sheet
+		bottomSheet.show(getChildFragmentManager(), MakeOfferBottomSheet.TAG);
 	}
 
 	@Override

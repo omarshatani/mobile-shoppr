@@ -1,5 +1,8 @@
 package com.shoppr.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import androidx.annotation.Nullable;
 
 import com.google.firebase.firestore.ServerTimestamp;
@@ -8,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class Post {
+public class Post implements Parcelable {
 	private String id;
 	private String title;
 	private String description;
@@ -58,7 +61,69 @@ public class Post {
 		this.updatedAt = builder.updatedAt;
 	}
 
-	// --- Getters and Setters ---
+	protected Post(Parcel in) {
+		id = in.readString();
+		title = in.readString();
+		description = in.readString();
+		price = in.readString();
+		currency = in.readString();
+		imageUrl = in.createStringArrayList();
+		categories = in.createStringArrayList();
+		requests = in.createStringArrayList();
+		if (in.readByte() == 0) {
+			latitude = null;
+		} else {
+			latitude = in.readDouble();
+		}
+		if (in.readByte() == 0) {
+			longitude = null;
+		} else {
+			longitude = in.readDouble();
+		}
+		postAddress = in.readString();
+	}
+
+	@Override
+	public void writeToParcel(Parcel dest, int flags) {
+		dest.writeString(id);
+		dest.writeString(title);
+		dest.writeString(description);
+		dest.writeString(price);
+		dest.writeString(currency);
+		dest.writeStringList(imageUrl);
+		dest.writeStringList(categories);
+		dest.writeStringList(requests);
+		if (latitude == null) {
+			dest.writeByte((byte) 0);
+		} else {
+			dest.writeByte((byte) 1);
+			dest.writeDouble(latitude);
+		}
+		if (longitude == null) {
+			dest.writeByte((byte) 0);
+		} else {
+			dest.writeByte((byte) 1);
+			dest.writeDouble(longitude);
+		}
+		dest.writeString(postAddress);
+	}
+
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	public static final Creator<Post> CREATOR = new Creator<Post>() {
+		@Override
+		public Post createFromParcel(Parcel in) {
+			return new Post(in);
+		}
+
+		@Override
+		public Post[] newArray(int size) {
+			return new Post[size];
+		}
+	};
 
 	@Nullable
 	public String getId() {

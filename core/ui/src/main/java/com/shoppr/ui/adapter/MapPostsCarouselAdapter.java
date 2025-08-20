@@ -21,7 +21,7 @@ public class MapPostsCarouselAdapter extends ListAdapter<Post, MapPostsCarouselA
 
 	private final OnPostClickListener postClickListener;
 	private final OnFavoriteClickListener favoriteClickListener;
-	private final OnQuickBuyClickListener quickBuyClickListener;
+	private final OnMakeAnOfferClickListener makeAnOfferClickListener;
 	private List<String> favoritePostIds = Collections.emptyList();
 
 	public interface OnPostClickListener {
@@ -32,19 +32,19 @@ public class MapPostsCarouselAdapter extends ListAdapter<Post, MapPostsCarouselA
 		void onFavoriteClick(Post post);
 	}
 
-	public interface OnQuickBuyClickListener {
-		void onQuickBuyClick(Post post);
+	public interface OnMakeAnOfferClickListener {
+		void onMakeAnOfferClick(Post post);
 	}
 
 	public MapPostsCarouselAdapter(
 			OnPostClickListener postClickListener,
 			OnFavoriteClickListener favoriteClickListener,
-			OnQuickBuyClickListener quickBuyClickListener
+			OnMakeAnOfferClickListener makeAnOfferClickListener
 	) {
 		super(PostDiffCallback.INSTANCE);
 		this.postClickListener = postClickListener;
 		this.favoriteClickListener = favoriteClickListener;
-		this.quickBuyClickListener = quickBuyClickListener;
+		this.makeAnOfferClickListener = makeAnOfferClickListener;
 	}
 
 	public void setFavoritePostIds(List<String> newFavoritePostIds) {
@@ -81,7 +81,7 @@ public class MapPostsCarouselAdapter extends ListAdapter<Post, MapPostsCarouselA
 		Post post = getItem(position);
 		if (post != null) {
 			boolean isFavorite = favoritePostIds.contains(post.getId());
-			holder.bind(post, isFavorite, postClickListener, favoriteClickListener, quickBuyClickListener);
+			holder.bind(post, isFavorite, postClickListener, favoriteClickListener, makeAnOfferClickListener);
 		}
 	}
 
@@ -98,7 +98,7 @@ public class MapPostsCarouselAdapter extends ListAdapter<Post, MapPostsCarouselA
 				boolean isFavorite,
 				final OnPostClickListener postClickListener,
 				final OnFavoriteClickListener favoriteClickListener,
-				final OnQuickBuyClickListener quickBuyClickListener
+				final OnMakeAnOfferClickListener makeAnOfferClickListener
 		) {
 			binding.postTitle.setText(post.getTitle());
 			binding.postPrice.setText(String.format("%s %s", post.getPrice(), post.getCurrency()));
@@ -113,7 +113,7 @@ public class MapPostsCarouselAdapter extends ListAdapter<Post, MapPostsCarouselA
 			}
 
 			binding.buttonFavorite.setOnClickListener(v -> favoriteClickListener.onFavoriteClick(post));
-			binding.buttonQuickBuy.setOnClickListener(v -> quickBuyClickListener.onQuickBuyClick(post));
+			binding.buttonQuickBuy.setOnClickListener(v -> makeAnOfferClickListener.onMakeAnOfferClick(post));
 			itemView.setOnClickListener(v -> postClickListener.onPostClick(post));
 		}
 	}
