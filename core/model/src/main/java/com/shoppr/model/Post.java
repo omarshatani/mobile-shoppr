@@ -23,6 +23,7 @@ public class Post implements Parcelable {
 	private List<String> categories;
 	private User lister;
 	private List<String> requests;
+	private List<String> offeringUserIds;
 
 	@Nullable
 	private Double latitude;
@@ -40,6 +41,7 @@ public class Post implements Parcelable {
 		this.imageUrl = new ArrayList<>();
 		this.requests = new ArrayList<>();
 		this.categories = new ArrayList<>();
+		this.offeringUserIds = new ArrayList<>();
 	}
 
 	private Post(Builder builder) {
@@ -70,6 +72,7 @@ public class Post implements Parcelable {
 		imageUrl = in.createStringArrayList();
 		categories = in.createStringArrayList();
 		requests = in.createStringArrayList();
+		offeringUserIds = in.createStringArrayList();
 		if (in.readByte() == 0) {
 			latitude = null;
 		} else {
@@ -93,6 +96,7 @@ public class Post implements Parcelable {
 		dest.writeStringList(imageUrl);
 		dest.writeStringList(categories);
 		dest.writeStringList(requests);
+		dest.writeStringList(offeringUserIds);
 		if (latitude == null) {
 			dest.writeByte((byte) 0);
 		} else {
@@ -214,6 +218,14 @@ public class Post implements Parcelable {
 		this.requests = requests;
 	}
 
+	public List<String> getOfferingUserIds() {
+		return offeringUserIds;
+	}
+
+	public void setOfferingUserIds(List<String> offeringUserIds) {
+		this.offeringUserIds = offeringUserIds;
+	}
+
 	@Nullable
 	public Double getLatitude() {
 		return latitude;
@@ -256,7 +268,6 @@ public class Post implements Parcelable {
 	public void setUpdatedAt(Date updatedAt) {
 		this.updatedAt = updatedAt;
 	}
-
 
 	public static class Builder {
 		@Nullable
@@ -320,7 +331,7 @@ public class Post implements Parcelable {
 			return this;
 		}
 
-		public Builder categories(List<String> categories) { // Updated builder method
+		public Builder categories(List<String> categories) {
 			this.categories = categories;
 			return this;
 		}

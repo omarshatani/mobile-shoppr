@@ -69,7 +69,7 @@
     </style>
 
     <style name="Widget.App.BottomSheet.Modal" parent="Widget.Material3.BottomSheet.Modal">
-        <item name="backgroundTint">?attr/colorSurfaceContainerHighest</item>
+        <item name="backgroundTint">?attr/colorSurfaceContainer</item>
     </style>
 
 </resources>

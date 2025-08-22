@@ -7,6 +7,7 @@ import com.shoppr.data.usecase.GetLLMSuggestionsUseCaseImpl;
 import com.shoppr.data.usecase.GetMapPostsUseCaseImpl;
 import com.shoppr.data.usecase.GetMyPostsUseCaseImpl;
 import com.shoppr.data.usecase.GetPostByIdUseCaseImpl;
+import com.shoppr.data.usecase.GetRequestForPostUseCaseImpl;
 import com.shoppr.data.usecase.LogoutUseCaseImpl;
 import com.shoppr.data.usecase.MakeOfferUseCaseImpl;
 import com.shoppr.data.usecase.SavePostUseCaseImpl;
@@ -19,6 +20,7 @@ import com.shoppr.domain.usecase.GetLLMSuggestionsUseCase;
 import com.shoppr.domain.usecase.GetMapPostsUseCase;
 import com.shoppr.domain.usecase.GetMyPostsUseCase;
 import com.shoppr.domain.usecase.GetPostByIdUseCase;
+import com.shoppr.domain.usecase.GetRequestForPostUseCase;
 import com.shoppr.domain.usecase.LogoutUseCase;
 import com.shoppr.domain.usecase.MakeOfferUseCase;
 import com.shoppr.domain.usecase.SavePostUseCase;
@@ -90,4 +92,7 @@ public abstract class UseCaseModule {
 	public abstract MakeOfferUseCase bindMakeOfferUseCase(
 			MakeOfferUseCaseImpl makeOfferUseCaseImpl
 	);
+
+	@Binds
+	public abstract GetRequestForPostUseCase bindGetRequestForPostUseCase(GetRequestForPostUseCaseImpl impl);
 }

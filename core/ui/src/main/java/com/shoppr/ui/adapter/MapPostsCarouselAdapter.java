@@ -4,6 +4,7 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,6 +24,7 @@ public class MapPostsCarouselAdapter extends ListAdapter<Post, MapPostsCarouselA
 	private final OnFavoriteClickListener favoriteClickListener;
 	private final OnMakeAnOfferClickListener makeAnOfferClickListener;
 	private List<String> favoritePostIds = Collections.emptyList();
+	private String currentUserId;
 
 	public interface OnPostClickListener {
 		void onPostClick(Post post);
@@ -68,6 +70,10 @@ public class MapPostsCarouselAdapter extends ListAdapter<Post, MapPostsCarouselA
 		}
 	}
 
+	public void setCurrentUserId(String currentUserId) {
+		this.currentUserId = currentUserId;
+	}
+
 	@NonNull
 	@Override
 	public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -81,7 +87,7 @@ public class MapPostsCarouselAdapter extends ListAdapter<Post, MapPostsCarouselA
 		Post post = getItem(position);
 		if (post != null) {
 			boolean isFavorite = favoritePostIds.contains(post.getId());
-			holder.bind(post, isFavorite, postClickListener, favoriteClickListener, makeAnOfferClickListener);
+			holder.bind(post, isFavorite, currentUserId, postClickListener, favoriteClickListener, makeAnOfferClickListener);
 		}
 	}
 
@@ -96,6 +102,7 @@ public class MapPostsCarouselAdapter extends ListAdapter<Post, MapPostsCarouselA
 		public void bind(
 				final Post post,
 				boolean isFavorite,
+				String currentUserId,
 				final OnPostClickListener postClickListener,
 				final OnFavoriteClickListener favoriteClickListener,
 				final OnMakeAnOfferClickListener makeAnOfferClickListener
@@ -112,8 +119,28 @@ public class MapPostsCarouselAdapter extends ListAdapter<Post, MapPostsCarouselA
 				binding.buttonFavorite.setIconResource(R.drawable.ic_favorite_outline);
 			}
 
+			boolean hasOffer = currentUserId != null &&
+					post.getOfferingUserIds() != null &&
+					post.getOfferingUserIds().contains(currentUserId);
+
+			if (hasOffer) {
+				// State when an offer has been made
+				binding.buttonMakeAnOffer.setText(R.string.offer_made);
+				binding.buttonMakeAnOffer.setIconResource(R.drawable.ic_done);
+				binding.buttonMakeAnOffer.setBackgroundTintList(
+						ContextCompat.getColorStateList(itemView.getContext(), R.color.button_offer_made_tint)
+				);
+			} else {
+				// Default state
+				binding.buttonMakeAnOffer.setText(R.string.make_an_offer);
+				binding.buttonMakeAnOffer.setIconResource(R.drawable.ic_price_change);
+				binding.buttonMakeAnOffer.setBackgroundTintList(
+						ContextCompat.getColorStateList(itemView.getContext(), R.color.button_default_tint)
+				);
+			}
+
 			binding.buttonFavorite.setOnClickListener(v -> favoriteClickListener.onFavoriteClick(post));
-			binding.buttonQuickBuy.setOnClickListener(v -> makeAnOfferClickListener.onMakeAnOfferClick(post));
+			binding.buttonMakeAnOffer.setOnClickListener(v -> makeAnOfferClickListener.onMakeAnOfferClick(post));
 			itemView.setOnClickListener(v -> postClickListener.onPostClick(post));
 		}
 	}

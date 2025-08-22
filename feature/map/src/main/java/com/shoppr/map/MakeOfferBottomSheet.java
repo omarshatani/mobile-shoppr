@@ -8,25 +8,25 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.shoppr.core.ui.R;
 import com.shoppr.map.databinding.BottomSheetMakeOfferBinding;
 import com.shoppr.model.Post;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class MakeOfferBottomSheet extends BottomSheetDialogFragment {
 
 	public static final String TAG = "MakeOfferBottomSheet";
 	private static final String ARG_POST = "arg_post";
 
 	private BottomSheetMakeOfferBinding binding;
+	private MakeOfferViewModel viewModel;
 	private Post post;
 
-	/**
-	 * Creates a new instance of the bottom sheet and passes the post data.
-	 *
-	 * @param post The post to make an offer on.
-	 * @return A new instance of MakeOfferBottomSheet.
-	 */
 	public static MakeOfferBottomSheet newInstance(Post post) {
 		MakeOfferBottomSheet fragment = new MakeOfferBottomSheet();
 		Bundle args = new Bundle();
@@ -38,9 +38,8 @@ public class MakeOfferBottomSheet extends BottomSheetDialogFragment {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
-		setStyle(BottomSheetDialogFragment.STYLE_NORMAL, com.shoppr.core.ui.R.style.ThemeOverlay_App_BottomSheetDialog);
-
+		setStyle(BottomSheetDialogFragment.STYLE_NORMAL, R.style.ThemeOverlay_App_BottomSheetDialog);
+		viewModel = new ViewModelProvider(this).get(MakeOfferViewModel.class);
 		if (getArguments() != null) {
 			post = getArguments().getParcelable(ARG_POST);
 		}
@@ -62,9 +61,37 @@ public class MakeOfferBottomSheet extends BottomSheetDialogFragment {
 			dismiss();
 			return;
 		}
+		viewModel.loadExistingOffer(post.getId());
 
 		setupUI();
 		setupClickListeners();
+		observeViewModel();
+	}
+
+	private void observeViewModel() {
+		viewModel.getExistingRequest().observe(getViewLifecycleOwner(), existingRequest -> {
+			if (existingRequest != null) {
+				binding.editTextOfferPrice.setText(String.valueOf(existingRequest.getOfferAmount()));
+				binding.editTextNote.setText(existingRequest.getMessage());
+				binding.buttonSubmitOffer.setText(R.string.update_offer);
+			} else {
+				binding.buttonSubmitOffer.setText(R.string.submit_offer);
+			}
+		});
+
+		viewModel.getOfferSubmittedEvent().observe(getViewLifecycleOwner(), event -> {
+			if (event.getContentIfNotHandled() != null) {
+				Toast.makeText(getContext(), "Offer submitted successfully!", Toast.LENGTH_SHORT).show();
+				dismiss();
+			}
+		});
+
+		viewModel.getErrorEvent().observe(getViewLifecycleOwner(), event -> {
+			String errorMessage = event.getContentIfNotHandled();
+			if (errorMessage != null) {
+				Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+			}
+		});
 	}
 
 	private void setupUI() {
@@ -73,7 +100,6 @@ public class MakeOfferBottomSheet extends BottomSheetDialogFragment {
 		binding.textBasePriceValue.setText(basePriceText);
 
 		binding.chipGroupCategory.removeAllViews();
-
 		if (post.getCategories() != null && !post.getCategories().isEmpty()) {
 			binding.chipGroupCategory.setVisibility(View.VISIBLE);
 			for (String categoryName : post.getCategories()) {
@@ -88,29 +114,17 @@ public class MakeOfferBottomSheet extends BottomSheetDialogFragment {
 
 	private void setupClickListeners() {
 		binding.buttonSubmitOffer.setOnClickListener(v -> {
-			// TODO: Add logic to handle offer submission via a ViewModel
 			String offerPrice = binding.editTextOfferPrice.getText().toString();
 			String note = binding.editTextNote.getText().toString();
-
-			// Simple validation for now
-			if (offerPrice.isEmpty()) {
-				binding.textInputLayoutOfferPrice.setError("Please enter an offer price.");
-				return;
-			}
-			binding.textInputLayoutOfferPrice.setError(null);
-
-			Toast.makeText(getContext(), "Offer of " + offerPrice + " submitted!", Toast.LENGTH_SHORT).show();
-			dismiss(); // Close the bottom sheet on success
+			viewModel.submitOffer(post, offerPrice, note);
 		});
 
-		binding.buttonCancel.setOnClickListener(v -> {
-			dismiss(); // Close the bottom sheet
-		});
+		binding.buttonCancel.setOnClickListener(v -> dismiss());
 	}
 
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView();
-		binding = null; // Avoid memory leaks
+		binding = null;
 	}
 }

@@ -158,10 +158,15 @@ public class MapFragment extends BaseFragment implements
 		});
 
 		viewModel.currentUserProfileLiveData.observe(getViewLifecycleOwner(), user -> {
-			if (user != null && user.getFavoritePosts() != null) {
-				carouselAdapter.setFavoritePostIds(user.getFavoritePosts());
+			if (user != null) {
+				carouselAdapter.setCurrentUserId(user.getId());
+				if (user.getFavoritePosts() != null) {
+					carouselAdapter.setFavoritePostIds(user.getFavoritePosts());
+				} else {
+					carouselAdapter.setFavoritePostIds(Collections.emptyList());
+				}
 			} else {
-				carouselAdapter.setFavoritePostIds(Collections.emptyList());
+				carouselAdapter.setCurrentUserId(null);
 			}
 		});
 
