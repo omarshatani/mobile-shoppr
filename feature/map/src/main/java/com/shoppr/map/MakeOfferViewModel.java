@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.shoppr.domain.usecase.DeleteOfferUseCase;
 import com.shoppr.domain.usecase.GetCurrentUserUseCase;
 import com.shoppr.domain.usecase.GetRequestForPostUseCase;
 import com.shoppr.domain.usecase.MakeOfferUseCase;
@@ -25,6 +26,7 @@ public class MakeOfferViewModel extends ViewModel {
 	private final MakeOfferUseCase makeOfferUseCase;
 	private final GetCurrentUserUseCase getCurrentUserUseCase;
 	private final GetRequestForPostUseCase getRequestForPostUseCase;
+	private final DeleteOfferUseCase deleteOfferUseCase;
 
 	private final MutableLiveData<Request> _existingRequest = new MutableLiveData<>();
 
@@ -38,6 +40,12 @@ public class MakeOfferViewModel extends ViewModel {
 		return _offerSubmittedEvent;
 	}
 
+	private final MutableLiveData<Event<Boolean>> _offerWithdrawnEvent = new MutableLiveData<>();
+
+	public LiveData<Event<Boolean>> getOfferWithdrawnEvent() {
+		return _offerWithdrawnEvent;
+	}
+
 	private final MutableLiveData<Event<String>> _errorEvent = new MutableLiveData<>();
 
 	public LiveData<Event<String>> getErrorEvent() {
@@ -45,10 +53,11 @@ public class MakeOfferViewModel extends ViewModel {
 	}
 
 	@Inject
-	public MakeOfferViewModel(MakeOfferUseCase makeOfferUseCase, GetCurrentUserUseCase getCurrentUserUseCase, GetRequestForPostUseCase getRequestForPostUseCase) {
+	public MakeOfferViewModel(MakeOfferUseCase makeOfferUseCase, GetCurrentUserUseCase getCurrentUserUseCase, GetRequestForPostUseCase getRequestForPostUseCase, DeleteOfferUseCase deleteOfferUseCase) {
 		this.makeOfferUseCase = makeOfferUseCase;
 		this.getCurrentUserUseCase = getCurrentUserUseCase;
 		this.getRequestForPostUseCase = getRequestForPostUseCase;
+		this.deleteOfferUseCase = deleteOfferUseCase;
 	}
 
 	public void loadExistingOffer(String postId) {
@@ -121,5 +130,25 @@ public class MakeOfferViewModel extends ViewModel {
 		} catch (NumberFormatException e) {
 			_errorEvent.setValue(new Event<>("Invalid offer price. Please enter a valid number."));
 		}
+	}
+
+	public void withdrawOffer() {
+		Request existingRequest = _existingRequest.getValue();
+		if (existingRequest == null) {
+			_errorEvent.setValue(new Event<>("Cannot withdraw: No offer found."));
+			return;
+		}
+
+		deleteOfferUseCase.execute(existingRequest, new DeleteOfferUseCase.DeleteOfferCallbacks() {
+			@Override
+			public void onSuccess() {
+				_offerWithdrawnEvent.setValue(new Event<>(true));
+			}
+
+			@Override
+			public void onError(@NonNull String message) {
+				_errorEvent.setValue(new Event<>(message));
+			}
+		});
 	}
 }

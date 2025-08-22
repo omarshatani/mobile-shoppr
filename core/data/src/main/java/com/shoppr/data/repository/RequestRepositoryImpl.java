@@ -6,7 +6,6 @@ import androidx.lifecycle.LiveData;
 
 import com.shoppr.domain.datasource.FirestoreRequestDataSource;
 import com.shoppr.domain.repository.RequestRepository;
-import com.shoppr.domain.usecase.GetRequestForPostUseCase;
 import com.shoppr.model.Request;
 
 import java.util.List;
@@ -40,12 +39,27 @@ public class RequestRepositoryImpl implements RequestRepository {
 	}
 
 	@Override
+	public void deleteRequest(@NonNull Request request, @NonNull RequestDeletionCallbacks callbacks) {
+		firestoreRequestDataSource.deleteRequest(request, new FirestoreRequestDataSource.RequestDeleteCallbacks() {
+			@Override
+			public void onSuccess() {
+				callbacks.onSuccess();
+			}
+
+			@Override
+			public void onError(@NonNull String message) {
+				callbacks.onError(message);
+			}
+		});
+	}
+
+	@Override
 	public LiveData<List<Request>> getRequestsForPost(@NonNull String postId) {
 		return firestoreRequestDataSource.getRequestsForPost(postId);
 	}
 
 	@Override
-	public void getRequestForPost(String userId, String postId, GetRequestForPostUseCase.GetRequestForPostCallbacks callbacks) {
+	public void getRequestForPost(String userId, String postId, SingleRequestCallback callbacks) {
 		firestoreRequestDataSource.getRequestForPost(userId, postId, new FirestoreRequestDataSource.SingleRequestCallback() {
 			@Override
 			public void onSuccess(@Nullable Request request) {

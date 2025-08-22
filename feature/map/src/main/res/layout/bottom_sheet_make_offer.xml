@@ -136,6 +136,18 @@
             app:icon="@drawable/ic_send" />
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_withdraw_offer"
+            style="@style/Widget.Material3.Button.UnelevatedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/withdraw_offer"
+            android:backgroundTint="?attr/colorError"
+            app:cornerRadius="8dp"
+            android:visibility="gone"
+            tools:visibility="visible"
+            app:icon="@drawable/ic_delete" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/button_cancel"
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="match_parent"

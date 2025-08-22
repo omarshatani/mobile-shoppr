@@ -22,7 +22,15 @@ public interface FirestoreRequestDataSource {
 		void onError(@NonNull String message);
 	}
 
+	interface RequestDeleteCallbacks {
+		void onSuccess();
+
+		void onError(@NonNull String message);
+	}
+
 	void createRequest(@NonNull Request request, @NonNull RequestOperationCallbacks callbacks);
+
+	void deleteRequest(@NonNull Request request, @NonNull RequestDeleteCallbacks callbacks);
 
 	LiveData<List<Request>> getRequestsForPost(@NonNull String postId);
 

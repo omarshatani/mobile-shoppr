@@ -74,14 +74,23 @@ public class MakeOfferBottomSheet extends BottomSheetDialogFragment {
 				binding.editTextOfferPrice.setText(String.valueOf(existingRequest.getOfferAmount()));
 				binding.editTextNote.setText(existingRequest.getMessage());
 				binding.buttonSubmitOffer.setText(R.string.update_offer);
+				binding.buttonWithdrawOffer.setVisibility(View.VISIBLE);
 			} else {
 				binding.buttonSubmitOffer.setText(R.string.submit_offer);
+				binding.buttonWithdrawOffer.setVisibility(View.GONE);
 			}
 		});
 
 		viewModel.getOfferSubmittedEvent().observe(getViewLifecycleOwner(), event -> {
 			if (event.getContentIfNotHandled() != null) {
 				Toast.makeText(getContext(), "Offer submitted successfully!", Toast.LENGTH_SHORT).show();
+				dismiss();
+			}
+		});
+
+		viewModel.getOfferWithdrawnEvent().observe(getViewLifecycleOwner(), event -> {
+			if (event.getContentIfNotHandled() != null) {
+				Toast.makeText(getContext(), "Offer withdrawn", Toast.LENGTH_SHORT).show();
 				dismiss();
 			}
 		});
@@ -118,7 +127,7 @@ public class MakeOfferBottomSheet extends BottomSheetDialogFragment {
 			String note = binding.editTextNote.getText().toString();
 			viewModel.submitOffer(post, offerPrice, note);
 		});
-
+		binding.buttonWithdrawOffer.setOnClickListener(v -> viewModel.withdrawOffer());
 		binding.buttonCancel.setOnClickListener(v -> dismiss());
 	}
 

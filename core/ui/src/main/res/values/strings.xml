@@ -25,4 +25,5 @@
     <string name="update_offer">Update Offer</string>
     <string name="submit_offer">Submit Offer</string>
     <string name="cancel">Cancel</string>
+    <string name="withdraw_offer">Withdraw Offer</string>
 </resources>

@@ -51,6 +51,22 @@ public class FirestoreRequestDataSourceImpl implements FirestoreRequestDataSourc
 	}
 
 	@Override
+	public void deleteRequest(@NonNull Request request, @NonNull RequestDeleteCallbacks callbacks) {
+		WriteBatch batch = db.batch();
+
+		DocumentReference requestRef = db.collection("requests").document(request.getId());
+		batch.delete(requestRef);
+
+		DocumentReference postRef = db.collection("posts").document(request.getPostId());
+		batch.update(postRef, "requests", FieldValue.arrayRemove(request.getId()));
+		batch.update(postRef, "offeringUserIds", FieldValue.arrayRemove(request.getBuyerId()));
+
+		batch.commit()
+				.addOnSuccessListener(aVoid -> callbacks.onSuccess())
+				.addOnFailureListener(e -> callbacks.onError("Failed to withdraw offer: " + e.getMessage()));
+	}
+
+	@Override
 	public LiveData<List<Request>> getRequestsForPost(@NonNull String postId) {
 		MutableLiveData<List<Request>> requestsLiveData = new MutableLiveData<>();
 		db.collection("requests")
