@@ -79,4 +79,6 @@
     <color name="md_theme_dark_surfaceContainer">#211F26</color>
     <color name="md_theme_dark_surfaceContainerHigh">#2B2931</color>
     <color name="md_theme_dark_surfaceContainerHighest">#36343B</color>
+
+    <color name="colorSuccessContainer">#C8E6C9</color>
 </resources>
