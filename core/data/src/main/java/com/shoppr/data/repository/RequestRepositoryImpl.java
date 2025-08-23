@@ -59,6 +59,11 @@ public class RequestRepositoryImpl implements RequestRepository {
 	}
 
 	@Override
+	public LiveData<List<Request>> getAllRequestsForUser(@NonNull String userId) {
+		return firestoreRequestDataSource.getAllRequestsForUser(userId);
+	}
+
+	@Override
 	public void getRequestForPost(String userId, String postId, SingleRequestCallback callbacks) {
 		firestoreRequestDataSource.getRequestForPost(userId, postId, new FirestoreRequestDataSource.SingleRequestCallback() {
 			@Override

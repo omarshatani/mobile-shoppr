@@ -81,4 +81,11 @@
     <color name="md_theme_dark_surfaceContainerHighest">#36343B</color>
 
     <color name="colorSuccessContainer">#C8E6C9</color>
+    <color name="color_background_pending">#cbdaff</color>
+    <color name="color_text_pending">#2e74ff</color>
+    <color name="color_background_completed">#acff9f</color>
+    <color name="color_text_completed">#299d29</color>
+    <color name="color_background_rejected">#ff9e9b</color>
+    <color name="color_text_rejected">#e62c4f</color>
+
 </resources>

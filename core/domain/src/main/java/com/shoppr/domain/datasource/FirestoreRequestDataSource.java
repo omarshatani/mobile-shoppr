@@ -28,11 +28,13 @@ public interface FirestoreRequestDataSource {
 		void onError(@NonNull String message);
 	}
 
+	LiveData<List<Request>> getRequestsForPost(@NonNull String postId);
+
+	LiveData<List<Request>> getAllRequestsForUser(@NonNull String userId);
+
 	void createRequest(@NonNull Request request, @NonNull RequestOperationCallbacks callbacks);
 
 	void deleteRequest(@NonNull Request request, @NonNull RequestDeleteCallbacks callbacks);
-
-	LiveData<List<Request>> getRequestsForPost(@NonNull String postId);
 
 	void getRequestForPost(String userId, String postId, @NonNull SingleRequestCallback callbacks);
 }

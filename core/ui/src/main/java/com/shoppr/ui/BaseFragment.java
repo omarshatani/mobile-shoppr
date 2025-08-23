@@ -2,8 +2,9 @@ package com.shoppr.ui;
 
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 
 import androidx.annotation.NonNull;
@@ -11,42 +12,48 @@ import androidx.annotation.Nullable;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
+import androidx.viewbinding.ViewBinding;
 
 import com.shoppr.navigation.BottomNavManager;
 import com.shoppr.ui.utils.InsetUtils;
 
-public abstract class BaseFragment extends Fragment {
+public abstract class BaseFragment<T extends ViewBinding> extends Fragment {
 	public final static String TAG = "BaseFragment";
 
-	/**
-	 * Defines the type of system padding a fragment needs.
-	 * This allows for a consistent approach to handling screen insets.
-	 */
-	public enum InsetType {
-		NONE,           // For edge-to-edge screens like the map
-		TOP,            // For screens that only need padding for the status bar
-		BOTTOM,         // For screens that only need padding for the navigation bar
-		TOP_AND_BOTTOM  // For standard screens that need both
-	}
+	private T _binding;
+	protected T binding;
 
 	/**
-	 * Subclasses must override this method to declare what kind of insets they need.
-	 *
-	 * @return The InsetType for the fragment.
+	 * Subclasses must implement this method to provide the inflater for their specific binding class.
 	 */
+	protected abstract T inflateBinding(@NonNull LayoutInflater inflater, @Nullable ViewGroup container);
+
+	@Nullable
+	@Override
+	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+		_binding = inflateBinding(inflater, container);
+		binding = _binding;
+		return binding.getRoot();
+	}
+
+	@Override
+	public void onDestroyView() {
+		super.onDestroyView();
+		_binding = null;
+		binding = null;
+	}
+
+	public enum InsetType {
+		NONE, TOP, BOTTOM, TOP_AND_BOTTOM
+	}
+
 	protected abstract InsetType getInsetType();
 
 	protected boolean isLightStatusBarRequired() {
-		// Default behavior:
-		// If system is in Dark Theme, we want LIGHT icons (return false).
-		// If system is in Light Theme, we want DARK icons (return true).
-		// This means we return true if the system is NOT in dark mode.
-		if (getContext() != null) { // Ensure context is available to get resources
+		if (getContext() != null) {
 			return (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
 					!= Configuration.UI_MODE_NIGHT_YES;
 		}
-		// Fallback if context is not available (should ideally not happen when this is called)
-		// Defaulting to true (dark icons) might be a "safer" visual fallback on many light themes.
 		return true;
 	}
 
@@ -86,7 +93,6 @@ public abstract class BaseFragment extends Fragment {
 	@Override
 	public void onStop() {
 		super.onStop();
-		// Always ensure the nav bar is visible when leaving a full-screen fragment
 		BottomNavManager manager = findParentBottomNavManager();
 		if (manager != null && shouldHideBottomNav()) {
 			manager.setBottomNavVisibility(true);
@@ -96,38 +102,24 @@ public abstract class BaseFragment extends Fragment {
 	@Override
 	public void onResume() {
 		super.onResume();
-		Log.d(TAG, "onResume for: " + getClass().getSimpleName() + ", setting status bar appearance.");
-		// Set the status bar appearance when the fragment becomes visible
 		setSystemBarAppearance();
 	}
 
 	private void applyInsets(@NonNull View view) {
 		switch (getInsetType()) {
 			case TOP:
-				applyTopInsets(view);
+				InsetUtils.applyTopInsets(view);
 				break;
 			case BOTTOM:
-				applyBottomInsets(view);
+				InsetUtils.applyBottomInsets(view);
 				break;
 			case TOP_AND_BOTTOM:
-				applyTopAndBottomInsets(view);
+				InsetUtils.applyTopAndBottomInsets(view);
 				break;
 			case NONE:
 			default:
 				break;
 		}
-	}
-
-	private void applyTopInsets(@NonNull View view) {
-		InsetUtils.applyTopInsets(view);
-	}
-
-	private void applyBottomInsets(@NonNull View view) {
-		InsetUtils.applyBottomInsets(view);
-	}
-
-	private void applyTopAndBottomInsets(@NonNull View view) {
-		InsetUtils.applyTopAndBottomInsets(view);
 	}
 
 	private void setSystemBarAppearance() {
@@ -139,13 +131,7 @@ public abstract class BaseFragment extends Fragment {
 				boolean lightStatusBar = isLightStatusBarRequired();
 				controller.setAppearanceLightStatusBars(lightStatusBar);
 				controller.setAppearanceLightNavigationBars(lightStatusBar);
-				Log.d(TAG, "Set AppearanceLightStatusBars to: " + lightStatusBar + " for " + getClass().getSimpleName());
-			} else {
-				Log.w(TAG, "Fragment view was null in setSystemBarAppearance for " + getClass().getSimpleName());
 			}
-		} else {
-			Log.w(TAG, "Activity was null in setSystemBarAppearance for " + getClass().getSimpleName());
 		}
 	}
-
 }

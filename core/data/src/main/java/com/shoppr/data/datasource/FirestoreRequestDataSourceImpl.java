@@ -9,12 +9,14 @@ import androidx.lifecycle.MutableLiveData;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.WriteBatch;
 import com.shoppr.domain.datasource.FirestoreRequestDataSource;
 import com.shoppr.model.Request;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
@@ -82,6 +84,50 @@ public class FirestoreRequestDataSourceImpl implements FirestoreRequestDataSourc
 						requestsLiveData.setValue(requests);
 					}
 				});
+		return requestsLiveData;
+	}
+
+	@Override
+	public LiveData<List<Request>> getAllRequestsForUser(@NonNull String userId) {
+		MutableLiveData<List<Request>> requestsLiveData = new MutableLiveData<>();
+
+		Query buyerQuery = db.collection("requests").whereEqualTo("buyerId", userId);
+		Query sellerQuery = db.collection("requests").whereEqualTo("sellerId", userId);
+
+		// Combine the results of both queries
+		buyerQuery.addSnapshotListener((buyerSnapshots, e1) -> {
+			if (e1 != null) {
+				Log.w("FirestoreRequestDataSource", "Buyer query listen failed.", e1);
+				return;
+			}
+
+			sellerQuery.addSnapshotListener((sellerSnapshots, e2) -> {
+				if (e2 != null) {
+					Log.w("FirestoreRequestDataSource", "Seller query listen failed.", e2);
+					return;
+				}
+
+				List<Request> allRequests = new ArrayList<>();
+				if (buyerSnapshots != null) {
+					allRequests.addAll(buyerSnapshots.toObjects(Request.class));
+				}
+				if (sellerSnapshots != null) {
+					allRequests.addAll(sellerSnapshots.toObjects(Request.class));
+				}
+
+				// Simple de-duplication in case a user makes an offer to themselves (edge case)
+				List<Request> distinctRequests = allRequests.stream()
+						.distinct().sorted((r1, r2) -> {
+							if (r1.getCreatedAt() != null && r2.getCreatedAt() != null) {
+								return r2.getCreatedAt().compareTo(r1.getCreatedAt());
+							}
+							return 0;
+						}).collect(Collectors.toList());
+
+				requestsLiveData.setValue(distinctRequests);
+			});
+		});
+
 		return requestsLiveData;
 	}
 

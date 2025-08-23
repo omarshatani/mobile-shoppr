@@ -38,7 +38,7 @@ import java.util.List;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class MapFragment extends BaseFragment implements
+public class MapFragment extends BaseFragment<FragmentMapBinding> implements
 		OnMapReadyCallback,
 		GoogleMap.OnCameraMoveStartedListener,
 		MapPostsCarouselAdapter.OnPostClickListener,
@@ -48,7 +48,6 @@ public class MapFragment extends BaseFragment implements
 		PostClusterManager.OnPostClusterClickListener {
 
 	private static final String TAG = "MapFragment";
-	private FragmentMapBinding binding;
 	private MapViewModel viewModel;
 	private GoogleMap googleMap;
 	private PostClusterManager postClusterManager;
@@ -63,16 +62,14 @@ public class MapFragment extends BaseFragment implements
 			});
 
 	@Override
+	protected FragmentMapBinding inflateBinding(@NonNull LayoutInflater inflater, @Nullable ViewGroup container) {
+		return FragmentMapBinding.inflate(inflater, container, false);
+	}
+
+	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		viewModel = new ViewModelProvider(this).get(MapViewModel.class);
-	}
-
-	@Nullable
-	@Override
-	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-		binding = FragmentMapBinding.inflate(inflater, container, false);
-		return binding.getRoot();
 	}
 
 	@Override
@@ -265,6 +262,5 @@ public class MapFragment extends BaseFragment implements
 		}
 		googleMap = null;
 		postClusterManager = null;
-		binding = null;
 	}
 }

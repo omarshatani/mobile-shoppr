@@ -23,9 +23,8 @@ import javax.inject.Inject;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class ProfileFragment extends BaseFragment {
+public class ProfileFragment extends BaseFragment<FragmentProfileBinding> {
 	private static final String TAG = "ProfileFragment";
-	private FragmentProfileBinding binding;
 	private ProfileViewModel viewModel;
 	private NavController localNavigator;
 	@Inject
@@ -41,10 +40,8 @@ public class ProfileFragment extends BaseFragment {
 	}
 
 	@Override
-	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-													 @Nullable Bundle savedInstanceState) {
-		binding = FragmentProfileBinding.inflate(inflater, container, false);
-		return binding.getRoot();
+	protected FragmentProfileBinding inflateBinding(@NonNull LayoutInflater inflater, @Nullable ViewGroup container) {
+		return FragmentProfileBinding.inflate(inflater, container, false);
 	}
 
 	@Override
@@ -72,12 +69,6 @@ public class ProfileFragment extends BaseFragment {
 	public void onStop() {
 		super.onStop();
 		viewModel.onFragmentStopped();
-	}
-
-	@Override
-	public void onDestroyView() {
-		super.onDestroyView();
-		binding = null;
 	}
 
 	private void setupLocalNavigation() {
@@ -130,8 +121,11 @@ public class ProfileFragment extends BaseFragment {
 
 	private void setupClickListeners() {
 		binding.buttonLogout.setOnClickListener(v -> viewModel.onLogoutClicked());
-
-		// Set the listener on the root of the included layout. This will work.
 		binding.menuItemMyFavorites.menuItemRoot.setOnClickListener(v -> viewModel.onMyFavoritesClicked());
+	}
+
+	@Override
+	public void onDestroyView() {
+		super.onDestroyView();
 	}
 }

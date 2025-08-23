@@ -11,9 +11,17 @@
         android:label="Post"
         tools:layout="@layout/fragment_post">
         <action
+            android:id="@+id/action_post_to_create_post"
+            app:destination="@id/create_post_fragment" />
+        <action
             android:id="@+id/action_post_to_post_detail"
             app:destination="@id/post_detail_fragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/create_post_fragment"
+        android:name="com.shoppr.post.CreatePostFragment"
+        tools:layout="@layout/fragment_create_post" />
 
     <fragment
         android:id="@+id/post_detail_fragment"

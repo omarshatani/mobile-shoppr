@@ -27,9 +27,8 @@ import javax.inject.Inject;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class PostFragment extends BaseFragment implements MyPostsAdapter.OnPostClickListener {
+public class PostFragment extends BaseFragment<FragmentPostBinding> implements MyPostsAdapter.OnPostClickListener {
 
-	private FragmentPostBinding binding;
 	private PostFragmentViewModel viewModel;
 	private MyPostsAdapter myPostsAdapter;
 	private NavController localNavigator;
@@ -38,15 +37,14 @@ public class PostFragment extends BaseFragment implements MyPostsAdapter.OnPostC
 	Navigator navigator;
 
 	@Override
-	public void onCreate(@Nullable Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		viewModel = new ViewModelProvider(this).get(PostFragmentViewModel.class);
+	protected FragmentPostBinding inflateBinding(@NonNull LayoutInflater inflater, @Nullable ViewGroup container) {
+		return FragmentPostBinding.inflate(inflater, container, false);
 	}
 
 	@Override
-	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-		binding = FragmentPostBinding.inflate(inflater, container, false);
-		return binding.getRoot();
+	public void onCreate(@Nullable Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		viewModel = new ViewModelProvider(this).get(PostFragmentViewModel.class);
 	}
 
 	@Override
@@ -76,12 +74,6 @@ public class PostFragment extends BaseFragment implements MyPostsAdapter.OnPostC
 		viewModel.stopObservingUser();
 	}
 
-	@Override
-	public void onDestroyView() {
-		super.onDestroyView();
-		binding = null;
-	}
-
 	private void setupLocalNavigation() {
 		localNavigator = NavHostFragment.findNavController(this);
 	}
@@ -91,10 +83,9 @@ public class PostFragment extends BaseFragment implements MyPostsAdapter.OnPostC
 			NavigationRoute route = event.peekContent();
 			if (route instanceof NavigationRoute.CreatePost) {
 				NavigationRoute consumedRoute = event.getContentIfNotHandled();
-				if (consumedRoute == null) {
+				if (consumedRoute != null) {
+					localNavigator.navigate(R.id.action_post_to_create_post);
 				}
-				// You might need to adjust this navigation action based on your graph
-				// localNavigator.navigate(R.id.action_post_fragment_to_create_post_fragment);
 			}
 		});
 
@@ -146,5 +137,10 @@ public class PostFragment extends BaseFragment implements MyPostsAdapter.OnPostC
 	private void setupBindings() {
 		binding.buttonCreateFirstPost.setOnClickListener(v -> viewModel.navigateToCreatePost());
 		binding.fabCreatePost.setOnClickListener(v -> viewModel.navigateToCreatePost());
+	}
+
+	@Override
+	public void onDestroyView() {
+		super.onDestroyView();
 	}
 }

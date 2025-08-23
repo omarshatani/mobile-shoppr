@@ -23,22 +23,19 @@ import java.util.List;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class PostDetailFragment extends BaseFragment {
+public class PostDetailFragment extends BaseFragment<FragmentPostDetailBinding> {
 
-	private FragmentPostDetailBinding binding;
 	private PostDetailViewModel viewModel;
+
+	@Override
+	protected FragmentPostDetailBinding inflateBinding(@NonNull LayoutInflater inflater, @Nullable ViewGroup container) {
+		return FragmentPostDetailBinding.inflate(inflater, container, false);
+	}
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		viewModel = new ViewModelProvider(this).get(PostDetailViewModel.class);
-	}
-
-	@Nullable
-	@Override
-	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-		binding = FragmentPostDetailBinding.inflate(inflater, container, false);
-		return binding.getRoot();
 	}
 
 	@Override

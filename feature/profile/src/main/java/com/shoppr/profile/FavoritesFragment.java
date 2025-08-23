@@ -21,7 +21,7 @@ import com.shoppr.ui.BaseFragment;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class FavoritesFragment extends BaseFragment implements FavoritesAdapter.OnPostClickListener, FavoritesAdapter.OnFavoriteClickListener {
+public class FavoritesFragment extends BaseFragment<FragmentFavoritesBinding> implements FavoritesAdapter.OnPostClickListener, FavoritesAdapter.OnFavoriteClickListener {
 
 	private FragmentFavoritesBinding binding;
 	private FavoritesViewModel viewModel;
@@ -33,11 +33,9 @@ public class FavoritesFragment extends BaseFragment implements FavoritesAdapter.
 		viewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
 	}
 
-	@Nullable
 	@Override
-	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-		binding = FragmentFavoritesBinding.inflate(inflater, container, false);
-		return binding.getRoot();
+	protected FragmentFavoritesBinding inflateBinding(@NonNull LayoutInflater inflater, @Nullable ViewGroup container) {
+		return FragmentFavoritesBinding.inflate(inflater, container, false);
 	}
 
 	@Override
@@ -86,10 +84,7 @@ public class FavoritesFragment extends BaseFragment implements FavoritesAdapter.
 
 	@Override
 	public void onPostClicked(@NonNull Post post) {
-		// You will need to add a navigation action from FavoritesFragment to PostDetailFragment
-		// Example:
-		// NavDirections action = FavoritesFragmentDirections.actionFavoritesFragmentToPostDetailFragment(post.getId());
-		// NavHostFragment.findNavController(this).navigate(action);
+		// TODO: add navigation action from FavoritesFragment to PostDetailFragment
 	}
 
 	@Override
@@ -100,6 +95,5 @@ public class FavoritesFragment extends BaseFragment implements FavoritesAdapter.
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView();
-		binding = null;
 	}
 }

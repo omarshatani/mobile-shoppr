@@ -37,11 +37,10 @@ import javax.inject.Inject;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class CreatePostFragment extends BaseFragment {
+public class CreatePostFragment extends BaseFragment<FragmentCreatePostBinding> {
 	private static final String TAG = "CreatePostFragment";
 
 	private CreatePostViewModel viewModel;
-	private FragmentCreatePostBinding binding;
 
 	@Inject
 	Navigator navigator;
@@ -88,10 +87,8 @@ public class CreatePostFragment extends BaseFragment {
 	}
 
 	@Override
-	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-													 Bundle savedInstanceState) {
-		binding = FragmentCreatePostBinding.inflate(inflater, container, false);
-		return binding.getRoot();
+	protected FragmentCreatePostBinding inflateBinding(@NonNull LayoutInflater inflater, @Nullable ViewGroup container) {
+		return FragmentCreatePostBinding.inflate(inflater, container, false);
 	}
 
 	@Override
@@ -205,6 +202,5 @@ public class CreatePostFragment extends BaseFragment {
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView();
-		binding = null;
 	}
 }

@@ -29,7 +29,7 @@ import javax.inject.Inject;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class LoginFragment extends BaseFragment {
+public class LoginFragment extends BaseFragment<FragmentLoginBinding> {
 	private static final String TAG = "LoginFragment";
 
 	private LoginViewModel viewModel;
@@ -37,7 +37,6 @@ public class LoginFragment extends BaseFragment {
 			new FirebaseAuthUIActivityResultContract(),
 			this::onSignInResult
 	);
-	private FragmentLoginBinding binding;
 	private boolean hasLaunchedSignIn = false;
 
 	@Inject
@@ -47,16 +46,14 @@ public class LoginFragment extends BaseFragment {
 	}
 
 	@Override
-	public void onCreate(@Nullable Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		viewModel = new ViewModelProvider(this).get(LoginViewModel.class);
+	protected FragmentLoginBinding inflateBinding(@NonNull LayoutInflater inflater, @Nullable ViewGroup container) {
+		return FragmentLoginBinding.inflate(inflater, container, false);
 	}
 
 	@Override
-	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-													 @Nullable Bundle savedInstanceState) {
-		binding = FragmentLoginBinding.inflate(inflater, container, false);
-		return binding.getRoot();
+	public void onCreate(@Nullable Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		viewModel = new ViewModelProvider(this).get(LoginViewModel.class);
 	}
 
 
@@ -69,6 +66,18 @@ public class LoginFragment extends BaseFragment {
 	@Override
 	protected InsetType getInsetType() {
 		return InsetType.TOP;
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		viewModel.startObserving();
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+		viewModel.stopObserving();
 	}
 
 	private void observeViewModel() {
@@ -131,18 +140,5 @@ public class LoginFragment extends BaseFragment {
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView();
-		binding = null;
-	}
-
-	@Override
-	public void onStart() {
-		super.onStart();
-		viewModel.startObserving();
-	}
-
-	@Override
-	public void onStop() {
-		super.onStop();
-		viewModel.stopObserving();
 	}
 }
