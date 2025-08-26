@@ -20,7 +20,8 @@
     <string name="offer_made">Offer sent</string>
     <string name="edit_offer">Edit Offer</string>
 
-    <string name="your_offer_price">Your Offer Price</string>
+    <string name="your_offer">Your Offer</string>
+    <string name="their_offer">Their Offer</string>
     <string name="add_a_note_optional">Add a Note (Optional)</string>
     <string name="update_offer">Update Offer</string>
     <string name="submit_offer">Submit Offer</string>

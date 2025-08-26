@@ -31,6 +31,8 @@ public interface RequestRepository {
 
 	LiveData<List<Request>> getAllRequestsForUser(@NonNull String userId);
 
+	LiveData<Request> getRequestById(@NonNull String requestId);
+
 	void createRequest(@NonNull Request request, @NonNull RequestCreationCallbacks callback);
 
 	void deleteRequest(@NonNull Request request, @NonNull RequestDeletionCallbacks callbacks);

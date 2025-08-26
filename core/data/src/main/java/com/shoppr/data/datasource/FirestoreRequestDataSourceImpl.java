@@ -132,6 +132,25 @@ public class FirestoreRequestDataSourceImpl implements FirestoreRequestDataSourc
 	}
 
 	@Override
+	public LiveData<Request> getRequestById(@NonNull String requestId) {
+		MutableLiveData<Request> requestLiveData = new MutableLiveData<>();
+		db.collection("requests").document(requestId)
+				.addSnapshotListener((snapshot, e) -> {
+					if (e != null) {
+						Log.w("FirestoreRequestDataSource", "Listen failed.", e);
+						requestLiveData.setValue(null);
+						return;
+					}
+					if (snapshot != null && snapshot.exists()) {
+						requestLiveData.setValue(snapshot.toObject(Request.class));
+					} else {
+						requestLiveData.setValue(null);
+					}
+				});
+		return requestLiveData;
+	}
+
+	@Override
 	public void getRequestForPost(String userId, String postId, @NonNull SingleRequestCallback callbacks) {
 		db.collection("requests")
 				.whereEqualTo("buyerId", userId)

@@ -1,10 +1,13 @@
 package com.shoppr.model;
 
-import com.google.firebase.firestore.ServerTimestamp;
+import android.os.Parcel;
+import android.os.Parcelable;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
-public class Request {
+public class Request implements Parcelable {
 
 	private String id;
 	private String postId;
@@ -14,11 +17,11 @@ public class Request {
 	private String offerCurrency;
 	private String message;
 	private RequestStatus status;
-
-	@ServerTimestamp
 	private Date createdAt;
+	private List<ActivityEntry> activityTimeline;
 
 	public Request() {
+		this.activityTimeline = new ArrayList<>();
 	}
 
 	private Request(Builder builder) {
@@ -31,8 +34,64 @@ public class Request {
 		this.message = builder.message;
 		this.status = builder.status;
 		this.createdAt = builder.createdAt;
+		this.activityTimeline = builder.activityTimeline != null ? new ArrayList<>(builder.activityTimeline) : new ArrayList<>();
 	}
 
+
+	protected Request(Parcel in) {
+		id = in.readString();
+		postId = in.readString();
+		buyerId = in.readString();
+		sellerId = in.readString();
+		if (in.readByte() == 0) {
+			offerAmount = null;
+		} else {
+			offerAmount = in.readDouble();
+		}
+		offerCurrency = in.readString();
+		message = in.readString();
+		status = (RequestStatus) in.readSerializable();
+		long tmpDate = in.readLong();
+		createdAt = tmpDate == -1 ? null : new Date(tmpDate);
+		// This correctly reads the list of ActivityEntry objects
+		activityTimeline = in.createTypedArrayList(ActivityEntry.CREATOR);
+	}
+
+	public static final Creator<Request> CREATOR = new Creator<Request>() {
+		@Override
+		public Request createFromParcel(Parcel in) {
+			return new Request(in);
+		}
+
+		@Override
+		public Request[] newArray(int size) {
+			return new Request[size];
+		}
+	};
+
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel dest, int flags) {
+		dest.writeString(id);
+		dest.writeString(postId);
+		dest.writeString(buyerId);
+		dest.writeString(sellerId);
+		if (offerAmount == null) {
+			dest.writeByte((byte) 0);
+		} else {
+			dest.writeByte((byte) 1);
+			dest.writeDouble(offerAmount);
+		}
+		dest.writeString(offerCurrency);
+		dest.writeString(message);
+		dest.writeSerializable(status);
+		dest.writeLong(createdAt != null ? createdAt.getTime() : -1);
+		dest.writeTypedList(activityTimeline);
+	}
 
 	public String getId() {
 		return id;
@@ -106,6 +165,14 @@ public class Request {
 		this.createdAt = createdAt;
 	}
 
+	public List<ActivityEntry> getActivityTimeline() {
+		return activityTimeline;
+	}
+
+	public void setActivityTimeline(List<ActivityEntry> activityTimeline) {
+		this.activityTimeline = activityTimeline;
+	}
+
 	public static class Builder {
 		private String id;
 		private String postId;
@@ -116,6 +183,7 @@ public class Request {
 		private String message;
 		private RequestStatus status;
 		private Date createdAt;
+		private List<ActivityEntry> activityTimeline;
 
 		public Builder id(String id) {
 			this.id = id;
@@ -159,6 +227,11 @@ public class Request {
 
 		public Builder createdAt(Date createdAt) {
 			this.createdAt = createdAt;
+			return this;
+		}
+
+		public Builder activityTimeline(List<ActivityEntry> activityTimeline) {
+			this.activityTimeline = activityTimeline;
 			return this;
 		}
 

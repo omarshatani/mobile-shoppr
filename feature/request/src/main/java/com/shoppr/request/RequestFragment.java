@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.shoppr.request.adapter.RequestsAdapter;
@@ -17,7 +18,7 @@ import com.shoppr.ui.BaseFragment;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class RequestFragment extends BaseFragment<FragmentRequestBinding> {
+public class RequestFragment extends BaseFragment<FragmentRequestBinding> implements RequestsAdapter.OnRequestClickListener {
 
 	private RequestViewModel viewModel;
 	private RequestsAdapter requestsAdapter;
@@ -43,8 +44,14 @@ public class RequestFragment extends BaseFragment<FragmentRequestBinding> {
 		return InsetType.TOP_AND_BOTTOM;
 	}
 
+	@Override
+	public void onRequestClicked(RequestUiModel requestUiModel) {
+		String requestId = requestUiModel.getRequest().getId();
+		NavHostFragment.findNavController(this).navigate(RequestFragmentDirections.actionRequestFragmentToRequestDetailFragment(requestId));
+	}
+
 	private void setupRecyclerView() {
-		requestsAdapter = new RequestsAdapter();
+		requestsAdapter = new RequestsAdapter(this); // Pass `this` as the listener
 		binding.recyclerViewRequests.setLayoutManager(new LinearLayoutManager(getContext()));
 		binding.recyclerViewRequests.setAdapter(requestsAdapter);
 	}

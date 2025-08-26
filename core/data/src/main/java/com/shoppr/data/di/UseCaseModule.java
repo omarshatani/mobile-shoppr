@@ -9,6 +9,7 @@ import com.shoppr.data.usecase.GetLLMSuggestionsUseCaseImpl;
 import com.shoppr.data.usecase.GetMapPostsUseCaseImpl;
 import com.shoppr.data.usecase.GetMyPostsUseCaseImpl;
 import com.shoppr.data.usecase.GetPostByIdUseCaseImpl;
+import com.shoppr.data.usecase.GetRequestByIdUseCaseImpl;
 import com.shoppr.data.usecase.GetRequestForPostUseCaseImpl;
 import com.shoppr.data.usecase.LogoutUseCaseImpl;
 import com.shoppr.data.usecase.MakeOfferUseCaseImpl;
@@ -24,6 +25,7 @@ import com.shoppr.domain.usecase.GetLLMSuggestionsUseCase;
 import com.shoppr.domain.usecase.GetMapPostsUseCase;
 import com.shoppr.domain.usecase.GetMyPostsUseCase;
 import com.shoppr.domain.usecase.GetPostByIdUseCase;
+import com.shoppr.domain.usecase.GetRequestByIdUseCase;
 import com.shoppr.domain.usecase.GetRequestForPostUseCase;
 import com.shoppr.domain.usecase.LogoutUseCase;
 import com.shoppr.domain.usecase.MakeOfferUseCase;
@@ -102,6 +104,9 @@ public abstract class UseCaseModule {
 
 	@Binds
 	public abstract GetAllRequestsUseCase bindGetAllRequestsUseCase(GetAllRequestsUseCaseImpl impl);
+
+	@Binds
+	public abstract GetRequestByIdUseCase bindGetRequestByIdUseCase(GetRequestByIdUseCaseImpl impl);
 
 	@Binds
 	public abstract DeleteOfferUseCase bindDeleteOfferUseCase(DeleteOfferUseCaseImpl impl);

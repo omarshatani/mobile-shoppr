@@ -32,6 +32,8 @@ public interface FirestoreRequestDataSource {
 
 	LiveData<List<Request>> getAllRequestsForUser(@NonNull String userId);
 
+	LiveData<Request> getRequestById(@NonNull String requestId);
+
 	void createRequest(@NonNull Request request, @NonNull RequestOperationCallbacks callbacks);
 
 	void deleteRequest(@NonNull Request request, @NonNull RequestDeleteCallbacks callbacks);
