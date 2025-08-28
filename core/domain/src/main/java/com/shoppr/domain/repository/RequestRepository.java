@@ -21,6 +21,12 @@ public interface RequestRepository {
 		void onError(@NonNull String message);
 	}
 
+	interface RequestUpdateCallbacks {
+		void onSuccess();
+
+		void onError(@NonNull String message);
+	}
+
 	interface SingleRequestCallback {
 		void onSuccess(@Nullable Request request);
 
@@ -36,6 +42,8 @@ public interface RequestRepository {
 	void createRequest(@NonNull Request request, @NonNull RequestCreationCallbacks callback);
 
 	void deleteRequest(@NonNull Request request, @NonNull RequestDeletionCallbacks callbacks);
+
+	void updateRequest(@NonNull Request request, @NonNull RequestUpdateCallbacks callbacks);
 
 	void getRequestForPost(String userId, String postId, SingleRequestCallback callbacks);
 }

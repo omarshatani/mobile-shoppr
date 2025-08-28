@@ -103,7 +103,7 @@ public class MakeOfferViewModel extends ViewModel {
 			Request existingOffer = _existingRequest.getValue();
 
 			if (existingOffer != null) {
-				String description = String.format("Updated offer to %s %s", FormattingUtils.formatPrice(offerPrice), post.getCurrency());
+				String description = String.format("Updated offer to %s", FormattingUtils.formatCurrency(post.getCurrency(), Double.parseDouble(offerPrice)));
 				ActivityEntry updateEntry = new ActivityEntry(
 						currentUser.getId(),
 						currentUser.getName(),
@@ -122,17 +122,15 @@ public class MakeOfferViewModel extends ViewModel {
 				existingOffer.setMessage(note);
 				// Set the new list back on the object
 				existingOffer.setActivityTimeline(newTimeline);
-
 				offerToSubmit = existingOffer;
 			} else {
-				String description = String.format("Offered %s %s", FormattingUtils.formatPrice(offerPrice), post.getCurrency());
+				String description = String.format("Offered %s", FormattingUtils.formatCurrency(post.getCurrency(), Double.parseDouble(offerPrice)));
 				ActivityEntry initialEntry = new ActivityEntry(
 						currentUser.getId(),
 						currentUser.getName(),
-						description
+						description,
+						new Date()
 				);
-				initialEntry.setCreatedAt(new Date());
-
 				offerToSubmit = new Request.Builder()
 						.postId(post.getId())
 						.buyerId(currentUser.getId())
@@ -141,6 +139,8 @@ public class MakeOfferViewModel extends ViewModel {
 						.offerCurrency(post.getCurrency())
 						.message(note)
 						.status(RequestStatus.PENDING)
+						.activityTimeline(List.of(initialEntry))
+						.createdAt(new Date())
 						.build();
 			}
 

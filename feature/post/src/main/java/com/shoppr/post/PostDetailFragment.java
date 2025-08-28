@@ -64,7 +64,7 @@ public class PostDetailFragment extends BaseFragment<FragmentPostDetailBinding> 
 			if (post != null) {
 				binding.detailPostHeadline.setText(post.getTitle());
 				binding.detailPostDescription.setText(post.getDescription());
-				binding.detailPostPrice.setText(String.format("%s %s", FormattingUtils.formatPrice(post.getPrice()), post.getCurrency()));
+				binding.detailPostPrice.setText(String.format("%s", FormattingUtils.formatCurrency(post.getCurrency(), Double.parseDouble(post.getPrice()))));
 
 				binding.detailChipGroupCategory.removeAllViews();
 				List<String> categories = post.getCategories();

@@ -15,6 +15,7 @@ import com.shoppr.data.usecase.LogoutUseCaseImpl;
 import com.shoppr.data.usecase.MakeOfferUseCaseImpl;
 import com.shoppr.data.usecase.SavePostUseCaseImpl;
 import com.shoppr.data.usecase.ToggleFavoriteUseCaseImpl;
+import com.shoppr.data.usecase.UpdateRequestUseCaseImpl;
 import com.shoppr.data.usecase.UpdateUserDefaultLocationUseCaseImpl;
 import com.shoppr.domain.usecase.DeleteOfferUseCase;
 import com.shoppr.domain.usecase.GetAllRequestsUseCase;
@@ -31,6 +32,7 @@ import com.shoppr.domain.usecase.LogoutUseCase;
 import com.shoppr.domain.usecase.MakeOfferUseCase;
 import com.shoppr.domain.usecase.SavePostUseCase;
 import com.shoppr.domain.usecase.ToggleFavoriteUseCase;
+import com.shoppr.domain.usecase.UpdateRequestUseCase;
 import com.shoppr.domain.usecase.UpdateUserDefaultLocationUseCase;
 
 import dagger.Binds;
@@ -107,6 +109,9 @@ public abstract class UseCaseModule {
 
 	@Binds
 	public abstract GetRequestByIdUseCase bindGetRequestByIdUseCase(GetRequestByIdUseCaseImpl impl);
+
+	@Binds
+	public abstract UpdateRequestUseCase bindUpdateRequestUseCase(UpdateRequestUseCaseImpl impl);
 
 	@Binds
 	public abstract DeleteOfferUseCase bindDeleteOfferUseCase(DeleteOfferUseCaseImpl impl);

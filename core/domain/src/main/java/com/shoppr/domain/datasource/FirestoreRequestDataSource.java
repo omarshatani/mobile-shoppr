@@ -16,14 +16,22 @@ public interface FirestoreRequestDataSource {
 		void onError(@NonNull String message);
 	}
 
-	interface SingleRequestCallback {
-		void onSuccess(@Nullable Request request);
+	interface RequestDeleteCallbacks {
+
+		void onSuccess();
+
+		void onError(@NonNull String message);
+
+	}
+
+	interface RequestUpdateCallbacks {
+		void onSuccess();
 
 		void onError(@NonNull String message);
 	}
 
-	interface RequestDeleteCallbacks {
-		void onSuccess();
+	interface SingleRequestCallback {
+		void onSuccess(@Nullable Request request);
 
 		void onError(@NonNull String message);
 	}
@@ -37,6 +45,8 @@ public interface FirestoreRequestDataSource {
 	void createRequest(@NonNull Request request, @NonNull RequestOperationCallbacks callbacks);
 
 	void deleteRequest(@NonNull Request request, @NonNull RequestDeleteCallbacks callbacks);
+
+	void updateRequest(@NonNull Request request, @NonNull RequestUpdateCallbacks callbacks);
 
 	void getRequestForPost(String userId, String postId, @NonNull SingleRequestCallback callbacks);
 }

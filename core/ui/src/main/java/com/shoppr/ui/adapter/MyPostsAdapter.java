@@ -64,8 +64,8 @@ public class MyPostsAdapter extends ListAdapter<Post, MyPostsAdapter.PostViewHol
 			binding.textPostItemDescription.setText(post.getDescription());
 
 			if (post.getPrice() != null && !post.getPrice().isEmpty()) {
-				String formattedPrice = FormattingUtils.formatPrice(post.getPrice());
-				binding.textPostItemPrice.setText(String.format("%s %s", formattedPrice, post.getCurrency()));
+				String formattedPrice = FormattingUtils.formatCurrency(post.getCurrency(), Double.parseDouble(post.getPrice()));
+				binding.textPostItemPrice.setText(String.format("%s", formattedPrice));
 				binding.textPostItemPrice.setVisibility(View.VISIBLE);
 			} else {
 				binding.textPostItemPrice.setVisibility(View.GONE);

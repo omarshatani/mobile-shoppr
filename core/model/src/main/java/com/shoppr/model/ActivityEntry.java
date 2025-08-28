@@ -3,15 +3,12 @@ package com.shoppr.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.google.firebase.firestore.ServerTimestamp;
-
 import java.util.Date;
 
 public class ActivityEntry implements Parcelable {
 	private String actorId;
 	private String actorName;
 	private String description;
-	@ServerTimestamp
 	private Date createdAt;
 
 	public ActivityEntry() {
@@ -21,6 +18,13 @@ public class ActivityEntry implements Parcelable {
 		this.actorId = actorId;
 		this.actorName = actorName;
 		this.description = description;
+	}
+
+	public ActivityEntry(String actorId, String actorName, String description, Date createdAt) {
+		this.actorId = actorId;
+		this.actorName = actorName;
+		this.description = description;
+		this.createdAt = createdAt;
 	}
 
 	public String getActorId() {

@@ -54,6 +54,21 @@ public class RequestRepositoryImpl implements RequestRepository {
 	}
 
 	@Override
+	public void updateRequest(@NonNull Request request, @NonNull RequestUpdateCallbacks callbacks) {
+		firestoreRequestDataSource.updateRequest(request, new FirestoreRequestDataSource.RequestUpdateCallbacks() {
+			@Override
+			public void onSuccess() {
+				callbacks.onSuccess();
+			}
+
+			@Override
+			public void onError(@NonNull String message) {
+				callbacks.onError(message);
+			}
+		});
+	}
+
+	@Override
 	public LiveData<List<Request>> getRequestsForPost(@NonNull String postId) {
 		return firestoreRequestDataSource.getRequestsForPost(postId);
 	}

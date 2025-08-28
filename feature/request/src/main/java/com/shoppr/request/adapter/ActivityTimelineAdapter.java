@@ -2,9 +2,11 @@ package com.shoppr.request;
 
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
@@ -51,39 +53,49 @@ public class ActivityTimelineAdapter extends ListAdapter<ActivityEntry, Activity
 		}
 
 		public void bind(ActivityEntry entry, String currentUserId) {
-			// Determine if the actor is the current user
 			boolean isCurrentUserTheActor = currentUserId != null && currentUserId.equals(entry.getActorId());
 
-			// Set the actor's name to "You" if it's the current user
 			binding.textActorName.setText(isCurrentUserTheActor ? "You" : entry.getActorName());
-
-			// Set the description of the event
 			binding.textEntryDescription.setText(entry.getDescription());
 
-			// Set the relative timestamp
 			if (entry.getCreatedAt() != null) {
 				CharSequence relativeTime = DateUtils.getRelativeTimeSpanString(
-						entry.getCreatedAt().getTime(),
-						System.currentTimeMillis(),
-						DateUtils.MINUTE_IN_MILLIS);
+						entry.getCreatedAt().getTime(), System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS);
 				binding.textEntryDate.setText(relativeTime);
 			}
 
-			// Set the actor's avatar (using a placeholder for now)
-			binding.imageActorAvatar.setImageResource(com.shoppr.core.ui.R.drawable.ic_account_circle);
+			ConstraintLayout.LayoutParams layoutParams = (ConstraintLayout.LayoutParams) binding.cardTimelineEntry.getLayoutParams();
 
-			// Style the card to differentiate between users
+
 			if (isCurrentUserTheActor) {
-				// Style for the current user's actions (e.g., your offers)
+				// --- Current User's Bubble (Right side) ---
+				binding.imageActorAvatarStart.setVisibility(View.GONE);
+				binding.imageActorAvatarEnd.setVisibility(View.VISIBLE);
+				binding.imageActorAvatarEnd.setImageResource(com.shoppr.core.ui.R.drawable.ic_account_circle);
+
+				// Ensure it's constrained to the right avatar
+				layoutParams.endToStart = binding.imageActorAvatarEnd.getId();
+
 				binding.cardTimelineEntry.setCardBackgroundColor(
 						itemView.getContext().getColor(com.google.android.material.R.color.material_dynamic_primary90)
 				);
+
 			} else {
-				// Style for the other user's actions
+				// --- Other User's Bubble (Left side) ---
+				binding.imageActorAvatarStart.setVisibility(View.VISIBLE);
+				binding.imageActorAvatarEnd.setVisibility(View.GONE); // Hide right avatar
+				binding.imageActorAvatarStart.setImageResource(com.shoppr.core.ui.R.drawable.ic_account_circle);
+
+				// Ensure it's constrained to the left avatar
+				layoutParams.startToEnd = binding.imageActorAvatarStart.getId();
+
 				binding.cardTimelineEntry.setCardBackgroundColor(
 						itemView.getContext().getColor(com.google.android.material.R.color.material_dynamic_secondary90)
 				);
 			}
+
+			// Re-apply the modified layout parameters
+			binding.cardTimelineEntry.setLayoutParams(layoutParams);
 		}
 	}
 

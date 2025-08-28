@@ -1,10 +1,10 @@
 package com.shoppr.request;
 
 import android.os.Bundle;
-import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,8 +15,8 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.android.material.chip.Chip;
-import com.shoppr.model.Post;
-import com.shoppr.model.Request;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
 import com.shoppr.request.databinding.FragmentRequestDetailBinding;
 import com.shoppr.ui.BaseFragment;
 import com.shoppr.ui.utils.FormattingUtils;
@@ -42,6 +42,7 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 
 		setupToolbar();
 		setupRecyclerView();
+		setupClickListeners();
 		observeViewModel();
 	}
 
@@ -56,66 +57,125 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 		binding.recyclerViewActivityTimeline.setLayoutManager(new LinearLayoutManager(getContext()));
 	}
 
+	private void setupClickListeners() {
+		binding.buttonAccept.setOnClickListener(v -> viewModel.acceptOffer());
+		binding.buttonReject.setOnClickListener(v -> viewModel.rejectOffer());
+		binding.buttonCounter.setOnClickListener(v -> showOfferDialog("Make a Counter Offer", false));
+		binding.buttonEditOffer.setOnClickListener(v -> showOfferDialog("Edit Your Offer", true));
+	}
+
 	private void observeViewModel() {
-		viewModel.getRequestDetails().observe(getViewLifecycleOwner(), uiModel -> {
-			if (uiModel != null) {
-				populateUI(uiModel);
+		viewModel.getRequestDetailState().observe(getViewLifecycleOwner(), state -> {
+			if (state != null) {
+				populateUI(state);
+			}
+		});
+
+		viewModel.getActionSuccessEvent().observe(getViewLifecycleOwner(), event -> {
+			String status = event.getContentIfNotHandled();
+			if (status != null) {
+				Toast.makeText(getContext(), "Offer " + status, Toast.LENGTH_SHORT).show();
+			}
+		});
+
+		viewModel.getErrorEvent().observe(getViewLifecycleOwner(), event -> {
+			String message = event.getContentIfNotHandled();
+			if (message != null) {
+				Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+			}
+		});
+
+		viewModel.getNavigateToCheckoutEvent().observe(getViewLifecycleOwner(), event -> {
+			if (event.getContentIfNotHandled() != null) {
+				Toast.makeText(getContext(), "Navigating to Checkout...", Toast.LENGTH_SHORT).show();
 			}
 		});
 	}
 
-	private void populateUI(RequestUiModel uiModel) {
-		Post post = uiModel.getPost();
-		Request request = uiModel.getRequest();
-		String currentUserId = viewModel.getCurrentUserId();
-
-		boolean isMyOffer = currentUserId != null && currentUserId.equals(request.getBuyerId());
-
-		if (post.getImageUrl() != null && !post.getImageUrl().isEmpty()) {
-			ImageLoader.loadImage(binding.imagePostDetail, post.getImageUrl().get(0));
+	private void populateUI(RequestDetailState state) {
+		// Post Card
+		if (state.getPost().getImageUrl() != null && !state.getPost().getImageUrl().isEmpty()) {
+			ImageLoader.loadImage(binding.imagePostDetail, state.getPost().getImageUrl().get(0));
+		} else {
+			binding.imagePostDetail.setImageResource(com.shoppr.core.ui.R.drawable.ic_placeholder_image);
 		}
-		binding.textPostTitle.setText(post.getTitle());
-		binding.textPostDescription.setText(post.getDescription());
-		binding.textListPrice.setText(String.format("%s %s", FormattingUtils.formatPrice(post.getPrice()), post.getCurrency()));
+		binding.textPostTitle.setText(state.getPost().getTitle());
+		binding.textPostDescription.setText(state.getPost().getDescription());
+		if (state.getPost().getPrice() != null) {
+			binding.textListPrice.setText(
+					FormattingUtils.formatCurrency(state.getPost().getCurrency(), Double.parseDouble(state.getPost().getPrice()))
+			);
+		}
 
-		// Populate Categories
+
+		// Lister Info
+		binding.textListerUsername.setText(state.listerName);
+		binding.imageListerAvatar.setImageResource(com.shoppr.core.ui.R.drawable.ic_account_circle);
+
+		// Categories
 		binding.chipGroupCategory.removeAllViews();
-		if (post.getCategories() != null && !post.getCategories().isEmpty()) {
-			for (String categoryName : post.getCategories()) {
+		if (state.getPost().getCategories() != null && !state.getPost().getCategories().isEmpty()) {
+			for (String categoryName : state.getPost().getCategories()) {
 				Chip chip = new Chip(getContext());
 				chip.setText(categoryName);
 				binding.chipGroupCategory.addView(chip);
 			}
 		}
 
-		if (post.getLister() != null) {
-			binding.textListerUsername.setText(isMyOffer ? "You" : post.getLister().getName());
-			binding.imageListerAvatar.setImageResource(com.shoppr.core.ui.R.drawable.ic_account_circle); // Using placeholder
+		// Offer Card
+		binding.textOfferLabel.setText(state.offerLabel);
+		binding.textOfferPrice.setText(
+				FormattingUtils.formatCurrency(state.getRequest().getOfferCurrency(), state.getRequest().getOfferAmount())
+		);
+		if (state.getRequest().getMessage() != null && !state.getRequest().getMessage().isEmpty()) {
+			binding.textOfferNote.setText(state.getRequest().getMessage());
+			binding.textOfferNote.setVisibility(View.VISIBLE);
+		} else {
+			binding.textOfferNote.setVisibility(View.GONE);
 		}
 
+		// Timeline
+		timelineAdapter.setCurrentUserId(state.getCurrentUser().getId());
+		timelineAdapter.submitList(state.getRequest().getActivityTimeline());
 
-		binding.textOfferLabel.setText(isMyOffer ? "Your Offer" : "Their Offer");
-		binding.textOfferPrice.setText(String.format("%s %s", FormattingUtils.formatPrice(request.getOfferAmount()), request.getOfferCurrency()));
-
-		// Date in Offer Card - CORRECTED
-		if (request.getCreatedAt() != null) {
-			CharSequence relativeTime = DateUtils.getRelativeTimeSpanString(
-					request.getCreatedAt().getTime(), System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS);
-			// This view ID `text_request_date` does not exist in the new layout.
-			// The date is now part of the timeline, so we will handle it there.
-			// We can remove this for now, or add a date to the offer card if you wish.
+		binding.actionButtonBar.setVisibility(state.showActionButtons ? View.VISIBLE : View.GONE);
+		if (state.showActionButtons) {
+			binding.buttonAccept.setVisibility(state.showAcceptButton ? View.VISIBLE : View.GONE);
+			binding.buttonReject.setVisibility(state.showRejectButton ? View.VISIBLE : View.GONE);
+			binding.buttonCounter.setVisibility(state.showCounterButton ? View.VISIBLE : View.GONE);
+			binding.buttonEditOffer.setVisibility(state.showEditOfferButton ? View.VISIBLE : View.GONE);
+			binding.buttonAccept.setText(state.acceptButtonText);
 		}
+	}
 
-		timelineAdapter.setCurrentUserId(currentUserId);
+	private void showOfferDialog(String title, boolean isEdit) {
+		View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_counter_offer, null);
+		TextInputEditText priceEditText = dialogView.findViewById(R.id.edit_text_counter_price);
 
-		// Submit the timeline data to the adapter
-		if (request.getActivityTimeline() != null) {
-			timelineAdapter.submitList(request.getActivityTimeline());
-		}
+		new MaterialAlertDialogBuilder(requireContext())
+				.setTitle(title)
+				.setView(dialogView)
+				.setNegativeButton("Cancel", null)
+				.setPositiveButton("Submit", (dialog, which) -> {
+					String newPrice = priceEditText.getText().toString();
+					if (!newPrice.isEmpty()) {
+						if (isEdit) {
+							viewModel.editOffer(newPrice);
+						} else {
+							viewModel.counterOffer(newPrice);
+						}
+					}
+				})
+				.show();
 	}
 
 	@Override
 	protected InsetType getInsetType() {
 		return InsetType.TOP;
+	}
+
+	@Override
+	protected boolean shouldHideBottomNav() {
+		return true;
 	}
 }
