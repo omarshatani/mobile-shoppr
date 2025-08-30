@@ -1,44 +1,49 @@
 package com.shoppr.ui.utils;
 
-import java.text.DecimalFormat;
-import java.util.Locale;
-
 public class FormattingUtils {
 
 	/**
-	 * Formats a Double price into a String.
-	 * - If the price is an integer (e.g., 300.0), it returns "300".
-	 * - If the price has decimals (e.g., 299.99), it returns "299.99".
-	 * - If the price is null, it returns an empty string.
-	 *
-	 * @param price The price to format.
-	 * @return The formatted price string.
+	 * Formats a price value to remove trailing zeros if it's a whole number.
+	 * Example: 300.0 -> "300", 25.50 -> "25.5"
 	 */
-	public static String formatPrice(Double price) {
-		if (price == null) {
-			return "";
-		}
-
-		// Check if the number has no fractional part
-		if (price % 1 == 0) {
-			return String.format(Locale.getDefault(), "%.0f", price);
+	public static String formatPrice(double price) {
+		if (price == (long) price) {
+			return String.format("%d", (long) price);
 		} else {
-			DecimalFormat df = new DecimalFormat("#.##");
-			return df.format(price);
+			return String.format("%s", price);
 		}
 	}
 
 	/**
-	 * Overloaded method to handle String prices safely.
+	 * Formats a currency code and an amount into a user-friendly string with the correct symbol.
+	 * Example: ("USD", 300.0) -> "$300"
+	 *
+	 * @param currencyCode The 3-letter currency code (e.g., "USD", "EUR").
+	 * @param amount The numerical amount.
+	 * @return A formatted string like "$300", "€300", or "USD 300" as a fallback.
 	 */
-	public static String formatPrice(String price) {
-		if (price == null || price.trim().isEmpty()) {
-			return "";
+	public static String formatCurrency(String currencyCode, double amount) {
+		if (currencyCode == null) {
+			return formatPrice(amount);
 		}
-		try {
-			return formatPrice(Double.parseDouble(price));
-		} catch (NumberFormatException e) {
-			return price;
+
+		String symbol;
+		switch (currencyCode.toUpperCase()) {
+			case "USD":
+				symbol = "$";
+				break;
+			case "EUR":
+				symbol = "€";
+				break;
+			case "GBP":
+				symbol = "£";
+				break;
+			// Add more currency cases as needed
+			default:
+				// If the currency is unknown, just use the code itself
+				return String.format("%s %s", currencyCode, formatPrice(amount));
 		}
+
+		return String.format("%s%s", symbol, formatPrice(amount));
 	}
 }

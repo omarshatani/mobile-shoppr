@@ -98,11 +98,6 @@ public class CreatePostViewModel extends ViewModel {
 
 	private void createAndSavePost(SuggestedPostDetails suggestions, User currentUser, String originalPrice, String originalCurrency) {
 		List<Uri> images = selectedImageUris.getValue();
-		if (images == null || images.isEmpty()) {
-			operationError.setValue(new Event<>("Please add at least one image."));
-			isLoading.setValue(false);
-			return;
-		}
 
 		String finalPrice = suggestions.getPrice() != null ? String.valueOf(suggestions.getPrice()) : originalPrice;
 		String finalCurrency = suggestions.getCurrency() != null ? suggestions.getCurrency() : originalCurrency;

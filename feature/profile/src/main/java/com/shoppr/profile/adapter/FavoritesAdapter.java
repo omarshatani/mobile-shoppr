@@ -71,7 +71,7 @@ public class FavoritesAdapter extends ListAdapter<Post, FavoritesAdapter.PostVie
 			binding.textPostItemDescription.setText(post.getDescription());
 
 			if (post.getPrice() != null && !post.getPrice().isEmpty()) {
-				binding.textPostItemPrice.setText(String.format("%s %s", FormattingUtils.formatPrice(post.getPrice()), post.getCurrency()));
+				binding.textPostItemPrice.setText(String.format("%s", FormattingUtils.formatCurrency(post.getCurrency(), Double.parseDouble(post.getPrice()))));
 				binding.textPostItemPrice.setVisibility(View.VISIBLE);
 			} else {
 				binding.textPostItemPrice.setVisibility(View.GONE);

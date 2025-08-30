@@ -10,11 +10,17 @@ import com.shoppr.domain.usecase.DeleteOfferUseCase;
 import com.shoppr.domain.usecase.GetCurrentUserUseCase;
 import com.shoppr.domain.usecase.GetRequestForPostUseCase;
 import com.shoppr.domain.usecase.MakeOfferUseCase;
+import com.shoppr.model.ActivityEntry;
 import com.shoppr.model.Event;
 import com.shoppr.model.Post;
 import com.shoppr.model.Request;
 import com.shoppr.model.RequestStatus;
 import com.shoppr.model.User;
+import com.shoppr.ui.utils.FormattingUtils;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -27,7 +33,6 @@ public class MakeOfferViewModel extends ViewModel {
 	private final GetCurrentUserUseCase getCurrentUserUseCase;
 	private final GetRequestForPostUseCase getRequestForPostUseCase;
 	private final DeleteOfferUseCase deleteOfferUseCase;
-
 	private final MutableLiveData<Request> _existingRequest = new MutableLiveData<>();
 
 	public LiveData<Request> getExistingRequest() {
@@ -98,12 +103,34 @@ public class MakeOfferViewModel extends ViewModel {
 			Request existingOffer = _existingRequest.getValue();
 
 			if (existingOffer != null) {
-				// If an offer exists, we update its values
+				String description = String.format("Updated offer to %s", FormattingUtils.formatCurrency(post.getCurrency(), Double.parseDouble(offerPrice)));
+				ActivityEntry updateEntry = new ActivityEntry(
+						currentUser.getId(),
+						currentUser.getName(),
+						description
+				);
+				updateEntry.setCreatedAt(new Date());
+
+				// Get the existing timeline and add the new entry
+				List<ActivityEntry> newTimeline = new ArrayList<>(existingOffer.getActivityTimeline() != null ? existingOffer.getActivityTimeline() : new ArrayList<>());
+
+				// Add the new entry to the new list
+				newTimeline.add(updateEntry);
+
+				// Update the existing offer object's fields
 				existingOffer.setOfferAmount(Double.parseDouble(offerPrice));
 				existingOffer.setMessage(note);
+				// Set the new list back on the object
+				existingOffer.setActivityTimeline(newTimeline);
 				offerToSubmit = existingOffer;
 			} else {
-				// Otherwise, we create a new one
+				String description = String.format("Offered %s", FormattingUtils.formatCurrency(post.getCurrency(), Double.parseDouble(offerPrice)));
+				ActivityEntry initialEntry = new ActivityEntry(
+						currentUser.getId(),
+						currentUser.getName(),
+						description,
+						new Date()
+				);
 				offerToSubmit = new Request.Builder()
 						.postId(post.getId())
 						.buyerId(currentUser.getId())
@@ -112,6 +139,8 @@ public class MakeOfferViewModel extends ViewModel {
 						.offerCurrency(post.getCurrency())
 						.message(note)
 						.status(RequestStatus.PENDING)
+						.activityTimeline(List.of(initialEntry))
+						.createdAt(new Date())
 						.build();
 			}
 

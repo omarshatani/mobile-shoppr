@@ -21,11 +21,16 @@ import com.shoppr.ui.utils.ImageLoader;
 import java.util.Objects;
 
 public class RequestsAdapter extends ListAdapter<RequestUiModel, RequestsAdapter.RequestViewHolder> {
+	public interface OnRequestClickListener {
+		void onRequestClicked(RequestUiModel requestUiModel);
+	}
 
+	private final OnRequestClickListener clickListener;
 	private String currentUserId;
 
-	public RequestsAdapter() {
+	public RequestsAdapter(OnRequestClickListener clickListener) {
 		super(DIFF_CALLBACK);
+		this.clickListener = clickListener;
 	}
 
 	public void setCurrentUserId(String currentUserId) {
@@ -44,7 +49,7 @@ public class RequestsAdapter extends ListAdapter<RequestUiModel, RequestsAdapter
 	public void onBindViewHolder(@NonNull RequestViewHolder holder, int position) {
 		RequestUiModel item = getItem(position);
 		if (item != null) {
-			holder.bind(item, currentUserId);
+			holder.bind(item, currentUserId, clickListener);
 		}
 	}
 
@@ -56,7 +61,7 @@ public class RequestsAdapter extends ListAdapter<RequestUiModel, RequestsAdapter
 			this.binding = binding;
 		}
 
-		public void bind(RequestUiModel uiModel, String currentUserId) {
+		public void bind(RequestUiModel uiModel, String currentUserId, OnRequestClickListener listener) {
 			Request request = uiModel.getRequest();
 			Post post = uiModel.getPost();
 
@@ -71,16 +76,8 @@ public class RequestsAdapter extends ListAdapter<RequestUiModel, RequestsAdapter
 				binding.textListerName.setVisibility(View.GONE);
 			}
 
-			if (post.getLister() != null && post.getLister().getName() != null) {
-				String listerText = "Listed by " + post.getLister().getName();
-				binding.textListerName.setText(listerText);
-				binding.textListerName.setVisibility(View.VISIBLE);
-			} else {
-				binding.textListerName.setVisibility(View.GONE);
-			}
-
 			if (post.getPrice() != null && !post.getPrice().isEmpty()) {
-				String listPriceText = String.format("List price: %s %s", post.getPrice(), post.getCurrency());
+				String listPriceText = String.format("List price: %s", FormattingUtils.formatCurrency(post.getCurrency(), Double.parseDouble(post.getPrice())));
 				binding.textListPrice.setText(listPriceText);
 				binding.textListPrice.setVisibility(View.VISIBLE);
 			} else {
@@ -97,7 +94,7 @@ public class RequestsAdapter extends ListAdapter<RequestUiModel, RequestsAdapter
 				binding.textOfferLabel.setText("Their offer");
 			}
 
-			String offerPrice = String.format("%s %s", FormattingUtils.formatPrice(request.getOfferAmount()), request.getOfferCurrency());
+			String offerPrice = String.format("%s", FormattingUtils.formatCurrency(request.getOfferCurrency(), request.getOfferAmount()));
 			binding.textOfferPrice.setText(offerPrice);
 
 			if (request.getCreatedAt() != null) {
@@ -119,6 +116,10 @@ public class RequestsAdapter extends ListAdapter<RequestUiModel, RequestsAdapter
 				int textColorRes;
 
 				switch (request.getStatus()) {
+					case ACCEPTED:
+						backgroundColorRes = com.shoppr.core.ui.R.color.color_background_accepted;
+						textColorRes = com.shoppr.core.ui.R.color.color_text_accepted;
+						break;
 					case COMPLETED:
 						backgroundColorRes = com.shoppr.core.ui.R.color.color_background_completed;
 						textColorRes = com.shoppr.core.ui.R.color.color_text_completed;
@@ -127,7 +128,11 @@ public class RequestsAdapter extends ListAdapter<RequestUiModel, RequestsAdapter
 						backgroundColorRes = com.shoppr.core.ui.R.color.color_background_rejected;
 						textColorRes = com.shoppr.core.ui.R.color.color_text_rejected;
 						break;
-					case PENDING:
+					case COUNTERED:
+						binding.chipStatus.setText("Counter-offer");
+						backgroundColorRes = com.shoppr.core.ui.R.color.color_background_counter_offer;
+						textColorRes = com.shoppr.core.ui.R.color.color_text_counter_offer;
+						break;
 					default:
 						backgroundColorRes = com.shoppr.core.ui.R.color.color_background_pending;
 						textColorRes = com.shoppr.core.ui.R.color.color_text_pending;
@@ -144,6 +149,8 @@ public class RequestsAdapter extends ListAdapter<RequestUiModel, RequestsAdapter
 			} else {
 				binding.chipStatus.setVisibility(View.GONE);
 			}
+
+			itemView.setOnClickListener(v -> listener.onRequestClicked(uiModel));
 		}
 	}
 

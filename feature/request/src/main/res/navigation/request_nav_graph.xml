@@ -8,5 +8,15 @@
         android:id="@+id/request_fragment"
         android:name="com.shoppr.request.RequestFragment"
         android:label="Request"
-        tools:layout="@layout/fragment_request" />
+        tools:layout="@layout/fragment_request">
+        <action
+            android:id="@+id/action_request_fragment_to_requestDetailFragment"
+            app:destination="@id/request_detail_fragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/request_detail_fragment"
+        android:name="com.shoppr.request.RequestDetailFragment"
+        tools:layout="@layout/fragment_request_detail">
+        <argument android:name="requestId" />
+    </fragment>
 </navigation>

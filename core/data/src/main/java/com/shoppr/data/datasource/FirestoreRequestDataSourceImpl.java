@@ -69,6 +69,18 @@ public class FirestoreRequestDataSourceImpl implements FirestoreRequestDataSourc
 	}
 
 	@Override
+	public void updateRequest(@NonNull Request request, @NonNull RequestUpdateCallbacks callbacks) {
+		if (request.getId() == null) {
+			callbacks.onError("Cannot update request with null ID.");
+			return;
+		}
+		db.collection("requests").document(request.getId())
+				.set(request)
+				.addOnSuccessListener(aVoid -> callbacks.onSuccess())
+				.addOnFailureListener(e -> callbacks.onError("Failed to update request: " + e.getMessage()));
+	}
+
+	@Override
 	public LiveData<List<Request>> getRequestsForPost(@NonNull String postId) {
 		MutableLiveData<List<Request>> requestsLiveData = new MutableLiveData<>();
 		db.collection("requests")
@@ -129,6 +141,25 @@ public class FirestoreRequestDataSourceImpl implements FirestoreRequestDataSourc
 		});
 
 		return requestsLiveData;
+	}
+
+	@Override
+	public LiveData<Request> getRequestById(@NonNull String requestId) {
+		MutableLiveData<Request> requestLiveData = new MutableLiveData<>();
+		db.collection("requests").document(requestId)
+				.addSnapshotListener((snapshot, e) -> {
+					if (e != null) {
+						Log.w("FirestoreRequestDataSource", "Listen failed.", e);
+						requestLiveData.setValue(null);
+						return;
+					}
+					if (snapshot != null && snapshot.exists()) {
+						requestLiveData.setValue(snapshot.toObject(Request.class));
+					} else {
+						requestLiveData.setValue(null);
+					}
+				});
+		return requestLiveData;
 	}
 
 	@Override

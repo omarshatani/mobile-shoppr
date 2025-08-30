@@ -43,7 +43,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textAppearance="?attr/textAppearanceTitleMedium"
-                app:layout_constraintEnd_toStartOf="@+id/linearLayout_offer"
+                app:layout_constraintEnd_toStartOf="@+id/linear_layout_offer"
                 app:layout_constraintStart_toEndOf="@id/image_post"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:text="Mid-Century Modern Armchair with Ottoman" />
@@ -74,7 +74,7 @@
                 tools:text="Pending" />
 
             <LinearLayout
-                android:id="@+id/linearLayout_offer"
+                android:id="@+id/linear_layout_offer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="end"
