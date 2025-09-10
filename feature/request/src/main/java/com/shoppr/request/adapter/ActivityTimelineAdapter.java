@@ -1,4 +1,4 @@
-package com.shoppr.request;
+package com.shoppr.request.adapter;
 
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
@@ -19,13 +19,18 @@ import java.util.Objects;
 public class ActivityTimelineAdapter extends ListAdapter<ActivityEntry, ActivityTimelineAdapter.TimelineViewHolder> {
 
 	private String currentUserId;
+	private String buyerId;
+	private String sellerId;
 
 	public ActivityTimelineAdapter() {
 		super(DIFF_CALLBACK);
 	}
 
-	public void setCurrentUserId(String currentUserId) {
+	public void setActorIds(String currentUserId, String buyerId, String sellerId) {
 		this.currentUserId = currentUserId;
+		this.buyerId = buyerId;
+		this.sellerId = sellerId;
+		notifyDataSetChanged(); // Refresh the list with new ID info
 	}
 
 	@NonNull
@@ -40,7 +45,7 @@ public class ActivityTimelineAdapter extends ListAdapter<ActivityEntry, Activity
 	public void onBindViewHolder(@NonNull TimelineViewHolder holder, int position) {
 		ActivityEntry item = getItem(position);
 		if (item != null) {
-			holder.bind(item, currentUserId);
+			holder.bind(item, currentUserId, buyerId, sellerId);
 		}
 	}
 
@@ -52,7 +57,7 @@ public class ActivityTimelineAdapter extends ListAdapter<ActivityEntry, Activity
 			this.binding = binding;
 		}
 
-		public void bind(ActivityEntry entry, String currentUserId) {
+		public void bind(ActivityEntry entry, String currentUserId, String buyerId, String sellerId) {
 			boolean isCurrentUserTheActor = currentUserId != null && currentUserId.equals(entry.getActorId());
 
 			binding.textActorName.setText(isCurrentUserTheActor ? "You" : entry.getActorName());
@@ -64,8 +69,19 @@ public class ActivityTimelineAdapter extends ListAdapter<ActivityEntry, Activity
 				binding.textEntryDate.setText(relativeTime);
 			}
 
-			ConstraintLayout.LayoutParams layoutParams = (ConstraintLayout.LayoutParams) binding.cardTimelineEntry.getLayoutParams();
+			// Set Role Label
+			if (entry.getActorId() != null) {
+				if (entry.getActorId().equals(buyerId)) {
+					binding.textActorRole.setText("(Buyer)");
+				} else if (entry.getActorId().equals(sellerId)) {
+					binding.textActorRole.setText("(Seller)");
+				} else {
+					binding.textActorRole.setText("");
+				}
+			}
 
+			// --- FINAL, CORRECTED ALIGNMENT LOGIC ---
+			ConstraintLayout.LayoutParams cardParams = (ConstraintLayout.LayoutParams) binding.cardTimelineEntry.getLayoutParams();
 
 			if (isCurrentUserTheActor) {
 				// --- Current User's Bubble (Right side) ---
@@ -74,7 +90,7 @@ public class ActivityTimelineAdapter extends ListAdapter<ActivityEntry, Activity
 				binding.imageActorAvatarEnd.setImageResource(com.shoppr.core.ui.R.drawable.ic_account_circle);
 
 				// Ensure it's constrained to the right avatar
-				layoutParams.endToStart = binding.imageActorAvatarEnd.getId();
+				cardParams.endToStart = binding.imageActorAvatarEnd.getId();
 
 				binding.cardTimelineEntry.setCardBackgroundColor(
 						itemView.getContext().getColor(com.google.android.material.R.color.material_dynamic_primary90)
@@ -83,26 +99,24 @@ public class ActivityTimelineAdapter extends ListAdapter<ActivityEntry, Activity
 			} else {
 				// --- Other User's Bubble (Left side) ---
 				binding.imageActorAvatarStart.setVisibility(View.VISIBLE);
-				binding.imageActorAvatarEnd.setVisibility(View.GONE); // Hide right avatar
+				binding.imageActorAvatarEnd.setVisibility(View.GONE);
 				binding.imageActorAvatarStart.setImageResource(com.shoppr.core.ui.R.drawable.ic_account_circle);
 
 				// Ensure it's constrained to the left avatar
-				layoutParams.startToEnd = binding.imageActorAvatarStart.getId();
+				cardParams.startToEnd = binding.imageActorAvatarStart.getId();
 
 				binding.cardTimelineEntry.setCardBackgroundColor(
 						itemView.getContext().getColor(com.google.android.material.R.color.material_dynamic_secondary90)
 				);
 			}
-
 			// Re-apply the modified layout parameters
-			binding.cardTimelineEntry.setLayoutParams(layoutParams);
+			binding.cardTimelineEntry.setLayoutParams(cardParams);
 		}
 	}
 
 	private static final DiffUtil.ItemCallback<ActivityEntry> DIFF_CALLBACK = new DiffUtil.ItemCallback<ActivityEntry>() {
 		@Override
 		public boolean areItemsTheSame(@NonNull ActivityEntry oldItem, @NonNull ActivityEntry newItem) {
-			// For a simple timeline, we can assume position is a stable identifier
 			return oldItem == newItem;
 		}
 

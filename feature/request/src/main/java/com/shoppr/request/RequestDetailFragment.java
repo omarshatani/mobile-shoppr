@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
+import com.shoppr.request.adapter.ActivityTimelineAdapter;
 import com.shoppr.request.databinding.FragmentRequestDetailBinding;
 import com.shoppr.ui.BaseFragment;
 import com.shoppr.ui.utils.FormattingUtils;
@@ -28,7 +29,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBinding> {
 
 	private RequestDetailViewModel viewModel;
-	private com.shoppr.request.ActivityTimelineAdapter timelineAdapter;
+	private ActivityTimelineAdapter timelineAdapter;
 
 	@Override
 	protected FragmentRequestDetailBinding inflateBinding(@NonNull LayoutInflater inflater, @Nullable ViewGroup container) {
@@ -52,7 +53,7 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 	}
 
 	private void setupRecyclerView() {
-		timelineAdapter = new com.shoppr.request.ActivityTimelineAdapter();
+		timelineAdapter = new ActivityTimelineAdapter();
 		binding.recyclerViewActivityTimeline.setAdapter(timelineAdapter);
 		binding.recyclerViewActivityTimeline.setLayoutManager(new LinearLayoutManager(getContext()));
 	}
@@ -88,6 +89,7 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 		viewModel.getNavigateToCheckoutEvent().observe(getViewLifecycleOwner(), event -> {
 			if (event.getContentIfNotHandled() != null) {
 				Toast.makeText(getContext(), "Navigating to Checkout...", Toast.LENGTH_SHORT).show();
+				// TODO: Add navigation logic to the checkout feature module
 			}
 		});
 	}
@@ -109,7 +111,7 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 
 
 		// Lister Info
-		binding.textListerUsername.setText(state.listerName);
+		binding.textListerUsername.setText(String.format("@%s", state.getPost().getLister().getName()));
 		binding.imageListerAvatar.setImageResource(com.shoppr.core.ui.R.drawable.ic_account_circle);
 
 		// Categories
@@ -127,17 +129,16 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 		binding.textOfferPrice.setText(
 				FormattingUtils.formatCurrency(state.getRequest().getOfferCurrency(), state.getRequest().getOfferAmount())
 		);
-		if (state.getRequest().getMessage() != null && !state.getRequest().getMessage().isEmpty()) {
-			binding.textOfferNote.setText(state.getRequest().getMessage());
-			binding.textOfferNote.setVisibility(View.VISIBLE);
-		} else {
-			binding.textOfferNote.setVisibility(View.GONE);
-		}
 
 		// Timeline
-		timelineAdapter.setCurrentUserId(state.getCurrentUser().getId());
+		timelineAdapter.setActorIds(
+				state.getCurrentUser().getId(),
+				state.getRequest().getBuyerId(),
+				state.getPost().getLister().getId()
+		);
 		timelineAdapter.submitList(state.getRequest().getActivityTimeline());
 
+		// Action Bar Visibility & Configuration
 		binding.actionButtonBar.setVisibility(state.showActionButtons ? View.VISIBLE : View.GONE);
 		if (state.showActionButtons) {
 			binding.buttonAccept.setVisibility(state.showAcceptButton ? View.VISIBLE : View.GONE);
