@@ -1,12 +1,9 @@
 package com.shoppr.request;
 
-import com.shoppr.model.ActivityEntry;
 import com.shoppr.model.Post;
 import com.shoppr.model.Request;
 import com.shoppr.model.RequestStatus;
 import com.shoppr.model.User;
-
-import java.util.List;
 
 public class RequestDetailState {
 
@@ -28,7 +25,7 @@ public class RequestDetailState {
 
 	// Button Text
 	public final String acceptButtonText;
-	public final String offerLabel = "Latest Offer";
+	public final String listerName;
 
 	public RequestDetailState(Post post, Request request, User currentUser) {
 		this.post = post;
@@ -38,51 +35,54 @@ public class RequestDetailState {
 		this.isCurrentUserSeller = currentUser != null && post.getLister().getId() != null && currentUser.getId().equals(post.getLister().getId());
 		this.isCurrentUserBuyer = currentUser != null && request.getBuyerId() != null && currentUser.getId().equals(request.getBuyerId());
 
-		this.showActionButtons = request.getStatus() != RequestStatus.COMPLETED && request.getStatus() != RequestStatus.REJECTED;
+		// The action bar is visible unless the negotiation is complete.
+		this.showActionButtons = request.getStatus() != RequestStatus.COMPLETED &&
+				request.getStatus() != RequestStatus.REJECTED &&
+				request.getStatus() != RequestStatus.REJECTED_COUNTERED;
 
-		String lastActorId = getLastActorId();
-		boolean wasLastActionMine = currentUser != null && currentUser.getId().equals(lastActorId);
+		boolean sellerTurn = isCurrentUserSeller && request.getStatus() == RequestStatus.PENDING;
+		boolean buyerTurn = isCurrentUserBuyer && request.getStatus() == RequestStatus.COUNTERED;
+		boolean buyerConfirmationTurn = isCurrentUserBuyer && request.getStatus() == RequestStatus.ACCEPTED;
+		boolean sellerConfirmationTurn = isCurrentUserSeller && request.getStatus() == RequestStatus.ACCEPTED_COUNTERED;
 
-		if (this.showActionButtons) {
-			// --- Finalized Logic ---
-			if (wasLastActionMine) {
-				// My last move: I can only edit or withdraw.
-				this.showEditOfferButton = request.getStatus() != RequestStatus.ACCEPTED;
-				this.showRejectButton = true; // "Reject" here means "Withdraw"
-				this.showAcceptButton = false;
-				this.showCounterButton = false;
-			} else {
-				// The other user's last move: I can respond.
-				this.showEditOfferButton = false;
-				this.showAcceptButton = true;
-				this.showRejectButton = true;
-				this.showCounterButton = request.getStatus() != RequestStatus.ACCEPTED;
-			}
-
-			// The "Confirm & Pay" button is ONLY visible to the buyer when the offer has been accepted by the seller.
-			if (isCurrentUserBuyer && request.getStatus() == RequestStatus.ACCEPTED) {
-				this.acceptButtonText = "Confirm & Pay";
-			} else {
-				this.acceptButtonText = "Accept";
-			}
-
-		} else {
-			// If the action bar isn't shown, hide all buttons.
-			this.showAcceptButton = false;
-			this.showRejectButton = false;
+		if (sellerTurn) {
+			this.showAcceptButton = true;
+			this.showRejectButton = true;
+			this.showCounterButton = true;
+			this.showEditOfferButton = false;
+		} else if (buyerTurn) {
+			this.showAcceptButton = true;
+			this.showRejectButton = true;
+			this.showCounterButton = true;
+			this.showEditOfferButton = false;
+		} else if (buyerConfirmationTurn) {
+			this.showAcceptButton = true;
+			this.showRejectButton = true;
 			this.showCounterButton = false;
 			this.showEditOfferButton = false;
+		} else if (sellerConfirmationTurn) {
+			this.showAcceptButton = true;
+			this.showRejectButton = true;
+			this.showCounterButton = false;
+			this.showEditOfferButton = false;
+		} else {
+			this.showAcceptButton = request.getStatus() == RequestStatus.COUNTERED;
+			this.showRejectButton = true;
+			this.showCounterButton = false;
+			this.showEditOfferButton = request.getStatus() == RequestStatus.PENDING || request.getStatus() == RequestStatus.COUNTERED;
+		}
+
+		if (buyerConfirmationTurn) {
+			this.acceptButtonText = "Confirm & Pay";
+		} else if (sellerConfirmationTurn) {
+			this.acceptButtonText = "Confirm";
+		} else {
 			this.acceptButtonText = "Accept";
 		}
+
+		this.listerName = isCurrentUserSeller ? "Your Listing" : String.format("@%s", post.getLister().getName());
 	}
 
-	private String getLastActorId() {
-		List<ActivityEntry> timeline = request.getActivityTimeline();
-		if (timeline == null || timeline.isEmpty()) {
-			return null; // Should not happen
-		}
-		return timeline.get(timeline.size() - 1).getActorId();
-	}
 	public Post getPost() {
 		return post;
 	}

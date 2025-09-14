@@ -118,11 +118,21 @@ public class RequestDetailViewModel extends ViewModel {
 		RequestDetailState currentState = _requestDetailState.getValue();
 		if (currentState == null) return;
 
+		RequestStatus currentStatus = currentState.getRequest().getStatus();
+
 		if (currentState.isCurrentUserSeller) {
-			updateRequest(RequestStatus.ACCEPTED, "Accepted the offer", null);
+			if (currentStatus == RequestStatus.PENDING) {
+				updateRequest(RequestStatus.ACCEPTED, "Seller accepted the offer", null);
+			} else if (currentStatus == RequestStatus.ACCEPTED_COUNTERED) {
+				updateRequest(RequestStatus.ACCEPTED, "Seller confirmed the deal", null);
+			}
 		} else if (currentState.isCurrentUserBuyer) {
-			updateRequest(RequestStatus.COMPLETED, "Confirmed the accepted offer", null);
-			_navigateToCheckoutEvent.setValue(new Event<>(true));
+			if (currentStatus == RequestStatus.COUNTERED) {
+				updateRequest(RequestStatus.ACCEPTED_COUNTERED, "Buyer accepted the counter-offer", null);
+			} else if (currentStatus == RequestStatus.ACCEPTED) {
+				updateRequest(RequestStatus.COMPLETED, "Buyer confirmed and paid", null);
+				_navigateToCheckoutEvent.setValue(new Event<>(true));
+			}
 		}
 	}
 
@@ -144,7 +154,13 @@ public class RequestDetailViewModel extends ViewModel {
 	}
 
 	public void rejectOffer() {
-		updateRequest(RequestStatus.REJECTED, "Rejected the offer", null);
+		RequestDetailState currentState = _requestDetailState.getValue();
+		if (currentState == null) return;
+
+		RequestStatus nextStatus = currentState.getRequest().getStatus() == RequestStatus.COUNTERED ?
+				RequestStatus.REJECTED_COUNTERED : RequestStatus.REJECTED;
+
+		updateRequest(nextStatus, "Rejected the offer", null);
 	}
 
 	public void counterOffer(String newPrice) {

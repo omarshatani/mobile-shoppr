@@ -29,4 +29,5 @@
     <string name="withdraw_offer">Withdraw Offer</string>
     <string name="no_requests_yet">No requests yet</string>
     <string name="your_sent_and_received_offers_will_appear_here">Your sent and received offers will appear here.</string>
+    <string name="latest_offer">Latest offer</string>
 </resources>

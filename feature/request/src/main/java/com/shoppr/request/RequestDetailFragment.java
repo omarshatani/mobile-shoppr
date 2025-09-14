@@ -111,7 +111,8 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 
 
 		// Lister Info
-		binding.textListerUsername.setText(String.format("@%s", state.getPost().getLister().getName()));
+		String listerName = state.isCurrentUserSeller ? "Your Listing" : String.format("@%s", state.getPost().getLister().getName());
+		binding.textListerUsername.setText(String.format("%s", listerName));
 		binding.imageListerAvatar.setImageResource(com.shoppr.core.ui.R.drawable.ic_account_circle);
 
 		// Categories
@@ -125,7 +126,6 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 		}
 
 		// Offer Card
-		binding.textOfferLabel.setText(state.offerLabel);
 		binding.textOfferPrice.setText(
 				FormattingUtils.formatCurrency(state.getRequest().getOfferCurrency(), state.getRequest().getOfferAmount())
 		);

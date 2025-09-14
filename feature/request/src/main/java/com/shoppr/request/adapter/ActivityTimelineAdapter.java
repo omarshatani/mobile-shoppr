@@ -106,7 +106,7 @@ public class ActivityTimelineAdapter extends ListAdapter<ActivityEntry, Activity
 				cardParams.startToEnd = binding.imageActorAvatarStart.getId();
 
 				binding.cardTimelineEntry.setCardBackgroundColor(
-						itemView.getContext().getColor(com.google.android.material.R.color.material_dynamic_secondary90)
+						itemView.getContext().getColor(com.google.android.material.R.color.material_dynamic_primary80)
 				);
 			}
 			// Re-apply the modified layout parameters

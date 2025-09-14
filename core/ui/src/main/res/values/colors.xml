@@ -88,7 +88,7 @@
     <color name="color_background_completed">#acff9f</color>
     <color name="color_text_completed">#299d29</color>
     <color name="color_background_accepted">#81d383</color>
-    <color name="color_text_accepted">#419c41</color>
+    <color name="color_text_accepted">#346834</color>
     <color name="color_accept_offer_background">#2ad32a</color>
     <color name="color_background_rejected">#ffb5b8</color>
     <color name="color_reject_offer_background">#e62c4f</color>

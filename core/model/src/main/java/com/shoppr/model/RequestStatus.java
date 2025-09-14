@@ -2,8 +2,10 @@ package com.shoppr.model;
 
 public enum RequestStatus {
 	PENDING,
-	COMPLETED,
-	ACCEPTED,
 	COUNTERED,
-	REJECTED
+	ACCEPTED,
+	ACCEPTED_COUNTERED,
+	COMPLETED,
+	REJECTED,
+	REJECTED_COUNTERED
 }
