@@ -130,7 +130,6 @@ public class RequestDetailViewModel extends ViewModel {
 			if (currentStatus == RequestStatus.COUNTERED) {
 				updateRequest(RequestStatus.ACCEPTED_COUNTERED, "Buyer accepted the counter-offer", null);
 			} else if (currentStatus == RequestStatus.ACCEPTED) {
-				updateRequest(RequestStatus.COMPLETED, "Buyer confirmed and paid", null);
 				_navigateToCheckoutEvent.setValue(new Event<>(true));
 			}
 		}

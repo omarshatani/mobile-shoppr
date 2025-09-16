@@ -24,6 +24,12 @@ public interface FirestoreUserDataSource {
         void onError(@NonNull String message);
     }
 
+    interface GetUserByIdCallbacks {
+        void onSuccess(@Nullable User user);
+
+        void onError(@NonNull String message);
+    }
+
     /**
      * Fetches a user profile from Firestore. If it doesn't exist, it creates one.
      */
@@ -55,4 +61,6 @@ public interface FirestoreUserDataSource {
         boolean shouldAdd,
         @NonNull OperationCallbacks callbacks
     );
+
+    void getUserById(String userId, @NonNull GetUserByIdCallbacks callbacks);
 }

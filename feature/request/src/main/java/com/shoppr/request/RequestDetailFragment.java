@@ -17,16 +17,22 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
+import com.shoppr.navigation.NavigationRoute;
+import com.shoppr.navigation.Navigator;
 import com.shoppr.request.adapter.ActivityTimelineAdapter;
 import com.shoppr.request.databinding.FragmentRequestDetailBinding;
 import com.shoppr.ui.BaseFragment;
 import com.shoppr.ui.utils.FormattingUtils;
 import com.shoppr.ui.utils.ImageLoader;
 
+import javax.inject.Inject;
+
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBinding> {
+	@Inject
+	Navigator navigator;
 
 	private RequestDetailViewModel viewModel;
 	private ActivityTimelineAdapter timelineAdapter;
@@ -88,8 +94,13 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 
 		viewModel.getNavigateToCheckoutEvent().observe(getViewLifecycleOwner(), event -> {
 			if (event.getContentIfNotHandled() != null) {
-				Toast.makeText(getContext(), "Navigating to Checkout...", Toast.LENGTH_SHORT).show();
-				// TODO: Add navigation logic to the checkout feature module
+				RequestDetailState currentState = viewModel.getRequestDetailState().getValue();
+				if (currentState != null) {
+					String requestId = currentState.getRequest().getId();
+					Bundle args = new Bundle();
+					args.putString("requestId", requestId);
+					navigator.navigate(new NavigationRoute.RequestToCheckout(), args);
+				}
 			}
 		});
 	}

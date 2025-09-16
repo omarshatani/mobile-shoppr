@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.shoppr.core.ui.R;
 import com.shoppr.core.ui.databinding.ListItemMapPostPeekBinding;
 import com.shoppr.model.Post;
+import com.shoppr.ui.utils.FormattingUtils;
 import com.shoppr.ui.utils.ImageLoader;
 
 import java.util.Collections;
@@ -108,7 +109,11 @@ public class MapPostsCarouselAdapter extends ListAdapter<Post, MapPostsCarouselA
 				final OnMakeAnOfferClickListener makeAnOfferClickListener
 		) {
 			binding.postTitle.setText(post.getTitle());
-			binding.postPrice.setText(String.format("%s %s", post.getPrice(), post.getCurrency()));
+			if (post.getPrice() != null) {
+				binding.postPrice.setText(String.format("%s", FormattingUtils.formatCurrency(post.getCurrency(), Double.parseDouble(post.getPrice()))));
+			} else {
+				binding.postPrice.setText("No base offer");
+			}
 
 			String imageUrl = (post.getImageUrl() != null && !post.getImageUrl().isEmpty()) ? post.getImageUrl().get(0) : null;
 			ImageLoader.loadImage(binding.postImage, imageUrl);
@@ -131,8 +136,17 @@ public class MapPostsCarouselAdapter extends ListAdapter<Post, MapPostsCarouselA
 						ContextCompat.getColorStateList(itemView.getContext(), R.color.button_offer_made_tint)
 				);
 			} else {
-				// Default state
-				binding.buttonMakeAnOffer.setText(R.string.make_an_offer);
+				if (post.getType() == null) {
+					return;
+				}
+				switch (post.getType()) {
+					case WANTING_TO_BUY_ITEM:
+					case WANTING_TO_OFFER_SERVICE:
+						binding.buttonMakeAnOffer.setText(R.string.make_an_offer);
+						break;
+					default:
+						binding.buttonMakeAnOffer.setText(R.string.propose_an_offer);
+				}
 				binding.buttonMakeAnOffer.setIconResource(R.drawable.ic_price_change);
 				binding.buttonMakeAnOffer.setBackgroundTintList(
 						ContextCompat.getColorStateList(itemView.getContext(), R.color.button_default_tint)

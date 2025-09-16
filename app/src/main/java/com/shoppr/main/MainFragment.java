@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -83,19 +85,29 @@ public class MainFragment extends Fragment implements BottomNavManager {
 	}
 
 	private void showBottomNav() {
-		binding.bottomNavigation.clearAnimation();
+		if (binding == null) return;
+
 		binding.bottomNavigation.animate()
-				.translationY(0)
-				.setDuration(300)
-				.withStartAction(() -> binding.bottomNavigation.setVisibility(View.VISIBLE));
+				.translationY(0f)
+				.setInterpolator(new DecelerateInterpolator(2f))
+				.withStartAction(() -> {
+					if (binding != null) {
+						binding.bottomNavigation.setVisibility(View.VISIBLE);
+					}
+				});
 	}
 
 	private void hideBottomNav() {
-		binding.bottomNavigation.clearAnimation();
+		if (binding == null) return;
+
 		binding.bottomNavigation.animate()
 				.translationY(binding.bottomNavigation.getHeight())
-				.setDuration(300)
-				.withEndAction(() -> binding.bottomNavigation.setVisibility(View.GONE));
+				.setInterpolator(new AccelerateInterpolator(2f))
+				.withEndAction(() -> {
+					if (binding != null) {
+						binding.bottomNavigation.setVisibility(View.GONE);
+					}
+				});
 	}
 
 }

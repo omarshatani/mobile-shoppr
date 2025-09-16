@@ -33,4 +33,7 @@ public interface NavigationRoute {
 	final class ProfileToFavorites implements NavigationRoute {
 	}
 
+	final class RequestToCheckout implements NavigationRoute {
+	}
+
 }

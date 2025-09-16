@@ -158,4 +158,19 @@ public class UserRepositoryImpl implements UserRepository {
 			}
 		});
 	}
+
+	@Override
+	public void getUserById(String userId, @NonNull UserRepository.GetUserByIdCallbacks callbacks) {
+		firestoreUserDataSource.getUserById(userId, new FirestoreUserDataSource.GetUserByIdCallbacks() {
+			@Override
+			public void onSuccess(@Nullable User user) {
+				callbacks.onSuccess(user);
+			}
+
+			@Override
+			public void onError(@NonNull String message) {
+				callbacks.onError(message);
+			}
+		});
+	}
 }

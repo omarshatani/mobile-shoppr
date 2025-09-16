@@ -95,4 +95,18 @@ public class FirestoreUserDataSourceImpl implements FirestoreUserDataSource {
 				.addOnSuccessListener(aVoid -> callbacks.onSuccess())
 				.addOnFailureListener(e -> callbacks.onError("Failed to update favorites: " + e.getMessage()));
 	}
+
+	@Override
+	public void getUserById(String userId, @NonNull FirestoreUserDataSource.GetUserByIdCallbacks callbacks) {
+		firestore.collection("users").document(userId).get()
+				.addOnSuccessListener(documentSnapshot -> {
+					if (documentSnapshot != null && documentSnapshot.exists()) {
+						User user = documentSnapshot.toObject(User.class);
+						callbacks.onSuccess(user);
+					} else {
+						callbacks.onSuccess(null);
+					}
+				})
+				.addOnFailureListener(e -> callbacks.onError("Error fetching user: " + e.getMessage()));
+	}
 }

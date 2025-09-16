@@ -21,6 +21,12 @@ public interface UserRepository {
         void onError(@NonNull String message);
     }
 
+	interface GetUserByIdCallbacks {
+		void onSuccess(@Nullable User user);
+
+		void onError(@NonNull String message);
+	}
+
     void startObservingUserProfile();
 
     void stopObservingUserProfile();
@@ -44,4 +50,6 @@ public interface UserRepository {
         @NonNull String postId,
         @NonNull OperationCallbacks callbacks
     );
+
+	void getUserById(String userId, @NonNull GetUserByIdCallbacks callbacks);
 }
