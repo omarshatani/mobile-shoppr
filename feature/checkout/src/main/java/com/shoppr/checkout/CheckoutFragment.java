@@ -14,6 +14,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
 import com.shoppr.checkout.databinding.FragmentCheckoutBinding;
+import com.shoppr.model.PaymentMethod;
 import com.shoppr.model.Post;
 import com.shoppr.model.Request;
 import com.shoppr.model.User;
@@ -50,7 +51,7 @@ public class CheckoutFragment extends BaseFragment<FragmentCheckoutBinding> {
 	}
 
 	private void setupPaymentMethodListener() {
-		binding.radiogroupPaymentMethod.setOnCheckedChangeListener((group, checkedId) -> {
+		binding.radioGroupPayment.setOnCheckedChangeListener((group, checkedId) -> {
 			if (checkedId == R.id.radio_button_card) {
 				// If card is selected, show the details view
 				binding.layoutCardDetails.getRoot().setVisibility(View.VISIBLE);
@@ -66,9 +67,8 @@ public class CheckoutFragment extends BaseFragment<FragmentCheckoutBinding> {
 
 	private void setupClickListeners() {
 		binding.buttonConfirmPurchase.setOnClickListener(v -> {
-			viewModel.confirmPurchase();
-			// TODO: Handle navigation to a "Purchase Successful" screen or back to the map
-			Toast.makeText(getContext(), "Purchase Confirmed!", Toast.LENGTH_SHORT).show();
+			PaymentMethod selectedMethod = binding.radioButtonCash.isSelected() ? PaymentMethod.CASH : PaymentMethod.CARD;
+			viewModel.confirmPurchase(selectedMethod);
 		});
 		binding.layoutCardDetails.buttonChangePayment.setOnClickListener(v -> {
 			// TODO: Navigate to the "Add/Change Card" screen

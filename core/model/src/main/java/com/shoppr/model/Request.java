@@ -37,7 +37,6 @@ public class Request implements Parcelable {
 		this.activityTimeline = builder.activityTimeline != null ? new ArrayList<>(builder.activityTimeline) : new ArrayList<>();
 	}
 
-
 	protected Request(Parcel in) {
 		id = in.readString();
 		postId = in.readString();

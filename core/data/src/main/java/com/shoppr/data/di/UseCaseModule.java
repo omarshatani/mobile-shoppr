@@ -1,5 +1,6 @@
 package com.shoppr.data.di;
 
+import com.shoppr.data.usecase.CreateTransactionUseCaseImpl;
 import com.shoppr.data.usecase.DeleteOfferUseCaseImpl;
 import com.shoppr.data.usecase.GetAllRequestsUseCaseImpl;
 import com.shoppr.data.usecase.GetCurrentDeviceLocationUseCaseImpl;
@@ -18,6 +19,7 @@ import com.shoppr.data.usecase.SavePostUseCaseImpl;
 import com.shoppr.data.usecase.ToggleFavoriteUseCaseImpl;
 import com.shoppr.data.usecase.UpdateRequestUseCaseImpl;
 import com.shoppr.data.usecase.UpdateUserDefaultLocationUseCaseImpl;
+import com.shoppr.domain.usecase.CreateTransactionUseCase;
 import com.shoppr.domain.usecase.DeleteOfferUseCase;
 import com.shoppr.domain.usecase.GetAllRequestsUseCase;
 import com.shoppr.domain.usecase.GetCurrentDeviceLocationUseCase;
@@ -120,4 +122,7 @@ public abstract class UseCaseModule {
 
 	@Binds
 	public abstract GetUserByIdUseCase bindGetUserByIdUseCase(GetUserByIdUseCaseImpl impl);
+
+	@Binds
+	public abstract CreateTransactionUseCase bindCreateTransactionUseCase(CreateTransactionUseCaseImpl impl);
 }

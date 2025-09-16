@@ -8,15 +8,19 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 
+import com.shoppr.domain.usecase.CreateTransactionUseCase;
 import com.shoppr.domain.usecase.GetPostByIdUseCase;
 import com.shoppr.domain.usecase.GetRequestByIdUseCase;
 import com.shoppr.domain.usecase.GetUserByIdUseCase;
 import com.shoppr.domain.usecase.UpdateRequestUseCase;
 import com.shoppr.model.ActivityEntry;
 import com.shoppr.model.Event;
+import com.shoppr.model.PaymentMethod;
 import com.shoppr.model.Post;
 import com.shoppr.model.Request;
 import com.shoppr.model.RequestStatus;
+import com.shoppr.model.Transaction;
+import com.shoppr.model.TransactionStatus;
 import com.shoppr.model.User;
 import com.shoppr.ui.utils.FormattingUtils;
 
@@ -35,30 +39,36 @@ public class CheckoutViewModel extends ViewModel {
 	private final GetPostByIdUseCase getPostByIdUseCase;
 	private final GetUserByIdUseCase getUserByIdUseCase;
 	private final UpdateRequestUseCase updateRequestUseCase;
+	private final CreateTransactionUseCase createTransactionUseCase;
 	private final SavedStateHandle savedStateHandle;
 
 	private final MediatorLiveData<CheckoutState> _checkoutState = new MediatorLiveData<>();
-
 	public LiveData<CheckoutState> getCheckoutState() {
 		return _checkoutState;
 	}
 
 	private final MutableLiveData<Event<Boolean>> _purchaseCompleteEvent = new MutableLiveData<>();
-
 	public LiveData<Event<Boolean>> getPurchaseCompleteEvent() {
 		return _purchaseCompleteEvent;
+	}
+
+	private final MutableLiveData<Event<String>> _errorEvent = new MutableLiveData<>();
+
+	public LiveData<Event<String>> getErrorEvent() {
+		return _errorEvent;
 	}
 
 	@Inject
 	public CheckoutViewModel(
 			GetRequestByIdUseCase getRequestByIdUseCase,
 			GetPostByIdUseCase getPostByIdUseCase,
-			GetUserByIdUseCase getUserByIdUseCase, UpdateRequestUseCase updateRequestUseCase,
+			GetUserByIdUseCase getUserByIdUseCase, UpdateRequestUseCase updateRequestUseCase, CreateTransactionUseCase createTransactionUseCase,
 			SavedStateHandle savedStateHandle) {
 		this.getRequestByIdUseCase = getRequestByIdUseCase;
 		this.getPostByIdUseCase = getPostByIdUseCase;
 		this.getUserByIdUseCase = getUserByIdUseCase;
 		this.updateRequestUseCase = updateRequestUseCase;
+		this.createTransactionUseCase = createTransactionUseCase;
 		this.savedStateHandle = savedStateHandle;
 
 		loadCheckoutDetails();
@@ -108,48 +118,68 @@ public class CheckoutViewModel extends ViewModel {
 		});
 	}
 
-	public void confirmPurchase() {
+	public void confirmPurchase(PaymentMethod paymentMethod) {
 		CheckoutState currentState = _checkoutState.getValue();
 		if (currentState == null) {
-			// Handle error
+			_errorEvent.setValue(new Event<>("Cannot complete purchase, data is missing."));
 			return;
 		}
 
-		// --- Step 1: Process Payment (Placeholder) ---
-		// TODO: Integrate with a real payment gateway like Stripe or Google Pay.
-		// For now, we'll assume the payment is always successful.
-		boolean paymentSuccessful = true;
+		Transaction transaction = new Transaction.Builder()
+				.requestId(currentState.getRequest().getId())
+				.postId(currentState.getPost().getId())
+				.buyerId(currentState.getRequest().getBuyerId())
+				.sellerId(currentState.getSeller().getId())
+				.amount(currentState.getRequest().getOfferAmount())
+				.currency(currentState.getRequest().getOfferCurrency())
+				.serviceFee(currentState.getServiceFee())
+				.totalAmount(currentState.getTotalAmount())
+				.paymentMethod(paymentMethod)
+				.status(TransactionStatus.PROCESSING)
+				.build();
 
-		if (paymentSuccessful) {
-			// --- Step 2: Update the Request Status to COMPLETED ---
-			Request requestToUpdate = currentState.getRequest();
+		createTransactionUseCase.execute(transaction, new CreateTransactionUseCase.CreateTransactionCallbacks() {
+			@Override
+			public void onSuccess(@NonNull Transaction createdTransaction) {
+				updateRequestToCompleted(currentState, createdTransaction);
+			}
 
-			String description = String.format("Paid %s",
-					FormattingUtils.formatCurrency(requestToUpdate.getOfferCurrency(), currentState.getTotalAmount()));
+			@Override
+			public void onError(@NonNull String message) {
+				_errorEvent.setValue(new Event<>(message));
+			}
+		});
+	}
 
-			ActivityEntry paymentEntry = new ActivityEntry(
-					requestToUpdate.getBuyerId(),
-					"You", // We can improve this later by getting the buyer's name
-					description);
-			paymentEntry.setCreatedAt(new Date());
+	private void updateRequestToCompleted(CheckoutState state, Transaction transaction) {
+		Request requestToUpdate = state.getRequest();
 
-			List<ActivityEntry> newTimeline = new ArrayList<>(requestToUpdate.getActivityTimeline());
-			newTimeline.add(paymentEntry);
+		String description = String.format("Paid %s via %s",
+				FormattingUtils.formatCurrency(transaction.getCurrency(), transaction.getTotalAmount()),
+				transaction.getPaymentMethod().toString().toLowerCase());
 
-			requestToUpdate.setStatus(RequestStatus.COMPLETED);
-			requestToUpdate.setActivityTimeline(newTimeline);
+		ActivityEntry paymentEntry = new ActivityEntry(
+				requestToUpdate.getBuyerId(),
+				"You",
+				description);
+		paymentEntry.setCreatedAt(new Date());
 
-			updateRequestUseCase.execute(requestToUpdate, new UpdateRequestUseCase.UpdateRequestCallbacks() {
-				@Override
-				public void onSuccess() {
-					_purchaseCompleteEvent.setValue(new Event<>(true));
-				}
+		List<ActivityEntry> newTimeline = new ArrayList<>(requestToUpdate.getActivityTimeline());
+		newTimeline.add(paymentEntry);
 
-				@Override
-				public void onError(@NonNull String message) {
-					// Handle error
-				}
-			});
-		}
+		requestToUpdate.setStatus(RequestStatus.COMPLETED);
+		requestToUpdate.setActivityTimeline(newTimeline);
+
+		updateRequestUseCase.execute(requestToUpdate, new UpdateRequestUseCase.UpdateRequestCallbacks() {
+			@Override
+			public void onSuccess() {
+				_purchaseCompleteEvent.setValue(new Event<>(true));
+			}
+
+			@Override
+			public void onError(@NonNull String message) {
+				_errorEvent.setValue(new Event<>(message));
+			}
+		});
 	}
 }
