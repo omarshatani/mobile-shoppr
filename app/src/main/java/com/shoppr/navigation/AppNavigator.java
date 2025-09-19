@@ -30,6 +30,7 @@ public class AppNavigator implements Navigator {
         ROUTES.put(NavigationRoute.CreatePostToMap.class, R.id.action_global_create_post_to_map);
         ROUTES.put(NavigationRoute.ProfileToLogin.class, R.id.action_global_navigate_to_login);
         ROUTES.put(NavigationRoute.RequestToCheckout.class, R.id.action_global_request_to_checkout);
+        ROUTES.put(NavigationRoute.Request.class, R.id.action_global_navigate_to_request);
     }
 
     @Inject

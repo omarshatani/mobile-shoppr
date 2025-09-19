@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.shoppr.request.adapter.RequestsAdapter;
 import com.shoppr.request.databinding.FragmentRequestBinding;
 import com.shoppr.ui.BaseFragment;
+import com.shoppr.ui.FeedbackDialogFragment;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -37,17 +38,7 @@ public class RequestFragment extends BaseFragment<FragmentRequestBinding> implem
 
 		setupRecyclerView();
 		observeViewModel();
-	}
-
-	@Override
-	public InsetType getInsetType() {
-		return InsetType.TOP_AND_BOTTOM;
-	}
-
-	@Override
-	public void onRequestClicked(RequestUiModel requestUiModel) {
-		String requestId = requestUiModel.getRequest().getId();
-		NavHostFragment.findNavController(this).navigate(RequestFragmentDirections.actionRequestFragmentToRequestDetailFragment(requestId));
+		setupFragmentResultListener();
 	}
 
 	private void setupRecyclerView() {
@@ -74,4 +65,32 @@ public class RequestFragment extends BaseFragment<FragmentRequestBinding> implem
 			}
 		});
 	}
+
+	private void setupFragmentResultListener() {
+		// Listen for a result from the CheckoutFragment.
+		getParentFragmentManager().setFragmentResultListener("checkout_complete_key", getViewLifecycleOwner(), (requestKey, bundle) -> {
+			// When the result is received, show the feedback dialog.
+			String transactionId = bundle.getString("transactionId");
+			String raterId = bundle.getString("raterId");
+			String rateeId = bundle.getString("rateeId");
+			String sellerName = bundle.getString("sellerName");
+
+			if (transactionId != null && raterId != null && rateeId != null) {
+				FeedbackDialogFragment.newInstance(transactionId, raterId, rateeId, sellerName)
+						.show(getChildFragmentManager(), FeedbackDialogFragment.TAG);
+			}
+		});
+	}
+
+	@Override
+	public InsetType getInsetType() {
+		return InsetType.TOP_AND_BOTTOM;
+	}
+
+	@Override
+	public void onRequestClicked(RequestUiModel requestUiModel) {
+		String requestId = requestUiModel.getRequest().getId();
+		NavHostFragment.findNavController(this).navigate(RequestFragmentDirections.actionRequestFragmentToRequestDetailFragment(requestId));
+	}
+
 }

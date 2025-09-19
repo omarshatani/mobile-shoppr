@@ -58,6 +58,10 @@
         app:popUpToInclusive="true" />
 
     <action
+        android:id="@+id/action_global_navigate_to_request"
+        app:destination="@id/request_nav_graph" />
+
+    <action
         android:id="@+id/action_global_request_to_checkout"
         app:destination="@id/checkout_nav_graph"
         app:popUpTo="@id/request_nav_graph"

@@ -1,17 +1,23 @@
 package com.shoppr.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class User {
+public class User implements Parcelable {
 	private String id;
 	private String name;
 	private String email;
 	private String phoneNumber;
 	private String address;
 	private List<String> favoritePosts;
+	private double averageRating = 0.0;
+	private int ratingCount = 0;
 
 	@Nullable
 	private Double latitude;
@@ -33,7 +39,43 @@ public class User {
 		this.longitude = builder.longitude;
 		this.locationAddress = builder.locationAddress;
 		this.favoritePosts = builder.favoritePosts != null ? new ArrayList<>(builder.favoritePosts) : new ArrayList<>();
+		this.averageRating = builder.averageRating;
+		this.ratingCount = builder.ratingCount;
 	}
+
+	protected User(Parcel in) {
+		id = in.readString();
+		name = in.readString();
+		email = in.readString();
+		phoneNumber = in.readString();
+		address = in.readString();
+		favoritePosts = in.createStringArrayList();
+		averageRating = in.readDouble();
+		ratingCount = in.readInt();
+		if (in.readByte() == 0) {
+			latitude = null;
+		} else {
+			latitude = in.readDouble();
+		}
+		if (in.readByte() == 0) {
+			longitude = null;
+		} else {
+			longitude = in.readDouble();
+		}
+		locationAddress = in.readString();
+	}
+
+	public static final Creator<User> CREATOR = new Creator<User>() {
+		@Override
+		public User createFromParcel(Parcel in) {
+			return new User(in);
+		}
+
+		@Override
+		public User[] newArray(int size) {
+			return new User[size];
+		}
+	};
 
 	public String getId() {
 		return id;
@@ -110,6 +152,52 @@ public class User {
 		this.favoritePosts = favoritePosts;
 	}
 
+	public double getAverageRating() {
+		return averageRating;
+	}
+
+	public void setAverageRating(double averageRating) {
+		this.averageRating = averageRating;
+	}
+
+	public int getRatingCount() {
+		return ratingCount;
+	}
+
+	public void setRatingCount(int ratingCount) {
+		this.ratingCount = ratingCount;
+	}
+
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(@NonNull Parcel dest, int flags) {
+		dest.writeString(id);
+		dest.writeString(name);
+		dest.writeString(email);
+		dest.writeString(phoneNumber);
+		dest.writeString(address);
+		dest.writeStringList(favoritePosts);
+		dest.writeDouble(averageRating);
+		dest.writeInt(ratingCount);
+		if (latitude == null) {
+			dest.writeByte((byte) 0);
+		} else {
+			dest.writeByte((byte) 1);
+			dest.writeDouble(latitude);
+		}
+		if (longitude == null) {
+			dest.writeByte((byte) 0);
+		} else {
+			dest.writeByte((byte) 1);
+			dest.writeDouble(longitude);
+		}
+		dest.writeString(locationAddress);
+	}
+
 	public static class Builder {
 		private String id;
 		private String name;
@@ -117,6 +205,8 @@ public class User {
 		private String phoneNumber;
 		private String address;
 		private List<String> favoritePosts = new ArrayList<>();
+		private double averageRating = 0.0;
+		private int ratingCount = 0;
 		@Nullable
 		private Double latitude;
 		@Nullable
@@ -151,6 +241,16 @@ public class User {
 
 		public Builder favoritePosts(List<String> favoritePosts) {
 			this.favoritePosts = favoritePosts;
+			return this;
+		}
+
+		public Builder averageRating(double averageRating) {
+			this.averageRating = averageRating;
+			return this;
+		}
+
+		public Builder ratingCount(int ratingCount) {
+			this.ratingCount = ratingCount;
 			return this;
 		}
 

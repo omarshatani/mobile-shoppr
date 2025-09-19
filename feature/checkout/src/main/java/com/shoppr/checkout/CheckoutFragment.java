@@ -18,9 +18,13 @@ import com.shoppr.model.PaymentMethod;
 import com.shoppr.model.Post;
 import com.shoppr.model.Request;
 import com.shoppr.model.User;
+import com.shoppr.navigation.NavigationRoute;
+import com.shoppr.navigation.Navigator;
 import com.shoppr.ui.BaseFragment;
 import com.shoppr.ui.utils.FormattingUtils;
 import com.shoppr.ui.utils.ImageLoader;
+
+import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -28,6 +32,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class CheckoutFragment extends BaseFragment<FragmentCheckoutBinding> {
 
 	private CheckoutViewModel viewModel;
+	@Inject
+	Navigator navigator;
 
 	@Override
 	protected FragmentCheckoutBinding inflateBinding(@NonNull LayoutInflater inflater, @Nullable ViewGroup container) {
@@ -67,7 +73,12 @@ public class CheckoutFragment extends BaseFragment<FragmentCheckoutBinding> {
 
 	private void setupClickListeners() {
 		binding.buttonConfirmPurchase.setOnClickListener(v -> {
-			PaymentMethod selectedMethod = binding.radioButtonCash.isSelected() ? PaymentMethod.CASH : PaymentMethod.CARD;
+			PaymentMethod selectedMethod;
+			if (binding.radioGroupPayment.getCheckedRadioButtonId() == R.id.radio_button_cash) {
+				selectedMethod = PaymentMethod.CASH;
+			} else {
+				selectedMethod = PaymentMethod.CARD;
+			}
 			viewModel.confirmPurchase(selectedMethod);
 		});
 		binding.layoutCardDetails.buttonChangePayment.setOnClickListener(v -> {
@@ -81,7 +92,6 @@ public class CheckoutFragment extends BaseFragment<FragmentCheckoutBinding> {
 			if (state != null) {
 				populateUI(state);
 			} else {
-				// Handle error state, e.g., show a message and pop back
 				Toast.makeText(getContext(), "Could not load checkout details.", Toast.LENGTH_SHORT).show();
 				NavHostFragment.findNavController(this).popBackStack();
 			}
@@ -90,9 +100,19 @@ public class CheckoutFragment extends BaseFragment<FragmentCheckoutBinding> {
 		viewModel.getPurchaseCompleteEvent().observe(getViewLifecycleOwner(), event -> {
 			if (event.getContentIfNotHandled() != null) {
 				Toast.makeText(getContext(), "Purchase Confirmed!", Toast.LENGTH_LONG).show();
-				// TODO: Navigate to a "My Purchases" screen or back to the map.
-				// For now, just navigate back.
-				NavHostFragment.findNavController(this).popBackStack();
+
+				CheckoutState currentState = viewModel.getCheckoutState().getValue();
+				if (currentState != null) {
+					Bundle result = new Bundle();
+					result.putString("transactionId", currentState.getRequest().getId());
+					result.putString("raterId", currentState.getRequest().getBuyerId());
+					result.putString("rateeId", currentState.getSeller().getId());
+					result.putString("sellerName", currentState.getSeller().getName());
+
+					getParentFragmentManager().setFragmentResult("checkout_complete_key", result);
+				}
+
+				navigator.navigate(new NavigationRoute.Request());
 			}
 		});
 	}
