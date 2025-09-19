@@ -120,7 +120,6 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 			);
 		}
 
-
 		// Lister Info
 		String listerName = state.isCurrentUserSeller ? "Your Listing" : String.format("@%s", state.getPost().getLister().getName());
 		binding.textListerUsername.setText(String.format("%s", listerName));
@@ -140,6 +139,10 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 		binding.textOfferPrice.setText(
 				FormattingUtils.formatCurrency(state.getRequest().getOfferCurrency(), state.getRequest().getOfferAmount())
 		);
+		if (state.getRequest().getMessage() != null && !state.getRequest().getMessage().isEmpty()) {
+			binding.textOfferNote.setText(state.getRequest().getMessage());
+			binding.textOfferNote.setVisibility(View.VISIBLE);
+		}
 
 		// Timeline
 		timelineAdapter.setActorIds(

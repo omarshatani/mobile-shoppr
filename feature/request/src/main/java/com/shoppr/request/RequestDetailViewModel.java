@@ -121,7 +121,7 @@ public class RequestDetailViewModel extends ViewModel {
 		RequestStatus currentStatus = currentState.getRequest().getStatus();
 
 		if (currentState.isCurrentUserSeller) {
-			if (currentStatus == RequestStatus.PENDING) {
+			if (currentStatus == RequestStatus.PENDING || currentStatus == RequestStatus.COUNTERED) {
 				updateRequest(RequestStatus.ACCEPTED, "Seller accepted the offer", null);
 			} else if (currentStatus == RequestStatus.ACCEPTED_COUNTERED) {
 				updateRequest(RequestStatus.ACCEPTED, "Seller confirmed the deal", null);

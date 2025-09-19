@@ -86,10 +86,8 @@ public class MapPostsCarouselAdapter extends ListAdapter<Post, MapPostsCarouselA
 	@Override
 	public void onBindViewHolder(@NonNull PostViewHolder holder, int position) {
 		Post post = getItem(position);
-		if (post != null) {
-			boolean isFavorite = favoritePostIds.contains(post.getId());
-			holder.bind(post, isFavorite, currentUserId, postClickListener, favoriteClickListener, makeAnOfferClickListener);
-		}
+		boolean isFavorite = favoritePostIds.contains(post.getId());
+		holder.bind(post, isFavorite, currentUserId, postClickListener, favoriteClickListener, makeAnOfferClickListener);
 	}
 
 	static class PostViewHolder extends RecyclerView.ViewHolder {
@@ -109,7 +107,7 @@ public class MapPostsCarouselAdapter extends ListAdapter<Post, MapPostsCarouselA
 				final OnMakeAnOfferClickListener makeAnOfferClickListener
 		) {
 			binding.postTitle.setText(post.getTitle());
-			if (post.getPrice() != null) {
+			if (post.getPrice() != null && !post.getPrice().isEmpty()) {
 				binding.postPrice.setText(String.format("%s", FormattingUtils.formatCurrency(post.getCurrency(), Double.parseDouble(post.getPrice()))));
 			} else {
 				binding.postPrice.setText("No base offer");
@@ -140,8 +138,8 @@ public class MapPostsCarouselAdapter extends ListAdapter<Post, MapPostsCarouselA
 					return;
 				}
 				switch (post.getType()) {
-					case WANTING_TO_BUY_ITEM:
 					case WANTING_TO_OFFER_SERVICE:
+					case SELLING_ITEM:
 						binding.buttonMakeAnOffer.setText(R.string.make_an_offer);
 						break;
 					default:

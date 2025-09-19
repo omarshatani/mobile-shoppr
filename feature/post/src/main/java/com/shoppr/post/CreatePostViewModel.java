@@ -12,6 +12,7 @@ import com.shoppr.domain.usecase.GetCurrentUserUseCase;
 import com.shoppr.domain.usecase.GetLLMSuggestionsUseCase;
 import com.shoppr.domain.usecase.SavePostUseCase;
 import com.shoppr.model.Event;
+import com.shoppr.model.ListingState;
 import com.shoppr.model.LocationData;
 import com.shoppr.model.Post;
 import com.shoppr.model.SuggestedPostDetails;
@@ -109,6 +110,11 @@ public class CreatePostViewModel extends ViewModel {
 				.currency(finalCurrency)
 				.categories(suggestions.getCategories())
 				.lister(currentUser)
+				.type(suggestions.getListingType())
+				.state(ListingState.NEW)
+				.latitude(currentUser.getLatitude())
+				.longitude(currentUser.getLongitude())
+				.postAddress(currentUser.getAddress())
 				.build();
 
 		savePostUseCase.execute(newPost, images, new SavePostUseCase.SavePostCallback() {
