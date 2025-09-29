@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 
+import com.shoppr.model.ListingState;
 import com.shoppr.model.Post;
 
 import java.util.List;
@@ -51,4 +52,10 @@ public interface FirestorePostDataSource {
      * Creates a new post document in Firestore.
      */
     void createPost(@NonNull Post post, @NonNull PostOperationCallbacks callbacks);
+
+    /**
+     * Updates the state of a post in Firestore.
+     */
+    void updatePostState(@NonNull String postId, @NonNull ListingState newListingState, @NonNull GeneralCallbacks callbacks);
+
 }

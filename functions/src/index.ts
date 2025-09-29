@@ -15,8 +15,8 @@ import {
 import {defineString} from "firebase-functions/params";
 
 const geminiApiKeyParam = defineString("SECRETS_GEMINI_API_KEY");
-const META_PROMPT_MODEL_NAME = "gemini-1.5-flash-latest";
-const SUGGESTION_MODEL_NAME = "gemini-1.5-flash-latest";
+const META_PROMPT_MODEL_NAME = "gemini-2.5-pro";
+const SUGGESTION_MODEL_NAME = "gemini-2.5-pro";
 
 interface ClientRequestData {
   text?: string;

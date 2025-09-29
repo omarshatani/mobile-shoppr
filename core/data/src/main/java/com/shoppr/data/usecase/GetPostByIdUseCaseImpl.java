@@ -19,7 +19,7 @@ public class GetPostByIdUseCaseImpl implements GetPostByIdUseCase {
 
     @Override
 		public void execute(@NonNull String postId, @NonNull GetPostByIdCallbacks callbacks) {
-			postRepository.getPostById(postId, new PostRepository.PostCallbacks() {
+			postRepository.getPostById(postId, new PostRepository.GetPostByIdCallbacks() {
             @Override
             public void onSuccess(@NonNull Post post) {
 							callbacks.onSuccess(post);

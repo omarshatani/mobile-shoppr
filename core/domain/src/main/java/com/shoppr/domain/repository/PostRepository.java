@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 
+import com.shoppr.model.ListingState;
 import com.shoppr.model.Post;
 
 import java.util.List;
@@ -18,13 +19,19 @@ public interface PostRepository {
 
 	LiveData<List<Post>> getPostsByIds(@NonNull List<String> postIds);
 
-	interface PostCallbacks {
+	interface GetPostByIdCallbacks {
 		void onSuccess(@NonNull Post post);
 		void onError(@NonNull String message);
 		void onNotFound();
 	}
 
-	void getPostById(@NonNull String postId, @NonNull PostCallbacks callbacks);
+	interface UpdatePostStateCallbacks {
+		void onSuccess();
+
+		void onError(@NonNull String message);
+	}
+
+	void getPostById(@NonNull String postId, @NonNull GetPostByIdCallbacks callbacks);
 
 	interface PostCreationCallbacks {
 		void onSuccess(@NonNull Post createdPost);
@@ -33,4 +40,6 @@ public interface PostRepository {
 	}
 
 	void createPost(Post post, List<Uri> imageUris, PostCreationCallbacks callback);
+
+	void updatePostState(@NonNull String postId, @NonNull ListingState newListingState, @NonNull UpdatePostStateCallbacks callbacks);
 }

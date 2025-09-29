@@ -12,9 +12,11 @@ import com.shoppr.domain.usecase.CreateTransactionUseCase;
 import com.shoppr.domain.usecase.GetPostByIdUseCase;
 import com.shoppr.domain.usecase.GetRequestByIdUseCase;
 import com.shoppr.domain.usecase.GetUserByIdUseCase;
+import com.shoppr.domain.usecase.UpdatePostStateUseCase;
 import com.shoppr.domain.usecase.UpdateRequestUseCase;
 import com.shoppr.model.ActivityEntry;
 import com.shoppr.model.Event;
+import com.shoppr.model.ListingState;
 import com.shoppr.model.PaymentMethod;
 import com.shoppr.model.Post;
 import com.shoppr.model.Request;
@@ -40,6 +42,7 @@ public class CheckoutViewModel extends ViewModel {
 	private final GetUserByIdUseCase getUserByIdUseCase;
 	private final UpdateRequestUseCase updateRequestUseCase;
 	private final CreateTransactionUseCase createTransactionUseCase;
+	private final UpdatePostStateUseCase updatePostStateUseCase;
 	private final SavedStateHandle savedStateHandle;
 
 	private final MediatorLiveData<CheckoutState> _checkoutState = new MediatorLiveData<>();
@@ -62,13 +65,14 @@ public class CheckoutViewModel extends ViewModel {
 	public CheckoutViewModel(
 			GetRequestByIdUseCase getRequestByIdUseCase,
 			GetPostByIdUseCase getPostByIdUseCase,
-			GetUserByIdUseCase getUserByIdUseCase, UpdateRequestUseCase updateRequestUseCase, CreateTransactionUseCase createTransactionUseCase,
+			GetUserByIdUseCase getUserByIdUseCase, UpdateRequestUseCase updateRequestUseCase, CreateTransactionUseCase createTransactionUseCase, UpdatePostStateUseCase updatePostStateUseCase,
 			SavedStateHandle savedStateHandle) {
 		this.getRequestByIdUseCase = getRequestByIdUseCase;
 		this.getPostByIdUseCase = getPostByIdUseCase;
 		this.getUserByIdUseCase = getUserByIdUseCase;
 		this.updateRequestUseCase = updateRequestUseCase;
 		this.createTransactionUseCase = createTransactionUseCase;
+		this.updatePostStateUseCase = updatePostStateUseCase;
 		this.savedStateHandle = savedStateHandle;
 
 		loadCheckoutDetails();
@@ -173,7 +177,17 @@ public class CheckoutViewModel extends ViewModel {
 		updateRequestUseCase.execute(requestToUpdate, new UpdateRequestUseCase.UpdateRequestCallbacks() {
 			@Override
 			public void onSuccess() {
-				_purchaseCompleteEvent.setValue(new Event<>(true));
+				updatePostStateUseCase.execute(state.getPost().getId(), ListingState.COMPLETED, new UpdatePostStateUseCase.UpdatePostStateCallbacks() {
+					@Override
+					public void onSuccess() {
+						_purchaseCompleteEvent.setValue(new Event<>(true));
+					}
+
+					@Override
+					public void onError(@NonNull String message) {
+						_errorEvent.setValue(new Event<>(message));
+					}
+				});
 			}
 
 			@Override

@@ -14,6 +14,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.shoppr.core.ui.R;
 import com.shoppr.map.databinding.BottomSheetMakeOfferBinding;
 import com.shoppr.model.Post;
+import com.shoppr.ui.utils.FormattingUtils;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -105,7 +106,7 @@ public class MakeOfferBottomSheet extends BottomSheetDialogFragment {
 
 	private void setupUI() {
 		binding.textPostTitle.setText(post.getTitle());
-		String basePriceText = String.format("%s %s", post.getPrice(), post.getCurrency());
+		String basePriceText = String.format("%s", FormattingUtils.formatCurrency(post.getCurrency(), Double.parseDouble(post.getPrice())));
 		binding.textBasePriceValue.setText(basePriceText);
 
 		binding.chipGroupCategory.removeAllViews();

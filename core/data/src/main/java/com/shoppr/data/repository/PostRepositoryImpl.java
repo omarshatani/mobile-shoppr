@@ -9,6 +9,7 @@ import androidx.lifecycle.LiveData;
 import com.shoppr.domain.datasource.FirebaseStorageDataSource;
 import com.shoppr.domain.datasource.FirestorePostDataSource;
 import com.shoppr.domain.repository.PostRepository;
+import com.shoppr.model.ListingState;
 import com.shoppr.model.Post;
 
 import java.util.List;
@@ -47,7 +48,7 @@ public class PostRepositoryImpl implements PostRepository {
 	}
 
 	@Override
-	public void getPostById(@NonNull String postId, @NonNull PostCallbacks callbacks) {
+	public void getPostById(@NonNull String postId, @NonNull GetPostByIdCallbacks callbacks) {
 		firestorePostDataSource.getPostById(postId, new FirestorePostDataSource.PostOperationCallbacks() {
 			@Override
 			public void onSuccess(@NonNull Post post) {
@@ -93,6 +94,21 @@ public class PostRepositoryImpl implements PostRepository {
 			@Override
 			public void onError(@NonNull String message) {
 				callback.onError(message);
+			}
+		});
+	}
+
+	@Override
+	public void updatePostState(@NonNull String postId, @NonNull ListingState newListingState, @NonNull UpdatePostStateCallbacks callbacks) {
+		firestorePostDataSource.updatePostState(postId, newListingState, new FirestorePostDataSource.GeneralCallbacks() {
+			@Override
+			public void onSuccess() {
+				callbacks.onSuccess();
+			}
+
+			@Override
+			public void onError(@NonNull String message) {
+				callbacks.onError(message);
 			}
 		});
 	}

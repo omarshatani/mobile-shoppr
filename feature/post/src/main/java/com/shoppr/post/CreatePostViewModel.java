@@ -111,7 +111,7 @@ public class CreatePostViewModel extends ViewModel {
 				.categories(suggestions.getCategories())
 				.lister(currentUser)
 				.type(suggestions.getListingType())
-				.state(ListingState.NEW)
+				.state(ListingState.ACTIVE)
 				.latitude(currentUser.getLatitude())
 				.longitude(currentUser.getLongitude())
 				.postAddress(currentUser.getAddress())

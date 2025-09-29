@@ -18,6 +18,7 @@ import com.shoppr.data.usecase.MakeOfferUseCaseImpl;
 import com.shoppr.data.usecase.SavePostUseCaseImpl;
 import com.shoppr.data.usecase.SubmitFeedbackUseCaseImpl;
 import com.shoppr.data.usecase.ToggleFavoriteUseCaseImpl;
+import com.shoppr.data.usecase.UpdatePostStateUseCaseImpl;
 import com.shoppr.data.usecase.UpdateRequestUseCaseImpl;
 import com.shoppr.data.usecase.UpdateUserDefaultLocationUseCaseImpl;
 import com.shoppr.domain.usecase.CreateTransactionUseCase;
@@ -38,6 +39,7 @@ import com.shoppr.domain.usecase.MakeOfferUseCase;
 import com.shoppr.domain.usecase.SavePostUseCase;
 import com.shoppr.domain.usecase.SubmitFeedbackUseCase;
 import com.shoppr.domain.usecase.ToggleFavoriteUseCase;
+import com.shoppr.domain.usecase.UpdatePostStateUseCase;
 import com.shoppr.domain.usecase.UpdateRequestUseCase;
 import com.shoppr.domain.usecase.UpdateUserDefaultLocationUseCase;
 
@@ -130,4 +132,7 @@ public abstract class UseCaseModule {
 
 	@Binds
 	public abstract SubmitFeedbackUseCase bindSubmitFeedbackUseCase(SubmitFeedbackUseCaseImpl impl);
+
+	@Binds
+	public abstract UpdatePostStateUseCase bindUpdatePostStateUseCase(UpdatePostStateUseCaseImpl impl);
 }

@@ -9,6 +9,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.shoppr.domain.datasource.FirestorePostDataSource;
+import com.shoppr.model.ListingState;
 import com.shoppr.model.Post;
 
 import java.util.ArrayList;
@@ -32,6 +33,8 @@ public class FirestorePostDataSourceImpl implements FirestorePostDataSource {
 	public LiveData<List<Post>> getFeedPosts(@Nullable String currentUserIdToExclude) {
 		MutableLiveData<List<Post>> postsLiveData = new MutableLiveData<>();
 		Query query = firestore.collection(POSTS_COLLECTION);
+
+		query = query.whereEqualTo("state", ListingState.ACTIVE);
 
 		if (currentUserIdToExclude != null && !currentUserIdToExclude.isEmpty()) {
 			query = query.whereNotEqualTo("lister.id", currentUserIdToExclude);
@@ -125,5 +128,13 @@ public class FirestorePostDataSourceImpl implements FirestorePostDataSource {
 							.addOnFailureListener(e -> callbacks.onError("Failed to update post with its ID: " + e.getMessage()));
 				})
 				.addOnFailureListener(e -> callbacks.onError("Failed to create post: " + e.getMessage()));
+	}
+
+	@Override
+	public void updatePostState(@NonNull String postId, @NonNull ListingState newListingState, @NonNull GeneralCallbacks callbacks) {
+		firestore.collection(POSTS_COLLECTION).document(postId)
+				.update("state", newListingState)
+				.addOnSuccessListener(aVoid -> callbacks.onSuccess())
+				.addOnFailureListener(e -> callbacks.onError("Failed to update post state: " + e.getMessage()));
 	}
 }
