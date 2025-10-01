@@ -38,21 +38,25 @@ public class RequestDetailViewModel extends ViewModel {
 	private final SavedStateHandle savedStateHandle;
 
 	private final MediatorLiveData<RequestDetailState> _requestDetailState = new MediatorLiveData<>();
+
 	public LiveData<RequestDetailState> getRequestDetailState() {
 		return _requestDetailState;
 	}
 
 	private final MutableLiveData<Event<String>> _actionSuccessEvent = new MutableLiveData<>();
+
 	public LiveData<Event<String>> getActionSuccessEvent() {
 		return _actionSuccessEvent;
 	}
 
 	private final MutableLiveData<Event<String>> _errorEvent = new MutableLiveData<>();
+
 	public LiveData<Event<String>> getErrorEvent() {
 		return _errorEvent;
 	}
 
 	private final MutableLiveData<Event<Boolean>> _navigateToCheckoutEvent = new MutableLiveData<>();
+
 	public LiveData<Event<Boolean>> getNavigateToCheckoutEvent() {
 		return _navigateToCheckoutEvent;
 	}
@@ -114,17 +118,24 @@ public class RequestDetailViewModel extends ViewModel {
 		RequestDetailState currentState = _requestDetailState.getValue();
 		if (currentState == null) return;
 
+		RequestStatus currentStatus = currentState.getRequest().getStatus();
+
 		if (currentState.isCurrentUserSeller) {
-			// Seller accepts, now it's the buyer's turn to confirm.
-			updateRequest(RequestStatus.ACCEPTED, "Accepted the offer", null);
+			if (currentStatus == RequestStatus.SELLER_PENDING) {
+				// Seller accepts initial offer -> moves to SELLER_ACCEPTED for buyer's confirmation.
+				updateRequest(RequestStatus.SELLER_ACCEPTED, "Accepted the offer", null);
+			} else if (currentStatus == RequestStatus.BUYER_ACCEPTED) {
+				// --- THIS IS THE FIX ---
+				// Seller confirms the deal after buyer accepted a counter-offer -> moves to SELLER_ACCEPTED for buyer's confirmation.
+				updateRequest(RequestStatus.SELLER_ACCEPTED, "Confirmed the deal", null);
+			}
 		} else if (currentState.isCurrentUserBuyer) {
-			// Buyer accepts a counter-offer, moving to final confirmation.
-			// OR Buyer confirms an already accepted offer, completing the deal.
-			if (currentState.getRequest().getStatus() == RequestStatus.ACCEPTED) {
-				updateRequest(RequestStatus.COMPLETED, "Confirmed the accepted offer", null);
+			if (currentStatus == RequestStatus.BUYER_PENDING) {
+				// Buyer accepts a counter-offer -> moves to BUYER_ACCEPTED for seller's confirmation.
+				updateRequest(RequestStatus.BUYER_ACCEPTED, "Accepted the counter-offer", null);
+			} else if (currentStatus == RequestStatus.SELLER_ACCEPTED) {
+				// Buyer gives final confirmation -> Navigate to checkout.
 				_navigateToCheckoutEvent.setValue(new Event<>(true));
-			} else { // Status must have been BUYER_PENDING
-				updateRequest(RequestStatus.ACCEPTED, "Accepted the counter-offer", null);
 			}
 		}
 	}
@@ -191,8 +202,11 @@ public class RequestDetailViewModel extends ViewModel {
 			@Override
 			public void onSuccess() {
 				switch (newStatus) {
-					case ACCEPTED:
+					case BUYER_ACCEPTED:
 						_actionSuccessEvent.setValue(new Event<>("accepted"));
+						break;
+					case SELLER_ACCEPTED:
+						_actionSuccessEvent.setValue(new Event<>("confirmed"));
 						break;
 					case REJECTED:
 						_actionSuccessEvent.setValue(new Event<>("rejected"));

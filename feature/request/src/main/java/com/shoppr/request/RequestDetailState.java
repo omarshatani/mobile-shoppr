@@ -37,32 +37,37 @@ public class RequestDetailState {
 
 		this.showActionButtons = request.getStatus() != RequestStatus.COMPLETED && request.getStatus() != RequestStatus.REJECTED;
 
-		// --- NEW, SIMPLIFIED LOGIC BASED ON THE DIAGRAM ---
 		boolean isSellerTurn = isCurrentUserSeller && request.getStatus() == RequestStatus.SELLER_PENDING;
 		boolean isBuyerTurn = isCurrentUserBuyer && request.getStatus() == RequestStatus.BUYER_PENDING;
-		boolean isBuyerConfirmation = isCurrentUserBuyer && request.getStatus() == RequestStatus.ACCEPTED;
+		boolean isSellerConfirmation = isCurrentUserSeller && request.getStatus() == RequestStatus.BUYER_ACCEPTED;
+		boolean isBuyerConfirmation = isCurrentUserBuyer && request.getStatus() == RequestStatus.SELLER_ACCEPTED;
 
 		if (isSellerTurn || isBuyerTurn) {
-			// It's my turn to respond to an offer.
 			this.showAcceptButton = true;
 			this.showRejectButton = true;
 			this.showCounterButton = true;
 			this.showEditOfferButton = false;
-		} else if (isBuyerConfirmation) {
-			// It's my turn to confirm the deal.
+		} else if (isSellerConfirmation || isBuyerConfirmation) {
 			this.showAcceptButton = true;
 			this.showRejectButton = true;
 			this.showCounterButton = false;
 			this.showEditOfferButton = false;
 		} else {
-			// It's the other person's turn. I can only edit or withdraw my last offer.
+			// It's the other person's turn to act.
 			this.showAcceptButton = false;
-			this.showRejectButton = true; // "Reject" here means "Withdraw"
+			this.showRejectButton = true; // Can always withdraw
 			this.showCounterButton = false;
-			this.showEditOfferButton = true;
+			this.showEditOfferButton = (isCurrentUserBuyer && request.getStatus() == RequestStatus.SELLER_PENDING);
 		}
 
-		this.acceptButtonText = isBuyerConfirmation ? "Confirm & Pay" : "Accept";
+		if (isBuyerConfirmation) {
+			this.acceptButtonText = "Confirm & Pay";
+		} else if (isSellerConfirmation) {
+			this.acceptButtonText = "Confirm Deal";
+		} else {
+			this.acceptButtonText = "Accept";
+		}
+
 		this.listerName = isCurrentUserSeller ? "Your Listing" : String.format("@%s", post.getLister().getName());
 	}
 

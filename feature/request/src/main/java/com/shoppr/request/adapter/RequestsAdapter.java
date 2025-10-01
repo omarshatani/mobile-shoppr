@@ -116,7 +116,10 @@ public class RequestsAdapter extends ListAdapter<RequestUiModel, RequestsAdapter
 				int textColorRes;
 
 				switch (request.getStatus()) {
-					case ACCEPTED:
+					case BUYER_ACCEPTED:
+						binding.chipStatus.setText("Waiting for confirmation");
+					case SELLER_ACCEPTED:
+						binding.chipStatus.setText("Waiting for payment");
 						backgroundColorRes = com.shoppr.core.ui.R.color.color_background_accepted;
 						textColorRes = com.shoppr.core.ui.R.color.color_text_accepted;
 						break;
