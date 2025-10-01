@@ -190,7 +190,22 @@ public class RequestDetailViewModel extends ViewModel {
 		updateRequestUseCase.execute(requestToUpdate, new UpdateRequestUseCase.UpdateRequestCallbacks() {
 			@Override
 			public void onSuccess() {
-				_actionSuccessEvent.setValue(new Event<>(newStatus.toString().toLowerCase()));
+				switch (newStatus) {
+					case ACCEPTED:
+						_actionSuccessEvent.setValue(new Event<>("accepted"));
+						break;
+					case REJECTED:
+						_actionSuccessEvent.setValue(new Event<>("rejected"));
+					case COMPLETED:
+						_actionSuccessEvent.setValue(new Event<>("completed"));
+						break;
+					case BUYER_PENDING:
+					case SELLER_PENDING:
+						_actionSuccessEvent.setValue(new Event<>("updated"));
+						break;
+					default:
+						break;
+				}
 			}
 
 			@Override

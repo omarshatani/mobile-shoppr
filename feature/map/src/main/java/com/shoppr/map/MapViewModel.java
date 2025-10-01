@@ -199,7 +199,6 @@ public class MapViewModel extends AndroidViewModel {
 
 					@Override
 					public void onLocationUpdateError(@NonNull String message) {
-						_toastMessageEvent.postValue(new Event<>("Could not save current location."));
 					}
 				});
 			}
