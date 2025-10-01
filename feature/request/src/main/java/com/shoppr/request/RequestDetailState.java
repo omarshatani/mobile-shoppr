@@ -35,54 +35,38 @@ public class RequestDetailState {
 		this.isCurrentUserSeller = currentUser != null && post.getLister().getId() != null && currentUser.getId().equals(post.getLister().getId());
 		this.isCurrentUserBuyer = currentUser != null && request.getBuyerId() != null && currentUser.getId().equals(request.getBuyerId());
 
-		// The action bar is visible unless the negotiation is complete.
-		this.showActionButtons = request.getStatus() != RequestStatus.COMPLETED &&
-				request.getStatus() != RequestStatus.REJECTED &&
-				request.getStatus() != RequestStatus.REJECTED_COUNTERED;
+		this.showActionButtons = request.getStatus() != RequestStatus.COMPLETED && request.getStatus() != RequestStatus.REJECTED;
 
-		boolean sellerTurn = isCurrentUserSeller && request.getStatus() == RequestStatus.PENDING;
-		boolean buyerTurn = isCurrentUserBuyer && request.getStatus() == RequestStatus.COUNTERED;
-		boolean buyerConfirmationTurn = isCurrentUserBuyer && request.getStatus() == RequestStatus.ACCEPTED;
-		boolean sellerConfirmationTurn = isCurrentUserSeller && request.getStatus() == RequestStatus.ACCEPTED_COUNTERED;
+		// --- NEW, SIMPLIFIED LOGIC BASED ON THE DIAGRAM ---
+		boolean isSellerTurn = isCurrentUserSeller && request.getStatus() == RequestStatus.SELLER_PENDING;
+		boolean isBuyerTurn = isCurrentUserBuyer && request.getStatus() == RequestStatus.BUYER_PENDING;
+		boolean isBuyerConfirmation = isCurrentUserBuyer && request.getStatus() == RequestStatus.ACCEPTED;
 
-		if (sellerTurn) {
+		if (isSellerTurn || isBuyerTurn) {
+			// It's my turn to respond to an offer.
 			this.showAcceptButton = true;
 			this.showRejectButton = true;
 			this.showCounterButton = true;
 			this.showEditOfferButton = false;
-		} else if (buyerTurn) {
-			this.showAcceptButton = true;
-			this.showRejectButton = true;
-			this.showCounterButton = true;
-			this.showEditOfferButton = false;
-		} else if (buyerConfirmationTurn) {
-			this.showAcceptButton = true;
-			this.showRejectButton = true;
-			this.showCounterButton = false;
-			this.showEditOfferButton = false;
-		} else if (sellerConfirmationTurn) {
+		} else if (isBuyerConfirmation) {
+			// It's my turn to confirm the deal.
 			this.showAcceptButton = true;
 			this.showRejectButton = true;
 			this.showCounterButton = false;
 			this.showEditOfferButton = false;
 		} else {
-			this.showAcceptButton = request.getStatus() == RequestStatus.COUNTERED;
-			this.showRejectButton = true;
+			// It's the other person's turn. I can only edit or withdraw my last offer.
+			this.showAcceptButton = false;
+			this.showRejectButton = true; // "Reject" here means "Withdraw"
 			this.showCounterButton = false;
-			this.showEditOfferButton = request.getStatus() == RequestStatus.PENDING || request.getStatus() == RequestStatus.COUNTERED;
+			this.showEditOfferButton = true;
 		}
 
-		if (buyerConfirmationTurn) {
-			this.acceptButtonText = "Confirm & Pay";
-		} else if (sellerConfirmationTurn) {
-			this.acceptButtonText = "Confirm";
-		} else {
-			this.acceptButtonText = "Accept";
-		}
-
+		this.acceptButtonText = isBuyerConfirmation ? "Confirm & Pay" : "Accept";
 		this.listerName = isCurrentUserSeller ? "Your Listing" : String.format("@%s", post.getLister().getName());
 	}
 
+	// --- Getters for Raw Data ---
 	public Post getPost() {
 		return post;
 	}

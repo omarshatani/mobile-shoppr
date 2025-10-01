@@ -1,11 +1,9 @@
 package com.shoppr.model;
 
 public enum RequestStatus {
-	PENDING,
-	COUNTERED,
-	ACCEPTED,
-	ACCEPTED_COUNTERED,
-	COMPLETED,
-	REJECTED,
-	REJECTED_COUNTERED
+	SELLER_PENDING, // It's the seller's turn to respond
+	BUYER_PENDING,  // It's the buyer's turn to respond
+	ACCEPTED,       // An offer was accepted, awaiting buyer confirmation
+	COMPLETED,      // The deal is done
+	REJECTED        // The deal is off
 }

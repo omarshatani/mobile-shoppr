@@ -38,25 +38,21 @@ public class RequestDetailViewModel extends ViewModel {
 	private final SavedStateHandle savedStateHandle;
 
 	private final MediatorLiveData<RequestDetailState> _requestDetailState = new MediatorLiveData<>();
-
 	public LiveData<RequestDetailState> getRequestDetailState() {
 		return _requestDetailState;
 	}
 
 	private final MutableLiveData<Event<String>> _actionSuccessEvent = new MutableLiveData<>();
-
 	public LiveData<Event<String>> getActionSuccessEvent() {
 		return _actionSuccessEvent;
 	}
 
 	private final MutableLiveData<Event<String>> _errorEvent = new MutableLiveData<>();
-
 	public LiveData<Event<String>> getErrorEvent() {
 		return _errorEvent;
 	}
 
 	private final MutableLiveData<Event<Boolean>> _navigateToCheckoutEvent = new MutableLiveData<>();
-
 	public LiveData<Event<Boolean>> getNavigateToCheckoutEvent() {
 		return _navigateToCheckoutEvent;
 	}
@@ -109,7 +105,7 @@ public class RequestDetailViewModel extends ViewModel {
 
 			@Override
 			public void onNotFound() {
-				_errorEvent.setValue(new Event<>("Post not found"));
+				_errorEvent.setValue(new Event<>("Post not found."));
 			}
 		});
 	}
@@ -118,21 +114,24 @@ public class RequestDetailViewModel extends ViewModel {
 		RequestDetailState currentState = _requestDetailState.getValue();
 		if (currentState == null) return;
 
-		RequestStatus currentStatus = currentState.getRequest().getStatus();
-
 		if (currentState.isCurrentUserSeller) {
-			if (currentStatus == RequestStatus.PENDING || currentStatus == RequestStatus.COUNTERED) {
-				updateRequest(RequestStatus.ACCEPTED, "Seller accepted the offer", null);
-			} else if (currentStatus == RequestStatus.ACCEPTED_COUNTERED) {
-				updateRequest(RequestStatus.ACCEPTED, "Seller confirmed the deal", null);
-			}
+			// Seller accepts, now it's the buyer's turn to confirm.
+			updateRequest(RequestStatus.ACCEPTED, "Accepted the offer", null);
 		} else if (currentState.isCurrentUserBuyer) {
-			if (currentStatus == RequestStatus.COUNTERED) {
-				updateRequest(RequestStatus.ACCEPTED_COUNTERED, "Buyer accepted the counter-offer", null);
-			} else if (currentStatus == RequestStatus.ACCEPTED) {
+			// Buyer accepts a counter-offer, moving to final confirmation.
+			// OR Buyer confirms an already accepted offer, completing the deal.
+			if (currentState.getRequest().getStatus() == RequestStatus.ACCEPTED) {
+				updateRequest(RequestStatus.COMPLETED, "Confirmed the accepted offer", null);
 				_navigateToCheckoutEvent.setValue(new Event<>(true));
+			} else { // Status must have been BUYER_PENDING
+				updateRequest(RequestStatus.ACCEPTED, "Accepted the counter-offer", null);
 			}
 		}
+	}
+
+	public void rejectOffer() {
+		// A rejection is a final state.
+		updateRequest(RequestStatus.REJECTED, "Rejected the offer", null);
 	}
 
 	public void editOffer(String newPrice) {
@@ -142,24 +141,11 @@ public class RequestDetailViewModel extends ViewModel {
 			double newAmount = Double.parseDouble(newPrice);
 			String description = String.format("Edited offer to %s",
 					FormattingUtils.formatCurrency(currentState.getRequest().getOfferCurrency(), newAmount));
-
-			// An edit flips the turn, so the status is now the other person's to handle.
-			RequestStatus nextStatus = currentState.isCurrentUserSeller ? RequestStatus.COUNTERED : RequestStatus.PENDING;
-
-			updateRequest(nextStatus, description, newAmount);
+			// An edit by the buyer keeps the state as SELLER_PENDING.
+			updateRequest(RequestStatus.SELLER_PENDING, description, newAmount);
 		} catch (NumberFormatException e) {
-			// Handle error
+			_errorEvent.setValue(new Event<>("Invalid price format."));
 		}
-	}
-
-	public void rejectOffer() {
-		RequestDetailState currentState = _requestDetailState.getValue();
-		if (currentState == null) return;
-
-		RequestStatus nextStatus = currentState.getRequest().getStatus() == RequestStatus.COUNTERED ?
-				RequestStatus.REJECTED_COUNTERED : RequestStatus.REJECTED;
-
-		updateRequest(nextStatus, "Rejected the offer", null);
 	}
 
 	public void counterOffer(String newPrice) {
@@ -169,35 +155,33 @@ public class RequestDetailViewModel extends ViewModel {
 			double newAmount = Double.parseDouble(newPrice);
 			String description = String.format("Countered with %s",
 					FormattingUtils.formatCurrency(currentState.getRequest().getOfferCurrency(), newAmount));
-			updateRequest(RequestStatus.COUNTERED, description, newAmount);
+			// A counter-offer always flips the turn.
+			RequestStatus nextStatus = currentState.isCurrentUserSeller ? RequestStatus.BUYER_PENDING : RequestStatus.SELLER_PENDING;
+			updateRequest(nextStatus, description, newAmount);
 		} catch (NumberFormatException e) {
 			_errorEvent.setValue(new Event<>("Invalid price format."));
 		}
 	}
 
+	// The generic updateRequest method no longer needs to calculate the finalStatus.
 	private void updateRequest(RequestStatus newStatus, String activityDescription, @Nullable Double newOfferAmount) {
 		RequestDetailState currentState = _requestDetailState.getValue();
 		if (currentState == null) {
-			_errorEvent.setValue(new Event<>("Cannot perform action: current state is null."));
 			return;
 		}
 
 		Request requestToUpdate = currentState.getRequest();
 		User currentUser = currentState.getCurrentUser();
-		RequestStatus finalStatus = newStatus;
 
-		if (newStatus == RequestStatus.COUNTERED) {
-			finalStatus = currentState.isCurrentUserSeller ? RequestStatus.COUNTERED : RequestStatus.PENDING;
-		}
-
+		// Create the timeline entry
 		ActivityEntry newEntry = new ActivityEntry(
 				currentUser.getId(), currentUser.getName(), activityDescription);
 		newEntry.setCreatedAt(new Date());
-
 		List<ActivityEntry> newTimeline = new ArrayList<>(requestToUpdate.getActivityTimeline() != null ? requestToUpdate.getActivityTimeline() : new ArrayList<>());
 		newTimeline.add(newEntry);
 
-		requestToUpdate.setStatus(finalStatus);
+		// Update the request object
+		requestToUpdate.setStatus(newStatus); // The correct status is passed in directly.
 		requestToUpdate.setActivityTimeline(newTimeline);
 		if (newOfferAmount != null) {
 			requestToUpdate.setOfferAmount(newOfferAmount);

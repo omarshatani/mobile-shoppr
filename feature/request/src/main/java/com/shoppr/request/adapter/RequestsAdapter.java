@@ -128,20 +128,15 @@ public class RequestsAdapter extends ListAdapter<RequestUiModel, RequestsAdapter
 						backgroundColorRes = com.shoppr.core.ui.R.color.color_background_rejected;
 						textColorRes = com.shoppr.core.ui.R.color.color_text_rejected;
 						break;
-					case COUNTERED:
-						binding.chipStatus.setText("Counter-offer");
+					case BUYER_PENDING:
+						binding.chipStatus.setText("Waiting for buyer");
 						backgroundColorRes = com.shoppr.core.ui.R.color.color_background_counter_offer;
 						textColorRes = com.shoppr.core.ui.R.color.color_text_counter_offer;
 						break;
-					case ACCEPTED_COUNTERED:
-						binding.chipStatus.setText("Accepted counter");
-						backgroundColorRes = com.shoppr.core.ui.R.color.color_background_accepted;
-						textColorRes = com.shoppr.core.ui.R.color.color_text_accepted;
-						break;
-					case REJECTED_COUNTERED:
-						binding.chipStatus.setText("Rejected counter");
-						backgroundColorRes = com.shoppr.core.ui.R.color.color_background_rejected;
-						textColorRes = com.shoppr.core.ui.R.color.color_text_rejected;
+					case SELLER_PENDING:
+						binding.chipStatus.setText("Waiting for seller");
+						backgroundColorRes = com.shoppr.core.ui.R.color.color_background_pending;
+						textColorRes = com.shoppr.core.ui.R.color.color_text_pending;
 						break;
 					default:
 						backgroundColorRes = com.shoppr.core.ui.R.color.color_background_pending;
