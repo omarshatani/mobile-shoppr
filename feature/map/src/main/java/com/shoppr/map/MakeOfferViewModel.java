@@ -138,7 +138,7 @@ public class MakeOfferViewModel extends ViewModel {
 						.offerAmount(Double.parseDouble(offerPrice))
 						.offerCurrency(post.getCurrency())
 						.message(note)
-						.status(RequestStatus.PENDING)
+						.status(RequestStatus.SELLER_PENDING)
 						.activityTimeline(List.of(initialEntry))
 						.createdAt(new Date())
 						.build();

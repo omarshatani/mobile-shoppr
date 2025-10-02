@@ -109,7 +109,7 @@ public class RequestDetailViewModel extends ViewModel {
 
 			@Override
 			public void onNotFound() {
-				_errorEvent.setValue(new Event<>("Post not found"));
+				_errorEvent.setValue(new Event<>("Post not found."));
 			}
 		});
 	}
@@ -121,18 +121,28 @@ public class RequestDetailViewModel extends ViewModel {
 		RequestStatus currentStatus = currentState.getRequest().getStatus();
 
 		if (currentState.isCurrentUserSeller) {
-			if (currentStatus == RequestStatus.PENDING || currentStatus == RequestStatus.COUNTERED) {
-				updateRequest(RequestStatus.ACCEPTED, "Seller accepted the offer", null);
-			} else if (currentStatus == RequestStatus.ACCEPTED_COUNTERED) {
-				updateRequest(RequestStatus.ACCEPTED, "Seller confirmed the deal", null);
+			if (currentStatus == RequestStatus.SELLER_PENDING) {
+				// Seller accepts initial offer -> moves to SELLER_ACCEPTED for buyer's confirmation.
+				updateRequest(RequestStatus.SELLER_ACCEPTED, "Accepted the offer", null);
+			} else if (currentStatus == RequestStatus.BUYER_ACCEPTED) {
+				// --- THIS IS THE FIX ---
+				// Seller confirms the deal after buyer accepted a counter-offer -> moves to SELLER_ACCEPTED for buyer's confirmation.
+				updateRequest(RequestStatus.SELLER_ACCEPTED, "Confirmed the deal", null);
 			}
 		} else if (currentState.isCurrentUserBuyer) {
-			if (currentStatus == RequestStatus.COUNTERED) {
-				updateRequest(RequestStatus.ACCEPTED_COUNTERED, "Buyer accepted the counter-offer", null);
-			} else if (currentStatus == RequestStatus.ACCEPTED) {
+			if (currentStatus == RequestStatus.BUYER_PENDING) {
+				// Buyer accepts a counter-offer -> moves to BUYER_ACCEPTED for seller's confirmation.
+				updateRequest(RequestStatus.BUYER_ACCEPTED, "Accepted the counter-offer", null);
+			} else if (currentStatus == RequestStatus.SELLER_ACCEPTED) {
+				// Buyer gives final confirmation -> Navigate to checkout.
 				_navigateToCheckoutEvent.setValue(new Event<>(true));
 			}
 		}
+	}
+
+	public void rejectOffer() {
+		// A rejection is a final state.
+		updateRequest(RequestStatus.REJECTED, "Rejected the offer", null);
 	}
 
 	public void editOffer(String newPrice) {
@@ -142,24 +152,11 @@ public class RequestDetailViewModel extends ViewModel {
 			double newAmount = Double.parseDouble(newPrice);
 			String description = String.format("Edited offer to %s",
 					FormattingUtils.formatCurrency(currentState.getRequest().getOfferCurrency(), newAmount));
-
-			// An edit flips the turn, so the status is now the other person's to handle.
-			RequestStatus nextStatus = currentState.isCurrentUserSeller ? RequestStatus.COUNTERED : RequestStatus.PENDING;
-
-			updateRequest(nextStatus, description, newAmount);
+			// An edit by the buyer keeps the state as SELLER_PENDING.
+			updateRequest(RequestStatus.SELLER_PENDING, description, newAmount);
 		} catch (NumberFormatException e) {
-			// Handle error
+			_errorEvent.setValue(new Event<>("Invalid price format."));
 		}
-	}
-
-	public void rejectOffer() {
-		RequestDetailState currentState = _requestDetailState.getValue();
-		if (currentState == null) return;
-
-		RequestStatus nextStatus = currentState.getRequest().getStatus() == RequestStatus.COUNTERED ?
-				RequestStatus.REJECTED_COUNTERED : RequestStatus.REJECTED;
-
-		updateRequest(nextStatus, "Rejected the offer", null);
 	}
 
 	public void counterOffer(String newPrice) {
@@ -169,35 +166,33 @@ public class RequestDetailViewModel extends ViewModel {
 			double newAmount = Double.parseDouble(newPrice);
 			String description = String.format("Countered with %s",
 					FormattingUtils.formatCurrency(currentState.getRequest().getOfferCurrency(), newAmount));
-			updateRequest(RequestStatus.COUNTERED, description, newAmount);
+			// A counter-offer always flips the turn.
+			RequestStatus nextStatus = currentState.isCurrentUserSeller ? RequestStatus.BUYER_PENDING : RequestStatus.SELLER_PENDING;
+			updateRequest(nextStatus, description, newAmount);
 		} catch (NumberFormatException e) {
 			_errorEvent.setValue(new Event<>("Invalid price format."));
 		}
 	}
 
+	// The generic updateRequest method no longer needs to calculate the finalStatus.
 	private void updateRequest(RequestStatus newStatus, String activityDescription, @Nullable Double newOfferAmount) {
 		RequestDetailState currentState = _requestDetailState.getValue();
 		if (currentState == null) {
-			_errorEvent.setValue(new Event<>("Cannot perform action: current state is null."));
 			return;
 		}
 
 		Request requestToUpdate = currentState.getRequest();
 		User currentUser = currentState.getCurrentUser();
-		RequestStatus finalStatus = newStatus;
 
-		if (newStatus == RequestStatus.COUNTERED) {
-			finalStatus = currentState.isCurrentUserSeller ? RequestStatus.COUNTERED : RequestStatus.PENDING;
-		}
-
+		// Create the timeline entry
 		ActivityEntry newEntry = new ActivityEntry(
 				currentUser.getId(), currentUser.getName(), activityDescription);
 		newEntry.setCreatedAt(new Date());
-
 		List<ActivityEntry> newTimeline = new ArrayList<>(requestToUpdate.getActivityTimeline() != null ? requestToUpdate.getActivityTimeline() : new ArrayList<>());
 		newTimeline.add(newEntry);
 
-		requestToUpdate.setStatus(finalStatus);
+		// Update the request object
+		requestToUpdate.setStatus(newStatus); // The correct status is passed in directly.
 		requestToUpdate.setActivityTimeline(newTimeline);
 		if (newOfferAmount != null) {
 			requestToUpdate.setOfferAmount(newOfferAmount);
@@ -206,7 +201,25 @@ public class RequestDetailViewModel extends ViewModel {
 		updateRequestUseCase.execute(requestToUpdate, new UpdateRequestUseCase.UpdateRequestCallbacks() {
 			@Override
 			public void onSuccess() {
-				_actionSuccessEvent.setValue(new Event<>(newStatus.toString().toLowerCase()));
+				switch (newStatus) {
+					case BUYER_ACCEPTED:
+						_actionSuccessEvent.setValue(new Event<>("accepted"));
+						break;
+					case SELLER_ACCEPTED:
+						_actionSuccessEvent.setValue(new Event<>("confirmed"));
+						break;
+					case REJECTED:
+						_actionSuccessEvent.setValue(new Event<>("rejected"));
+					case COMPLETED:
+						_actionSuccessEvent.setValue(new Event<>("completed"));
+						break;
+					case BUYER_PENDING:
+					case SELLER_PENDING:
+						_actionSuccessEvent.setValue(new Event<>("updated"));
+						break;
+					default:
+						break;
+				}
 			}
 
 			@Override

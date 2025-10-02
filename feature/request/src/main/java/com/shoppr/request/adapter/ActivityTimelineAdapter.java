@@ -30,8 +30,10 @@ public class ActivityTimelineAdapter extends ListAdapter<ActivityEntry, Activity
 		this.currentUserId = currentUserId;
 		this.buyerId = buyerId;
 		this.sellerId = sellerId;
-		notifyDataSetChanged(); // Refresh the list with new ID info
+		// We can optionally call notifyDataSetChanged() here if IDs might change
+		// after the list is submitted, but it's often not needed.
 	}
+
 
 	@NonNull
 	@Override
@@ -45,7 +47,8 @@ public class ActivityTimelineAdapter extends ListAdapter<ActivityEntry, Activity
 	public void onBindViewHolder(@NonNull TimelineViewHolder holder, int position) {
 		ActivityEntry item = getItem(position);
 		if (item != null) {
-			holder.bind(item, currentUserId, buyerId, sellerId);
+			// The bind method is now much simpler.
+			holder.bind(item, this);
 		}
 	}
 
@@ -57,8 +60,8 @@ public class ActivityTimelineAdapter extends ListAdapter<ActivityEntry, Activity
 			this.binding = binding;
 		}
 
-		public void bind(ActivityEntry entry, String currentUserId, String buyerId, String sellerId) {
-			boolean isCurrentUserTheActor = currentUserId != null && currentUserId.equals(entry.getActorId());
+		public void bind(ActivityEntry entry, ActivityTimelineAdapter adapter) {
+			boolean isCurrentUserTheActor = adapter.currentUserId != null && adapter.currentUserId.equals(entry.getActorId());
 
 			binding.textActorName.setText(isCurrentUserTheActor ? "You" : entry.getActorName());
 			binding.textEntryDescription.setText(entry.getDescription());
@@ -71,9 +74,9 @@ public class ActivityTimelineAdapter extends ListAdapter<ActivityEntry, Activity
 
 			// Set Role Label
 			if (entry.getActorId() != null) {
-				if (entry.getActorId().equals(buyerId)) {
+				if (entry.getActorId().equals(adapter.buyerId)) {
 					binding.textActorRole.setText("(Buyer)");
-				} else if (entry.getActorId().equals(sellerId)) {
+				} else if (entry.getActorId().equals(adapter.sellerId)) {
 					binding.textActorRole.setText("(Seller)");
 				} else {
 					binding.textActorRole.setText("");
