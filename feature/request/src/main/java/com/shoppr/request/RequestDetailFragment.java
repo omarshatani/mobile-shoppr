@@ -1,6 +1,7 @@
 package com.shoppr.request;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +23,7 @@ import com.shoppr.navigation.Navigator;
 import com.shoppr.request.adapter.ActivityTimelineAdapter;
 import com.shoppr.request.databinding.FragmentRequestDetailBinding;
 import com.shoppr.ui.BaseFragment;
+import com.shoppr.ui.FeedbackDialogFragment;
 import com.shoppr.ui.utils.FormattingUtils;
 import com.shoppr.ui.utils.ImageLoader;
 
@@ -50,6 +52,7 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 		setupToolbar();
 		setupRecyclerView();
 		setupClickListeners();
+		setupFragmentResultListener();
 		observeViewModel();
 	}
 
@@ -182,6 +185,26 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 					}
 				})
 				.show();
+	}
+
+	private void setupFragmentResultListener() {
+		Log.d("REQUEST", "Registering listener on activity FM. FragmentManager: " + requireActivity().getSupportFragmentManager());
+		requireActivity().getSupportFragmentManager()
+				.setFragmentResultListener("checkout_complete_key", getViewLifecycleOwner(),
+						(requestKey, bundle) -> {
+							// This will always be called when Checkout posts the result to the activity FM
+							// Extract values and show the feedback dialog
+							Log.d("REQUEST", "Received checkout result in RequestFragment: " + bundle);
+							String transactionId = bundle.getString("transactionId");
+							String raterId = bundle.getString("raterId");
+							String rateeId = bundle.getString("rateeId");
+							String sellerName = bundle.getString("sellerName");
+
+							if (transactionId != null && raterId != null && rateeId != null) {
+								FeedbackDialogFragment.newInstance(transactionId, raterId, rateeId, sellerName)
+										.show(getChildFragmentManager(), FeedbackDialogFragment.TAG);
+							}
+						});
 	}
 
 	@Override

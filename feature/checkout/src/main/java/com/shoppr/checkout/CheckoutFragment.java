@@ -1,6 +1,7 @@
 package com.shoppr.checkout;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,7 +19,6 @@ import com.shoppr.model.PaymentMethod;
 import com.shoppr.model.Post;
 import com.shoppr.model.Request;
 import com.shoppr.model.User;
-import com.shoppr.navigation.NavigationRoute;
 import com.shoppr.navigation.Navigator;
 import com.shoppr.ui.BaseFragment;
 import com.shoppr.ui.utils.FormattingUtils;
@@ -109,10 +109,12 @@ public class CheckoutFragment extends BaseFragment<FragmentCheckoutBinding> {
 					result.putString("rateeId", currentState.getSeller().getId());
 					result.putString("sellerName", currentState.getSeller().getName());
 
-					getParentFragmentManager().setFragmentResult("checkout_complete_key", result);
+					Log.d("CHECKOUT", "Posting result to activity FM from CheckoutFragment. FragmentManager: " + requireActivity().getSupportFragmentManager());
+					requireActivity().getSupportFragmentManager().setFragmentResult("checkout_complete_key", result);
+					Log.d("CHECKOUT", "Posted result. Now calling navigator.goBack()");
 				}
 
-				navigator.navigate(new NavigationRoute.Request());
+				navigator.goBack();
 			}
 		});
 	}
