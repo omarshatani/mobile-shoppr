@@ -112,16 +112,14 @@ public class RequestsAdapter extends ListAdapter<RequestUiModel, RequestsAdapter
 				binding.chipStatus.setText(String.format("%s%s", request.getStatus().toString().substring(0, 1).toUpperCase(), request.getStatus().toString().substring(1).toLowerCase())); // Capitalize
 				binding.chipStatus.setVisibility(View.VISIBLE);
 
-				int backgroundColorRes;
-				int textColorRes;
+				int backgroundColorRes = com.shoppr.core.ui.R.color.color_background_accepted;
+				int textColorRes = com.shoppr.core.ui.R.color.color_text_accepted;
 
 				switch (request.getStatus()) {
 					case BUYER_ACCEPTED:
 						binding.chipStatus.setText("Waiting for confirmation");
 					case SELLER_ACCEPTED:
 						binding.chipStatus.setText("Waiting for payment");
-						backgroundColorRes = com.shoppr.core.ui.R.color.color_background_accepted;
-						textColorRes = com.shoppr.core.ui.R.color.color_text_accepted;
 						break;
 					case COMPLETED:
 						backgroundColorRes = com.shoppr.core.ui.R.color.color_background_completed;
