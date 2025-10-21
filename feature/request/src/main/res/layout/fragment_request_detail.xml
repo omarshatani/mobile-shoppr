@@ -26,6 +26,7 @@
         android:id="@+id/nested_scrollview"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:paddingBottom="16dp"
         app:layout_constraintBottom_toTopOf="@id/action_button_bar"
         app:layout_constraintTop_toBottomOf="@id/app_bar_layout">
 
@@ -99,13 +100,57 @@
 
                             <TextView
                                 android:id="@+id/text_lister_username"
-                                android:layout_width="0dp"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="8dp"
-                                android:layout_weight="1"
                                 android:textAppearance="?attr/textAppearanceLabelLarge"
                                 android:textColor="?attr/colorOnSurfaceVariant"
                                 tools:text="\@sarah_tech" />
+
+                            <LinearLayout
+                                android:id="@+id/layout_lister_rating"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:visibility="gone"
+                                tools:visibility="visible">
+
+                                <RatingBar
+                                    android:id="@+id/rating_bar_lister"
+                                    style="?android:attr/ratingBarStyleSmall"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:isIndicator="true"
+                                    android:numStars="1"
+                                    android:stepSize="1"
+                                    android:rating="1"
+                                    tools:rating="4.0" />
+
+                                <TextView
+                                    android:id="@+id/text_lister_rating_value"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="8dp"
+                                    android:textAppearance="?attr/textAppearanceLabelMedium"
+                                    android:textStyle="bold"
+                                    tools:text="4.0" />
+
+                                <TextView
+                                    android:id="@+id/text_lister_rating_count"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="4dp"
+                                    android:textAppearance="?attr/textAppearanceBodySmall"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    tools:text="(8)" />
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
 
                             <TextView
                                 android:id="@+id/text_list_price"
@@ -185,6 +230,17 @@
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 tools:itemCount="3"
                 tools:listitem="@layout/list_item_timeline_entry" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_give_seller_feedback"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Rate the Buyer"
+                android:visibility="gone"
+                app:icon="@drawable/ic_rate_review"
+                tools:visibility="visible" />
 
         </LinearLayout>
 

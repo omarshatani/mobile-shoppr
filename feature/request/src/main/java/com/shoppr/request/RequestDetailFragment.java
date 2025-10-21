@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
+import com.shoppr.model.User;
 import com.shoppr.navigation.NavigationRoute;
 import com.shoppr.navigation.Navigator;
 import com.shoppr.request.adapter.ActivityTimelineAdapter;
@@ -72,6 +73,7 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 		binding.buttonReject.setOnClickListener(v -> viewModel.rejectOffer());
 		binding.buttonCounter.setOnClickListener(v -> showOfferDialog("Make a Counter Offer", false));
 		binding.buttonEditOffer.setOnClickListener(v -> showOfferDialog("Edit Your Offer", true));
+		binding.buttonGiveSellerFeedback.setOnClickListener(v -> showSellerFeedbackDialog());
 	}
 
 	private void observeViewModel() {
@@ -128,6 +130,15 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 		binding.textListerUsername.setText(String.format("%s", listerName));
 		binding.imageListerAvatar.setImageResource(com.shoppr.core.ui.R.drawable.ic_account_circle);
 
+		User lister = state.getPost().getLister();
+		if (lister != null && lister.getRatingCount() > 0) {
+			binding.layoutListerRating.setVisibility(View.VISIBLE);
+			binding.textListerRatingValue.setText(String.format("%.1f", lister.getAverageRating()));
+			binding.textListerRatingCount.setText(String.format("(%d)", lister.getRatingCount()));
+		} else {
+			binding.layoutListerRating.setVisibility(View.GONE);
+		}
+
 		// Categories
 		binding.chipGroupCategory.removeAllViews();
 		if (state.getPost().getCategories() != null && !state.getPost().getCategories().isEmpty()) {
@@ -164,6 +175,8 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 			binding.buttonEditOffer.setVisibility(state.showEditOfferButton ? View.VISIBLE : View.GONE);
 			binding.buttonAccept.setText(state.acceptButtonText);
 		}
+
+		binding.buttonGiveSellerFeedback.setVisibility(state.showSellerFeedbackButton ? View.VISIBLE : View.GONE);
 	}
 
 	private void showOfferDialog(String title, boolean isEdit) {
@@ -205,6 +218,21 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 										.show(getChildFragmentManager(), FeedbackDialogFragment.TAG);
 							}
 						});
+	}
+
+	private void showSellerFeedbackDialog() {
+		RequestDetailState currentState = viewModel.getRequestDetailState().getValue();
+		if (currentState == null) return;
+
+		String requestId = currentState.getRequest().getId();
+		String sellerId = currentState.getCurrentUser().getId(); // Seller is the current user
+		String buyerId = currentState.getRequest().getBuyerId();
+		// We need the buyer's name. We don't have it directly in the RequestDetailState.
+		// For now, let's use a placeholder. A better solution would involve fetching the buyer's user profile.
+		String buyerName = "the buyer";
+
+		// Use the existing FeedbackDialogFragment
+		FeedbackDialogFragment.newInstance(requestId, sellerId, buyerId, buyerName).show(getChildFragmentManager(), FeedbackDialogFragment.TAG);
 	}
 
 	@Override

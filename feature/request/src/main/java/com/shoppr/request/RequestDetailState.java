@@ -22,6 +22,7 @@ public class RequestDetailState {
 	public final boolean showRejectButton;
 	public final boolean showCounterButton;
 	public final boolean showEditOfferButton;
+	public final boolean showSellerFeedbackButton;
 
 	// Button Text
 	public final String acceptButtonText;
@@ -36,6 +37,9 @@ public class RequestDetailState {
 		this.isCurrentUserBuyer = currentUser != null && request.getBuyerId() != null && currentUser.getId().equals(request.getBuyerId());
 
 		this.showActionButtons = request.getStatus() != RequestStatus.COMPLETED && request.getStatus() != RequestStatus.REJECTED;
+
+		this.showSellerFeedbackButton = this.isCurrentUserSeller &&
+				request.getStatus() == RequestStatus.COMPLETED;
 
 		boolean isSellerTurn = isCurrentUserSeller && request.getStatus() == RequestStatus.SELLER_PENDING;
 		boolean isBuyerTurn = isCurrentUserBuyer && request.getStatus() == RequestStatus.BUYER_PENDING;
