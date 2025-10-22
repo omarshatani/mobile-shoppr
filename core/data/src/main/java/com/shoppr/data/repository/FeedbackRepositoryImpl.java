@@ -1,6 +1,7 @@
 package com.shoppr.data.repository;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
 
 import com.shoppr.domain.datasource.FirestoreFeedbackDataSource;
 import com.shoppr.domain.repository.FeedbackRepository;
@@ -30,5 +31,10 @@ public class FeedbackRepositoryImpl implements FeedbackRepository {
 				callbacks.onError(message);
 			}
 		});
+	}
+
+	@Override
+	public LiveData<Boolean> hasUserGivenFeedback(@NonNull String requestId, @NonNull String raterId) {
+		return firestoreFeedbackDataSource.hasUserGivenFeedback(requestId, raterId);
 	}
 }

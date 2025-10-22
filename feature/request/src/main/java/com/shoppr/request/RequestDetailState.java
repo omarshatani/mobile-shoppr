@@ -29,6 +29,10 @@ public class RequestDetailState {
 	public final String listerName;
 
 	public RequestDetailState(Post post, Request request, User currentUser) {
+		this(post, request, currentUser, false);
+	}
+
+	public RequestDetailState(Post post, Request request, User currentUser, boolean hasSellerRatedBuyer) {
 		this.post = post;
 		this.request = request;
 		this.currentUser = currentUser;
@@ -39,7 +43,8 @@ public class RequestDetailState {
 		this.showActionButtons = request.getStatus() != RequestStatus.COMPLETED && request.getStatus() != RequestStatus.REJECTED;
 
 		this.showSellerFeedbackButton = this.isCurrentUserSeller &&
-				request.getStatus() == RequestStatus.COMPLETED;
+				request.getStatus() == RequestStatus.COMPLETED &&
+				!hasSellerRatedBuyer;
 
 		boolean isSellerTurn = isCurrentUserSeller && request.getStatus() == RequestStatus.SELLER_PENDING;
 		boolean isBuyerTurn = isCurrentUserBuyer && request.getStatus() == RequestStatus.BUYER_PENDING;
@@ -75,7 +80,6 @@ public class RequestDetailState {
 		this.listerName = isCurrentUserSeller ? "Your Listing" : String.format("@%s", post.getLister().getName());
 	}
 
-	// --- Getters for Raw Data ---
 	public Post getPost() {
 		return post;
 	}

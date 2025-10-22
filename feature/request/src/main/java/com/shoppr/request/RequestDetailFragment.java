@@ -208,13 +208,13 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 							// This will always be called when Checkout posts the result to the activity FM
 							// Extract values and show the feedback dialog
 							Log.d("REQUEST", "Received checkout result in RequestFragment: " + bundle);
-							String transactionId = bundle.getString("transactionId");
+							String requestId = bundle.getString("requestId");
 							String raterId = bundle.getString("raterId");
 							String rateeId = bundle.getString("rateeId");
 							String sellerName = bundle.getString("sellerName");
 
-							if (transactionId != null && raterId != null && rateeId != null) {
-								FeedbackDialogFragment.newInstance(transactionId, raterId, rateeId, sellerName)
+							if (requestId != null && raterId != null && rateeId != null) {
+								FeedbackDialogFragment.newInstance(requestId, raterId, rateeId, sellerName)
 										.show(getChildFragmentManager(), FeedbackDialogFragment.TAG);
 							}
 						});

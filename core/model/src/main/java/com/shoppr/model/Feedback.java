@@ -6,7 +6,7 @@ import java.util.Date;
 
 public class Feedback {
 	private String id;
-	private String transactionId;
+	private String requestId;
 	private String raterId;      // The user GIVING the rating
 	private String rateeId;      // The user RECEIVING the rating
 	private float rating;        // The star rating (e.g., 4.5)
@@ -26,12 +26,12 @@ public class Feedback {
 		this.id = id;
 	}
 
-	public String getTransactionId() {
-		return transactionId;
+	public String getRequestId() {
+		return requestId;
 	}
 
-	public void setTransactionId(String transactionId) {
-		this.transactionId = transactionId;
+	public void setRequestId(String requestId) {
+		this.requestId = requestId;
 	}
 
 	public String getRaterId() {

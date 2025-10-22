@@ -1,6 +1,8 @@
 package com.shoppr.data.datasource;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -14,6 +16,7 @@ import javax.inject.Inject;
 public class FirestoreFeedbackDataSourceImpl implements FirestoreFeedbackDataSource {
 
 	private final FirebaseFirestore db;
+	private static final String FEEDBACK_COLLECTION = "feedback";
 
 	@Inject
 	public FirestoreFeedbackDataSourceImpl(FirebaseFirestore db) {
@@ -52,5 +55,24 @@ public class FirestoreFeedbackDataSourceImpl implements FirestoreFeedbackDataSou
 				})
 				.addOnSuccessListener(aVoid -> callbacks.onSuccess())
 				.addOnFailureListener(e -> callbacks.onError("Failed to submit feedback: " + e.getMessage()));
+	}
+
+	@Override
+	public LiveData<Boolean> hasUserGivenFeedback(@NonNull String requestId, @NonNull String raterId) {
+		MutableLiveData<Boolean> resultLiveData = new MutableLiveData<>();
+
+		db.collection(FEEDBACK_COLLECTION)
+				.whereEqualTo("requestId", requestId)
+				.whereEqualTo("raterId", raterId)
+				.limit(1)
+				.get()
+				.addOnSuccessListener(queryDocumentSnapshots -> {
+					resultLiveData.setValue(!queryDocumentSnapshots.isEmpty());
+				})
+				.addOnFailureListener(e -> {
+					resultLiveData.setValue(false);
+				});
+
+		return resultLiveData;
 	}
 }

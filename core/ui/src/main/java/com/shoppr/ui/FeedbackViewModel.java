@@ -39,6 +39,7 @@ public class FeedbackViewModel extends ViewModel {
 			@Override
 			public void onError(@NonNull String message) {
 				// Optionally handle error with another LiveData event
+				_feedbackSubmittedEvent.setValue(new Event<>(false));
 			}
 		});
 	}

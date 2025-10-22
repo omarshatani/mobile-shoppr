@@ -21,7 +21,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class FeedbackDialogFragment extends DialogFragment {
 
 	public static final String TAG = "FeedbackDialog";
-	private static final String ARG_TRANSACTION_ID = "transaction_id";
+	private static final String ARG_REQUEST_ID = "request_id";
 	private static final String ARG_RATER_ID = "rater_id";
 	private static final String ARG_RATEE_ID = "ratee_id";
 	private static final String ARG_SELLER_NAME = "seller_name";
@@ -29,10 +29,10 @@ public class FeedbackDialogFragment extends DialogFragment {
 	private DialogSubmitFeedbackBinding binding;
 	private FeedbackViewModel viewModel;
 
-	public static FeedbackDialogFragment newInstance(String transactionId, String raterId, String rateeId, String sellerName) {
+	public static FeedbackDialogFragment newInstance(String requestId, String raterId, String rateeId, String sellerName) {
 		FeedbackDialogFragment fragment = new FeedbackDialogFragment();
 		Bundle args = new Bundle();
-		args.putString(ARG_TRANSACTION_ID, transactionId);
+		args.putString(ARG_REQUEST_ID, requestId);
 		args.putString(ARG_RATER_ID, raterId);
 		args.putString(ARG_RATEE_ID, rateeId);
 		args.putString(ARG_SELLER_NAME, sellerName);
@@ -78,7 +78,7 @@ public class FeedbackDialogFragment extends DialogFragment {
 		if (args == null) return;
 
 		Feedback feedback = new Feedback();
-		feedback.setTransactionId(args.getString(ARG_TRANSACTION_ID));
+		feedback.setRequestId(args.getString(ARG_REQUEST_ID));
 		feedback.setRaterId(args.getString(ARG_RATER_ID));
 		feedback.setRateeId(args.getString(ARG_RATEE_ID));
 		feedback.setRating(binding.ratingBarFeedback.getRating());
