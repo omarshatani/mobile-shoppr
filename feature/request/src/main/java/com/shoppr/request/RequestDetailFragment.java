@@ -1,7 +1,6 @@
 package com.shoppr.request;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,7 +52,6 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 		setupToolbar();
 		setupRecyclerView();
 		setupClickListeners();
-		setupFragmentResultListener();
 		observeViewModel();
 	}
 
@@ -77,6 +75,7 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 	}
 
 	private void observeViewModel() {
+		// Main state observer handles all UI updates, including the feedback button
 		viewModel.getRequestDetailState().observe(getViewLifecycleOwner(), state -> {
 			if (state != null) {
 				populateUI(state);
@@ -126,13 +125,14 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 		}
 
 		// Lister Info
-		String listerName = state.isCurrentUserSeller ? "Your Listing" : String.format("@%s", state.getPost().getLister().getName());
-		binding.textListerUsername.setText(String.format("%s", listerName));
+		binding.textListerUsername.setText(state.listerName);
 		binding.imageListerAvatar.setImageResource(com.shoppr.core.ui.R.drawable.ic_account_circle);
 
+		// Lister Rating
 		User lister = state.getPost().getLister();
 		if (lister != null && lister.getRatingCount() > 0) {
 			binding.layoutListerRating.setVisibility(View.VISIBLE);
+			binding.ratingBarLister.setRating((float) lister.getAverageRating());
 			binding.textListerRatingValue.setText(String.format("%.1f", lister.getAverageRating()));
 			binding.textListerRatingCount.setText(String.format("(%d)", lister.getRatingCount()));
 		} else {
@@ -153,20 +153,16 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 		binding.textOfferPrice.setText(
 				FormattingUtils.formatCurrency(state.getRequest().getOfferCurrency(), state.getRequest().getOfferAmount())
 		);
-		if (state.getRequest().getMessage() != null && !state.getRequest().getMessage().isEmpty()) {
-			binding.textOfferNote.setText(state.getRequest().getMessage());
-			binding.textOfferNote.setVisibility(View.VISIBLE);
-		}
 
 		// Timeline
 		timelineAdapter.setActorIds(
 				state.getCurrentUser().getId(),
 				state.getRequest().getBuyerId(),
-				state.getPost().getLister().getId()
+				state.getPost().getLister().getId() // Ensure correct ID is used
 		);
 		timelineAdapter.submitList(state.getRequest().getActivityTimeline());
 
-		// Action Bar Visibility & Configuration
+		// Action Bar (Negotiation)
 		binding.actionButtonBar.setVisibility(state.showActionButtons ? View.VISIBLE : View.GONE);
 		if (state.showActionButtons) {
 			binding.buttonAccept.setVisibility(state.showAcceptButton ? View.VISIBLE : View.GONE);
@@ -176,6 +172,7 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 			binding.buttonAccept.setText(state.acceptButtonText);
 		}
 
+		// Seller Feedback Button (Post-Completion)
 		binding.buttonGiveSellerFeedback.setVisibility(state.showSellerFeedbackButton ? View.VISIBLE : View.GONE);
 	}
 
@@ -200,26 +197,6 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 				.show();
 	}
 
-	private void setupFragmentResultListener() {
-		Log.d("REQUEST", "Registering listener on activity FM. FragmentManager: " + requireActivity().getSupportFragmentManager());
-		requireActivity().getSupportFragmentManager()
-				.setFragmentResultListener("checkout_complete_key", getViewLifecycleOwner(),
-						(requestKey, bundle) -> {
-							// This will always be called when Checkout posts the result to the activity FM
-							// Extract values and show the feedback dialog
-							Log.d("REQUEST", "Received checkout result in RequestFragment: " + bundle);
-							String requestId = bundle.getString("requestId");
-							String raterId = bundle.getString("raterId");
-							String rateeId = bundle.getString("rateeId");
-							String sellerName = bundle.getString("sellerName");
-
-							if (requestId != null && raterId != null && rateeId != null) {
-								FeedbackDialogFragment.newInstance(requestId, raterId, rateeId, sellerName)
-										.show(getChildFragmentManager(), FeedbackDialogFragment.TAG);
-							}
-						});
-	}
-
 	private void showSellerFeedbackDialog() {
 		RequestDetailState currentState = viewModel.getRequestDetailState().getValue();
 		if (currentState == null) return;
@@ -227,12 +204,15 @@ public class RequestDetailFragment extends BaseFragment<FragmentRequestDetailBin
 		String requestId = currentState.getRequest().getId();
 		String sellerId = currentState.getCurrentUser().getId(); // Seller is the current user
 		String buyerId = currentState.getRequest().getBuyerId();
-		// We need the buyer's name. We don't have it directly in the RequestDetailState.
-		// For now, let's use a placeholder. A better solution would involve fetching the buyer's user profile.
-		String buyerName = "the buyer";
+		// Fetching buyer name is still a potential improvement point
+		String buyerName = "the buyer"; // Placeholder - ideally fetch buyer User object
 
-		// Use the existing FeedbackDialogFragment
-		FeedbackDialogFragment.newInstance(requestId, sellerId, buyerId, buyerName).show(getChildFragmentManager(), FeedbackDialogFragment.TAG);
+		FeedbackDialogFragment.newInstance(
+				requestId,
+				sellerId,
+				buyerId,
+				buyerName
+		).show(getChildFragmentManager(), FeedbackDialogFragment.TAG); // Use getChildFragmentManager
 	}
 
 	@Override

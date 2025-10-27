@@ -5,7 +5,6 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 
@@ -46,12 +45,7 @@ public class RequestDetailViewModel extends ViewModel {
 	private LiveData<Request> requestSource;
 	private LiveData<User> userSource;
 	private final MutableLiveData<Post> postSource = new MutableLiveData<>();
-	private final MutableLiveData<Boolean> feedbackCheckResult = new MutableLiveData<>(false);
-	private final MutableLiveData<Event<Boolean>> _feedbackSubmittedEvent = new MutableLiveData<>();
-
-	public LiveData<Event<Boolean>> getFeedbackSubmittedEvent() {
-		return _feedbackSubmittedEvent;
-	}
+	private LiveData<Boolean> feedbackCheckSource;
 
 	// --- State & Events ---
 	private final MediatorLiveData<RequestDetailState> _requestDetailState = new MediatorLiveData<>();
@@ -60,6 +54,7 @@ public class RequestDetailViewModel extends ViewModel {
 		return _requestDetailState;
 	}
 
+	// Other events...
 	private final MutableLiveData<Event<String>> _actionSuccessEvent = new MutableLiveData<>();
 
 	public LiveData<Event<String>> getActionSuccessEvent() {
@@ -104,31 +99,27 @@ public class RequestDetailViewModel extends ViewModel {
 
 		requestSource = getRequestByIdUseCase.execute(requestId);
 		userSource = getCurrentUserUseCase.getFullUserProfile();
+		// Initialize feedback source with a non-null default before adding
+		feedbackCheckSource = new MutableLiveData<>(false);
 
-		// Add all sources that contribute to the final state
-		_requestDetailState.addSource(requestSource, request -> combineAllData());
-		_requestDetailState.addSource(userSource, user -> combineAllData());
+		// Add all sources needed for the final state
+		_requestDetailState.addSource(requestSource, request -> fetchPostIfNeeded(request, userSource.getValue()));
+		_requestDetailState.addSource(userSource, user -> fetchPostIfNeeded(requestSource.getValue(), user));
 		_requestDetailState.addSource(postSource, post -> combineAllData());
-		_requestDetailState.addSource(feedbackCheckResult, hasRated -> combineAllData());
-
-		// Initial trigger to fetch the post once request/user are loaded
-		requestSource.observeForever(request -> fetchPostIfNeeded(request, userSource.getValue()));
-		userSource.observeForever(user -> fetchPostIfNeeded(requestSource.getValue(), user));
+		_requestDetailState.addSource(feedbackCheckSource, hasRated -> combineAllData());
 	}
 
-	// Trigger post fetch only when request and user are ready
+	// Trigger post fetch
 	private void fetchPostIfNeeded(@Nullable Request request, @Nullable User user) {
-		// Fetch post only if we have request & user, AND haven't fetched it yet OR request/user changed
 		if (request != null && user != null && request.getPostId() != null) {
 			Post currentPost = postSource.getValue();
-			// If postSource is null or the postId has changed (unlikely but safe), fetch
 			if (currentPost == null || !Objects.equals(currentPost.getId(), request.getPostId())) {
 				getPostByIdUseCase.execute(request.getPostId(), new GetPostByIdUseCase.GetPostByIdCallbacks() {
 					@Override
 					public void onSuccess(@NonNull Post post) {
-						postSource.setValue(post); // Triggers combineAllData
-						// Perform the initial feedback check *after* post is loaded
-						checkFeedbackStatus(request, user, post);
+						postSource.setValue(post); // Triggers combineAllData via observer
+						initializeFeedbackListener(request, user, post); // Init listener *after* post load
+						// No need to explicitly call combineAllData here, postSource observer does it.
 					}
 
 					@Override
@@ -142,65 +133,52 @@ public class RequestDetailViewModel extends ViewModel {
 					}
 				});
 			} else {
-				// If post already exists, just re-check feedback status and combine
-				checkFeedbackStatus(request, user, currentPost);
+				// If post already loaded, just ensure listener is correct for current state
+				initializeFeedbackListener(request, user, currentPost);
+			}
+		}
+	}
+
+	// Initialize or reset the feedback listener source
+	private void initializeFeedbackListener(Request request, User user, Post post) {
+		boolean isSeller = user.getId().equals(post.getLister().getId());
+		LiveData<Boolean> newSource;
+
+		if (isSeller && request.getStatus() == RequestStatus.COMPLETED) {
+			// Conditions met: get the *actual* listening LiveData
+			newSource = hasUserGivenFeedbackUseCase.execute(request.getId(), user.getId());
+		} else {
+			// Conditions NOT met: use a LiveData that always holds 'false'
+			newSource = new MutableLiveData<>(false);
+		}
+
+		// Only swap source if it's actually different
+		if (feedbackCheckSource != newSource) {
+			_requestDetailState.removeSource(feedbackCheckSource); // Remove old one
+			feedbackCheckSource = newSource;
+			_requestDetailState.addSource(feedbackCheckSource, hasRated -> combineAllData()); // Add new one
+			// If the new source is the static 'false', trigger combine immediately
+			if (newSource instanceof MutableLiveData && newSource.getValue() == Boolean.FALSE) {
 				combineAllData();
 			}
-		}
-	}
-
-	// Check feedback status and update the feedbackCheckResult LiveData
-	private void checkFeedbackStatus(Request request, User user, Post post) {
-		boolean isSeller = user.getId().equals(post.getLister().getId());
-		if (isSeller && request.getStatus() == RequestStatus.COMPLETED) {
-			LiveData<Boolean> source = hasUserGivenFeedbackUseCase.execute(request.getId(), user.getId());
-			source.observeForever(new Observer<Boolean>() {
-				@Override
-				public void onChanged(Boolean hasRated) {
-					if (!Objects.equals(feedbackCheckResult.getValue(), hasRated)) {
-						feedbackCheckResult.setValue(hasRated); // Triggers combineAllData
-					}
-					source.removeObserver(this); // Clean up immediately
-				}
-			});
 		} else {
-			// If check not needed, ensure feedback status is false
-			if (feedbackCheckResult.getValue() != Boolean.FALSE) {
-				feedbackCheckResult.setValue(false); // Triggers combineAllData
-			}
+			// If source is the same, still might need to recombine if request/user changed
+			combineAllData();
 		}
 	}
 
-	// Combine all available data into the final state - called whenever any source changes
+	// Combine all available data - Called whenever ANY source changes
 	private void combineAllData() {
 		Request request = requestSource.getValue();
 		User user = userSource.getValue();
 		Post post = postSource.getValue();
-		Boolean hasRated = feedbackCheckResult.getValue();
+		Boolean hasRated = feedbackCheckSource.getValue();
 
-		// Only emit state when ALL required data is available
 		if (request != null && user != null && post != null && hasRated != null) {
 			_requestDetailState.setValue(new RequestDetailState(post, request, user, hasRated));
 		}
 	}
 
-	public void onFeedbackSubmitted() {
-		_feedbackSubmittedEvent.setValue(new Event<>(true));
-		// Also trigger the refresh immediately
-		refreshFeedbackStatus();
-	}
-
-	// --- PUBLIC METHOD FOR FRAGMENT TO TRIGGER REFRESH ---
-	public void refreshFeedbackStatus() {
-		Request request = requestSource.getValue();
-		User user = userSource.getValue();
-		Post post = postSource.getValue();
-		if (request != null && user != null && post != null) {
-			checkFeedbackStatus(request, user, post); // Re-run the check
-		}
-	}
-
-	// --- ACTION METHODS (Use the versions you provided) ---
 	public void acceptOffer() {
 		RequestDetailState currentState = _requestDetailState.getValue();
 		if (currentState == null) return;
@@ -285,7 +263,7 @@ public class RequestDetailViewModel extends ViewModel {
 						break;
 					case SELLER_ACCEPTED:
 						successMessage = "confirmed";
-						break; // Using "confirmed" as per your previous logic
+						break;
 					case REJECTED:
 						successMessage = "rejected";
 						break;
@@ -315,17 +293,11 @@ public class RequestDetailViewModel extends ViewModel {
 		return (currentUser != null) ? currentUser.getId() : null;
 	}
 
-	// Clean up observers added with observeForever
 	@Override
 	protected void onCleared() {
 		super.onCleared();
-		if (requestSource != null) {
-			// You might need to manage removal of the observeForever listeners added in loadRequestDetails
-			// Depending on how your LiveData sources are implemented (e.g., if they are single-shot or continuous)
-			// For simplicity, assuming they are managed elsewhere or are Activity/Fragment scoped.
-		}
-		// Clean up the single observer from checkFeedbackStatusIfNeeded if it's still active
-		// This part is tricky without knowing the exact LiveData lifecycle from the use case.
-		// A safer approach might involve using Transformations.switchMap or collecting Flows if using Kotlin.
+		// Clean up potentially leaked observers if observeForever was used
+		// requestSource.removeObserver(...);
+		// userSource.removeObserver(...);
 	}
 }
