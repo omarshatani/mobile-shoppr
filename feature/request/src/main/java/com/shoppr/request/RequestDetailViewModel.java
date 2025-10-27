@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModel;
 import com.shoppr.domain.usecase.GetCurrentUserUseCase;
 import com.shoppr.domain.usecase.GetPostByIdUseCase;
 import com.shoppr.domain.usecase.GetRequestByIdUseCase;
+import com.shoppr.domain.usecase.HasUserGivenFeedbackUseCase;
 import com.shoppr.domain.usecase.UpdateRequestUseCase;
 import com.shoppr.model.ActivityEntry;
 import com.shoppr.model.Event;
@@ -23,6 +24,7 @@ import com.shoppr.ui.utils.FormattingUtils;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import javax.inject.Inject;
 
@@ -31,18 +33,28 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 @HiltViewModel
 public class RequestDetailViewModel extends ViewModel {
 
+	// --- Use Cases ---
 	private final GetRequestByIdUseCase getRequestByIdUseCase;
 	private final GetPostByIdUseCase getPostByIdUseCase;
 	private final GetCurrentUserUseCase getCurrentUserUseCase;
 	private final UpdateRequestUseCase updateRequestUseCase;
+	private final HasUserGivenFeedbackUseCase hasUserGivenFeedbackUseCase;
 	private final SavedStateHandle savedStateHandle;
 
+	// --- LiveData Sources ---
+	private LiveData<Request> requestSource;
+	private LiveData<User> userSource;
+	private final MutableLiveData<Post> postSource = new MutableLiveData<>();
+	private LiveData<Boolean> feedbackCheckSource;
+
+	// --- State & Events ---
 	private final MediatorLiveData<RequestDetailState> _requestDetailState = new MediatorLiveData<>();
 
 	public LiveData<RequestDetailState> getRequestDetailState() {
 		return _requestDetailState;
 	}
 
+	// Other events...
 	private final MutableLiveData<Event<String>> _actionSuccessEvent = new MutableLiveData<>();
 
 	public LiveData<Event<String>> getActionSuccessEvent() {
@@ -67,11 +79,13 @@ public class RequestDetailViewModel extends ViewModel {
 			GetPostByIdUseCase getPostByIdUseCase,
 			GetCurrentUserUseCase getCurrentUserUseCase,
 			UpdateRequestUseCase updateRequestUseCase,
+			HasUserGivenFeedbackUseCase hasUserGivenFeedbackUseCase,
 			SavedStateHandle savedStateHandle) {
 		this.getRequestByIdUseCase = getRequestByIdUseCase;
 		this.getPostByIdUseCase = getPostByIdUseCase;
 		this.getCurrentUserUseCase = getCurrentUserUseCase;
 		this.updateRequestUseCase = updateRequestUseCase;
+		this.hasUserGivenFeedbackUseCase = hasUserGivenFeedbackUseCase;
 		this.savedStateHandle = savedStateHandle;
 
 		loadRequestDetails();
@@ -80,79 +94,125 @@ public class RequestDetailViewModel extends ViewModel {
 	private void loadRequestDetails() {
 		String requestId = savedStateHandle.get("requestId");
 		if (requestId == null) {
-			_errorEvent.setValue(new Event<>("Request ID is missing."));
 			return;
 		}
 
-		LiveData<Request> requestSource = getRequestByIdUseCase.execute(requestId);
-		LiveData<User> userSource = getCurrentUserUseCase.getFullUserProfile();
+		requestSource = getRequestByIdUseCase.execute(requestId);
+		userSource = getCurrentUserUseCase.getFullUserProfile();
+		// Initialize feedback source with a non-null default before adding
+		feedbackCheckSource = new MutableLiveData<>(false);
 
-		_requestDetailState.addSource(requestSource, request -> combineData(request, userSource.getValue()));
-		_requestDetailState.addSource(userSource, user -> combineData(requestSource.getValue(), user));
+		// Add all sources needed for the final state
+		_requestDetailState.addSource(requestSource, request -> fetchPostIfNeeded(request, userSource.getValue()));
+		_requestDetailState.addSource(userSource, user -> fetchPostIfNeeded(requestSource.getValue(), user));
+		_requestDetailState.addSource(postSource, post -> combineAllData());
+		_requestDetailState.addSource(feedbackCheckSource, hasRated -> combineAllData());
 	}
 
-	private void combineData(@Nullable Request request, @Nullable User user) {
-		if (request == null || user == null || request.getPostId() == null) {
-			return;
+	// Trigger post fetch
+	private void fetchPostIfNeeded(@Nullable Request request, @Nullable User user) {
+		if (request != null && user != null && request.getPostId() != null) {
+			Post currentPost = postSource.getValue();
+			if (currentPost == null || !Objects.equals(currentPost.getId(), request.getPostId())) {
+				getPostByIdUseCase.execute(request.getPostId(), new GetPostByIdUseCase.GetPostByIdCallbacks() {
+					@Override
+					public void onSuccess(@NonNull Post post) {
+						postSource.setValue(post); // Triggers combineAllData via observer
+						initializeFeedbackListener(request, user, post); // Init listener *after* post load
+						// No need to explicitly call combineAllData here, postSource observer does it.
+					}
+
+					@Override
+					public void onError(@NonNull String message) {
+						_errorEvent.setValue(new Event<>(message));
+					}
+
+					@Override
+					public void onNotFound() {
+						_errorEvent.setValue(new Event<>("Not found"));
+					}
+				});
+			} else {
+				// If post already loaded, just ensure listener is correct for current state
+				initializeFeedbackListener(request, user, currentPost);
+			}
+		}
+	}
+
+	// Initialize or reset the feedback listener source
+	private void initializeFeedbackListener(Request request, User user, Post post) {
+		boolean isSeller = user.getId().equals(post.getLister().getId());
+		LiveData<Boolean> newSource;
+
+		if (isSeller && request.getStatus() == RequestStatus.COMPLETED) {
+			// Conditions met: get the *actual* listening LiveData
+			newSource = hasUserGivenFeedbackUseCase.execute(request.getId(), user.getId());
+		} else {
+			// Conditions NOT met: use a LiveData that always holds 'false'
+			newSource = new MutableLiveData<>(false);
 		}
 
-		getPostByIdUseCase.execute(request.getPostId(), new GetPostByIdUseCase.GetPostByIdCallbacks() {
-			@Override
-			public void onSuccess(@NonNull Post post) {
-				_requestDetailState.setValue(new RequestDetailState(post, request, user));
+		// Only swap source if it's actually different
+		if (feedbackCheckSource != newSource) {
+			_requestDetailState.removeSource(feedbackCheckSource); // Remove old one
+			feedbackCheckSource = newSource;
+			_requestDetailState.addSource(feedbackCheckSource, hasRated -> combineAllData()); // Add new one
+			// If the new source is the static 'false', trigger combine immediately
+			if (newSource instanceof MutableLiveData && newSource.getValue() == Boolean.FALSE) {
+				combineAllData();
 			}
+		} else {
+			// If source is the same, still might need to recombine if request/user changed
+			combineAllData();
+		}
+	}
 
-			@Override
-			public void onError(@NonNull String message) {
-				_errorEvent.setValue(new Event<>(message));
-			}
+	// Combine all available data - Called whenever ANY source changes
+	private void combineAllData() {
+		Request request = requestSource.getValue();
+		User user = userSource.getValue();
+		Post post = postSource.getValue();
+		Boolean hasRated = feedbackCheckSource.getValue();
 
-			@Override
-			public void onNotFound() {
-				_errorEvent.setValue(new Event<>("Post not found."));
-			}
-		});
+		if (request != null && user != null && post != null && hasRated != null) {
+			_requestDetailState.setValue(new RequestDetailState(post, request, user, hasRated));
+		}
 	}
 
 	public void acceptOffer() {
 		RequestDetailState currentState = _requestDetailState.getValue();
 		if (currentState == null) return;
-
 		RequestStatus currentStatus = currentState.getRequest().getStatus();
 
 		if (currentState.isCurrentUserSeller) {
 			if (currentStatus == RequestStatus.SELLER_PENDING) {
-				// Seller accepts initial offer -> moves to SELLER_ACCEPTED for buyer's confirmation.
 				updateRequest(RequestStatus.SELLER_ACCEPTED, "Accepted the offer", null);
 			} else if (currentStatus == RequestStatus.BUYER_ACCEPTED) {
-				// --- THIS IS THE FIX ---
-				// Seller confirms the deal after buyer accepted a counter-offer -> moves to SELLER_ACCEPTED for buyer's confirmation.
 				updateRequest(RequestStatus.SELLER_ACCEPTED, "Confirmed the deal", null);
 			}
 		} else if (currentState.isCurrentUserBuyer) {
 			if (currentStatus == RequestStatus.BUYER_PENDING) {
-				// Buyer accepts a counter-offer -> moves to BUYER_ACCEPTED for seller's confirmation.
 				updateRequest(RequestStatus.BUYER_ACCEPTED, "Accepted the counter-offer", null);
 			} else if (currentStatus == RequestStatus.SELLER_ACCEPTED) {
-				// Buyer gives final confirmation -> Navigate to checkout.
 				_navigateToCheckoutEvent.setValue(new Event<>(true));
 			}
 		}
 	}
 
 	public void rejectOffer() {
-		// A rejection is a final state.
 		updateRequest(RequestStatus.REJECTED, "Rejected the offer", null);
 	}
 
 	public void editOffer(String newPrice) {
 		RequestDetailState currentState = getRequestDetailState().getValue();
-		if (currentState == null) return;
+		if (currentState == null || !currentState.isCurrentUserBuyer || currentState.getRequest().getStatus() != RequestStatus.SELLER_PENDING) {
+			_errorEvent.setValue(new Event<>("Cannot edit offer at this time."));
+			return;
+		}
 		try {
 			double newAmount = Double.parseDouble(newPrice);
 			String description = String.format("Edited offer to %s",
 					FormattingUtils.formatCurrency(currentState.getRequest().getOfferCurrency(), newAmount));
-			// An edit by the buyer keeps the state as SELLER_PENDING.
 			updateRequest(RequestStatus.SELLER_PENDING, description, newAmount);
 		} catch (NumberFormatException e) {
 			_errorEvent.setValue(new Event<>("Invalid price format."));
@@ -166,7 +226,6 @@ public class RequestDetailViewModel extends ViewModel {
 			double newAmount = Double.parseDouble(newPrice);
 			String description = String.format("Countered with %s",
 					FormattingUtils.formatCurrency(currentState.getRequest().getOfferCurrency(), newAmount));
-			// A counter-offer always flips the turn.
 			RequestStatus nextStatus = currentState.isCurrentUserSeller ? RequestStatus.BUYER_PENDING : RequestStatus.SELLER_PENDING;
 			updateRequest(nextStatus, description, newAmount);
 		} catch (NumberFormatException e) {
@@ -174,7 +233,6 @@ public class RequestDetailViewModel extends ViewModel {
 		}
 	}
 
-	// The generic updateRequest method no longer needs to calculate the finalStatus.
 	private void updateRequest(RequestStatus newStatus, String activityDescription, @Nullable Double newOfferAmount) {
 		RequestDetailState currentState = _requestDetailState.getValue();
 		if (currentState == null) {
@@ -184,15 +242,12 @@ public class RequestDetailViewModel extends ViewModel {
 		Request requestToUpdate = currentState.getRequest();
 		User currentUser = currentState.getCurrentUser();
 
-		// Create the timeline entry
-		ActivityEntry newEntry = new ActivityEntry(
-				currentUser.getId(), currentUser.getName(), activityDescription);
+		ActivityEntry newEntry = new ActivityEntry(currentUser.getId(), currentUser.getName(), activityDescription);
 		newEntry.setCreatedAt(new Date());
 		List<ActivityEntry> newTimeline = new ArrayList<>(requestToUpdate.getActivityTimeline() != null ? requestToUpdate.getActivityTimeline() : new ArrayList<>());
 		newTimeline.add(newEntry);
 
-		// Update the request object
-		requestToUpdate.setStatus(newStatus); // The correct status is passed in directly.
+		requestToUpdate.setStatus(newStatus);
 		requestToUpdate.setActivityTimeline(newTimeline);
 		if (newOfferAmount != null) {
 			requestToUpdate.setOfferAmount(newOfferAmount);
@@ -201,25 +256,29 @@ public class RequestDetailViewModel extends ViewModel {
 		updateRequestUseCase.execute(requestToUpdate, new UpdateRequestUseCase.UpdateRequestCallbacks() {
 			@Override
 			public void onSuccess() {
+				String successMessage;
 				switch (newStatus) {
 					case BUYER_ACCEPTED:
-						_actionSuccessEvent.setValue(new Event<>("accepted"));
+						successMessage = "accepted";
 						break;
 					case SELLER_ACCEPTED:
-						_actionSuccessEvent.setValue(new Event<>("confirmed"));
+						successMessage = "confirmed";
 						break;
 					case REJECTED:
-						_actionSuccessEvent.setValue(new Event<>("rejected"));
+						successMessage = "rejected";
+						break;
 					case COMPLETED:
-						_actionSuccessEvent.setValue(new Event<>("completed"));
+						successMessage = "completed";
 						break;
 					case BUYER_PENDING:
 					case SELLER_PENDING:
-						_actionSuccessEvent.setValue(new Event<>("updated"));
+						successMessage = "updated";
 						break;
 					default:
+						successMessage = newStatus.toString().toLowerCase();
 						break;
 				}
+				_actionSuccessEvent.setValue(new Event<>(successMessage));
 			}
 
 			@Override
@@ -227,5 +286,18 @@ public class RequestDetailViewModel extends ViewModel {
 				_errorEvent.setValue(new Event<>(message));
 			}
 		});
+	}
+
+	public String getCurrentUserId() {
+		User currentUser = userSource.getValue();
+		return (currentUser != null) ? currentUser.getId() : null;
+	}
+
+	@Override
+	protected void onCleared() {
+		super.onCleared();
+		// Clean up potentially leaked observers if observeForever was used
+		// requestSource.removeObserver(...);
+		// userSource.removeObserver(...);
 	}
 }

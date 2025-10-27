@@ -22,12 +22,17 @@ public class RequestDetailState {
 	public final boolean showRejectButton;
 	public final boolean showCounterButton;
 	public final boolean showEditOfferButton;
+	public final boolean showSellerFeedbackButton;
 
 	// Button Text
 	public final String acceptButtonText;
 	public final String listerName;
 
 	public RequestDetailState(Post post, Request request, User currentUser) {
+		this(post, request, currentUser, false);
+	}
+
+	public RequestDetailState(Post post, Request request, User currentUser, boolean hasSellerRatedBuyer) {
 		this.post = post;
 		this.request = request;
 		this.currentUser = currentUser;
@@ -36,6 +41,10 @@ public class RequestDetailState {
 		this.isCurrentUserBuyer = currentUser != null && request.getBuyerId() != null && currentUser.getId().equals(request.getBuyerId());
 
 		this.showActionButtons = request.getStatus() != RequestStatus.COMPLETED && request.getStatus() != RequestStatus.REJECTED;
+
+		this.showSellerFeedbackButton = this.isCurrentUserSeller &&
+				request.getStatus() == RequestStatus.COMPLETED &&
+				!hasSellerRatedBuyer;
 
 		boolean isSellerTurn = isCurrentUserSeller && request.getStatus() == RequestStatus.SELLER_PENDING;
 		boolean isBuyerTurn = isCurrentUserBuyer && request.getStatus() == RequestStatus.BUYER_PENDING;
@@ -71,7 +80,6 @@ public class RequestDetailState {
 		this.listerName = isCurrentUserSeller ? "Your Listing" : String.format("@%s", post.getLister().getName());
 	}
 
-	// --- Getters for Raw Data ---
 	public Post getPost() {
 		return post;
 	}

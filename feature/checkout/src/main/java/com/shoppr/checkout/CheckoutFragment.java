@@ -104,7 +104,7 @@ public class CheckoutFragment extends BaseFragment<FragmentCheckoutBinding> {
 				CheckoutState currentState = viewModel.getCheckoutState().getValue();
 				if (currentState != null) {
 					Bundle result = new Bundle();
-					result.putString("transactionId", currentState.getRequest().getId());
+					result.putString("requestId", currentState.getRequest().getId());
 					result.putString("raterId", currentState.getRequest().getBuyerId());
 					result.putString("rateeId", currentState.getSeller().getId());
 					result.putString("sellerName", currentState.getSeller().getName());

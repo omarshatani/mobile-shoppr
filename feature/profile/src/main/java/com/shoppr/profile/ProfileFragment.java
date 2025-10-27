@@ -98,10 +98,23 @@ public class ProfileFragment extends BaseFragment<FragmentProfileBinding> {
 				binding.profileName.setText(user.getName());
 				binding.profileEmail.setText(user.getEmail());
 				binding.buttonLogout.setVisibility(View.VISIBLE);
+
+				if (user.getRatingCount() > 0) {
+					binding.layoutProfileRating.setVisibility(View.VISIBLE);
+					binding.ratingBarProfile.setRating((float) user.getAverageRating());
+					binding.textProfileRatingValue.setText(String.format("%.1f", user.getAverageRating()));
+					String reviewText = String.format("(%d reviews)", user.getRatingCount());
+					binding.textProfileRatingCount.setText(reviewText);
+				} else {
+					// Hide the rating section if the user has no reviews
+					binding.layoutProfileRating.setVisibility(View.GONE);
+				}
+
 			} else {
 				binding.profileName.setText(R.string.guest);
 				binding.profileEmail.setText(com.shoppr.profile.R.string.user_logged_out_interaction_label);
 				binding.buttonLogout.setVisibility(View.GONE);
+				binding.layoutProfileRating.setVisibility(View.GONE);
 			}
 		});
 

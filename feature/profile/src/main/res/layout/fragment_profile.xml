@@ -55,6 +55,49 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/profile_name"
                 tools:text="alex.richards@example.com" />
+
+            <LinearLayout
+                android:id="@+id/layout_profile_rating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/profile_email"
+                tools:visibility="visible">
+
+                <RatingBar
+                    android:id="@+id/rating_bar_profile"
+                    style="?android:attr/ratingBarStyleSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:isIndicator="true"
+                    android:numStars="5"
+                    android:stepSize="0.1"
+                    tools:rating="4.5" />
+
+                <TextView
+                    android:id="@+id/text_profile_rating_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"
+                    android:textStyle="bold"
+                    tools:text="4.3" />
+
+                <TextView
+                    android:id="@+id/text_profile_rating_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    tools:text="(12 reviews)" />
+
+            </LinearLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <TextView
