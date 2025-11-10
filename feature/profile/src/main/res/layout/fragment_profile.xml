@@ -55,6 +55,49 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/profile_name"
                 tools:text="alex.richards@example.com" />
+
+            <LinearLayout
+                android:id="@+id/layout_profile_rating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/profile_email"
+                tools:visibility="visible">
+
+                <RatingBar
+                    android:id="@+id/rating_bar_profile"
+                    style="?android:attr/ratingBarStyleSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:isIndicator="true"
+                    android:numStars="5"
+                    android:stepSize="0.1"
+                    tools:rating="4.5" />
+
+                <TextView
+                    android:id="@+id/text_profile_rating_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"
+                    android:textStyle="bold"
+                    tools:text="4.3" />
+
+                <TextView
+                    android:id="@+id/text_profile_rating_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    tools:text="(12 reviews)" />
+
+            </LinearLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <TextView
@@ -77,28 +120,22 @@
             android:layout_marginEnd="16dp"
             android:background="@drawable/bg_rounded_surface_container"
             android:elevation="1dp"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingVertical="8dp"
+            android:divider="@drawable/divider"
+            android:showDividers="middle">
 
-            <com.shoppr.ui.MenuItemView
-                android:id="@+id/item_contact"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:menuItemIcon="@drawable/ic_person_24"
-                app:menuItemText="@string/menu_contact" />
+            <include
+                android:id="@+id/menu_personal_information"
+                layout="@layout/layout_menu_item" />
 
-            <com.shoppr.ui.MenuItemView
-                android:id="@+id/item_location"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:menuItemIcon="@drawable/ic_location_on"
-                app:menuItemText="@string/menu_location" />
+            <include
+                android:id="@+id/menu_item_my_messages"
+                layout="@layout/layout_menu_item" />
 
-            <com.shoppr.ui.MenuItemView
-                android:id="@+id/item_barcode"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:menuItemIcon="@drawable/ic_barcode"
-                app:menuItemText="@string/menu_barcode" />
+            <include
+                android:id="@+id/menu_item_my_favorites"
+                layout="@layout/layout_menu_item" />
         </LinearLayout>
 
         <View
@@ -125,24 +162,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
             android:layout_marginEnd="16dp"
             android:background="@drawable/bg_rounded_surface_container"
             android:elevation="1dp"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingVertical="8dp"
+            android:divider="@drawable/divider"
+            android:showDividers="middle">
 
-            <com.shoppr.ui.MenuItemView
-                android:id="@+id/item_likes_coffee"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:menuItemIcon="@drawable/ic_coffee"
-                app:menuItemText="@string/menu_likes_coffee" />
+            <include
+                android:id="@+id/menu_item_settings"
+                layout="@layout/layout_menu_item" />
 
-            <com.shoppr.ui.MenuItemView
-                android:id="@+id/item_calendar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:menuItemIcon="@drawable/ic_calendar_month"
-                app:menuItemText="@string/menu_calendar" />
+            <include
+                android:id="@+id/menu_item_help"
+                layout="@layout/layout_menu_item" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
@@ -154,8 +189,8 @@
             android:layout_marginTop="16dp"
             android:text="@string/logout"
             android:textColor="@color/md_theme_light_error"
-            app:strokeColor="@color/md_theme_light_error"
+            app:icon="@drawable/ic_logout"
             app:iconTint="@color/md_theme_light_error"
-            app:icon="@drawable/ic_logout" />
+            app:strokeColor="@color/md_theme_light_error" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

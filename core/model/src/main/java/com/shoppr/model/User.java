@@ -1,23 +1,33 @@
 package com.shoppr.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-public class User {
+import java.util.ArrayList;
+import java.util.List;
+
+public class User implements Parcelable {
 	private String id;
 	private String name;
 	private String email;
 	private String phoneNumber;
-	private String address; // General address string
+	private String address;
+	private List<String> favoritePosts;
+	private double averageRating = 0.0;
+	private int ratingCount = 0;
 
-	// New fields for last known/default posting location
 	@Nullable
-	private Double lastLatitude;
+	private Double latitude;
 	@Nullable
-	private Double lastLongitude;
+	private Double longitude;
 	@Nullable
-	private String lastLocationAddress; // Optional: A reverse-geocoded address for this lat/lon
+	private String locationAddress;
 
-	public User() {}
+	public User() {
+	}
 
 	private User(Builder builder) {
 		this.id = builder.id;
@@ -25,12 +35,48 @@ public class User {
 		this.email = builder.email;
 		this.phoneNumber = builder.phoneNumber;
 		this.address = builder.address;
-		this.lastLatitude = builder.lastLatitude;
-		this.lastLongitude = builder.lastLongitude;
-		this.lastLocationAddress = builder.lastLocationAddress;
+		this.latitude = builder.latitude;
+		this.longitude = builder.longitude;
+		this.locationAddress = builder.locationAddress;
+		this.favoritePosts = builder.favoritePosts != null ? new ArrayList<>(builder.favoritePosts) : new ArrayList<>();
+		this.averageRating = builder.averageRating;
+		this.ratingCount = builder.ratingCount;
 	}
 
-	// Existing getters and setters...
+	protected User(Parcel in) {
+		id = in.readString();
+		name = in.readString();
+		email = in.readString();
+		phoneNumber = in.readString();
+		address = in.readString();
+		favoritePosts = in.createStringArrayList();
+		averageRating = in.readDouble();
+		ratingCount = in.readInt();
+		if (in.readByte() == 0) {
+			latitude = null;
+		} else {
+			latitude = in.readDouble();
+		}
+		if (in.readByte() == 0) {
+			longitude = null;
+		} else {
+			longitude = in.readDouble();
+		}
+		locationAddress = in.readString();
+	}
+
+	public static final Creator<User> CREATOR = new Creator<User>() {
+		@Override
+		public User createFromParcel(Parcel in) {
+			return new User(in);
+		}
+
+		@Override
+		public User[] newArray(int size) {
+			return new User[size];
+		}
+	};
+
 	public String getId() {
 		return id;
 	}
@@ -71,34 +117,86 @@ public class User {
 		this.address = address;
 	}
 
-	// Getters and Setters for new location fields
 	@Nullable
-	public Double getLastLatitude() {
-		return lastLatitude;
+	public Double getLatitude() {
+		return latitude;
 	}
 
-	public void setLastLatitude(@Nullable Double lastLatitude) {
-		this.lastLatitude = lastLatitude;
-	}
-
-	@Nullable
-	public Double getLastLongitude() {
-		return lastLongitude;
-	}
-
-	public void setLastLongitude(@Nullable Double lastLongitude) {
-		this.lastLongitude = lastLongitude;
+	public void setLatitude(@Nullable Double latitude) {
+		this.latitude = latitude;
 	}
 
 	@Nullable
-	public String getLastLocationAddress() {
-		return lastLocationAddress;
+	public Double getLongitude() {
+		return longitude;
 	}
 
-	public void setLastLocationAddress(@Nullable String lastLocationAddress) {
-		this.lastLocationAddress = lastLocationAddress;
+	public void setLongitude(@Nullable Double longitude) {
+		this.longitude = longitude;
 	}
 
+	@Nullable
+	public String getLocationAddress() {
+		return locationAddress;
+	}
+
+	public void setLocationAddress(@Nullable String locationAddress) {
+		this.locationAddress = locationAddress;
+	}
+
+	public List<String> getFavoritePosts() {
+		return favoritePosts;
+	}
+
+	public void setFavoritePosts(List<String> favoritePosts) {
+		this.favoritePosts = favoritePosts;
+	}
+
+	public double getAverageRating() {
+		return averageRating;
+	}
+
+	public void setAverageRating(double averageRating) {
+		this.averageRating = averageRating;
+	}
+
+	public int getRatingCount() {
+		return ratingCount;
+	}
+
+	public void setRatingCount(int ratingCount) {
+		this.ratingCount = ratingCount;
+	}
+
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(@NonNull Parcel dest, int flags) {
+		dest.writeString(id);
+		dest.writeString(name);
+		dest.writeString(email);
+		dest.writeString(phoneNumber);
+		dest.writeString(address);
+		dest.writeStringList(favoritePosts);
+		dest.writeDouble(averageRating);
+		dest.writeInt(ratingCount);
+		if (latitude == null) {
+			dest.writeByte((byte) 0);
+		} else {
+			dest.writeByte((byte) 1);
+			dest.writeDouble(latitude);
+		}
+		if (longitude == null) {
+			dest.writeByte((byte) 0);
+		} else {
+			dest.writeByte((byte) 1);
+			dest.writeDouble(longitude);
+		}
+		dest.writeString(locationAddress);
+	}
 
 	public static class Builder {
 		private String id;
@@ -106,12 +204,15 @@ public class User {
 		private String email;
 		private String phoneNumber;
 		private String address;
+		private List<String> favoritePosts = new ArrayList<>();
+		private double averageRating = 0.0;
+		private int ratingCount = 0;
 		@Nullable
-		private Double lastLatitude;
+		private Double latitude;
 		@Nullable
-		private Double lastLongitude;
+		private Double longitude;
 		@Nullable
-		private String lastLocationAddress;
+		private String locationAddress;
 
 		public Builder id(String id) {
 			this.id = id;
@@ -138,21 +239,35 @@ public class User {
 			return this;
 		}
 
-		public Builder lastLatitude(@Nullable Double latitude) {
-			this.lastLatitude = latitude;
+		public Builder favoritePosts(List<String> favoritePosts) {
+			this.favoritePosts = favoritePosts;
 			return this;
 		}
 
-		public Builder lastLongitude(@Nullable Double longitude) {
-			this.lastLongitude = longitude;
+		public Builder averageRating(double averageRating) {
+			this.averageRating = averageRating;
 			return this;
 		}
 
-		public Builder lastLocationAddress(@Nullable String address) {
-			this.lastLocationAddress = address;
+		public Builder ratingCount(int ratingCount) {
+			this.ratingCount = ratingCount;
 			return this;
 		}
 
+		public Builder latitude(@Nullable Double latitude) {
+			this.latitude = latitude;
+			return this;
+		}
+
+		public Builder longitude(@Nullable Double longitude) {
+			this.longitude = longitude;
+			return this;
+		}
+
+		public Builder locationAddress(@Nullable String address) {
+			this.locationAddress = address;
+			return this;
+		}
 
 		public User build() {
 			return new User(this);

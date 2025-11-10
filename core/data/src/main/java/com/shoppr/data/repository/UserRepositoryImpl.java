@@ -4,125 +4,173 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Transformations;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.shoppr.domain.datasource.FirebaseAuthDataSource;
 import com.shoppr.domain.datasource.FirestoreUserDataSource;
 import com.shoppr.domain.repository.UserRepository;
 import com.shoppr.model.User;
+
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class UserRepositoryImpl implements UserRepository {
-    private static final String TAG = "UserRepositoryImpl";
-    private final FirestoreUserDataSource firestoreUserDataSource; // Using the interface
+	private static final String TAG = "UserRepositoryImpl";
 
-    @Inject
-    public UserRepositoryImpl(FirestoreUserDataSource firestoreUserDataSource) { // Inject interface
-        this.firestoreUserDataSource = firestoreUserDataSource;
-    }
+	private final FirestoreUserDataSource firestoreUserDataSource;
+	private final FirebaseAuthDataSource firebaseAuthDataSource;
+	private final LiveData<User> fullUserProfile;
+	private ListenerRegistration userProfileListenerRegistration;
 
-    @Override
-    public void getOrCreateUserProfile(@NonNull String uid, @Nullable String displayName, @Nullable String email, @Nullable String photoUrl, @NonNull ProfileOperationCallbacks callbacks) {
-        Log.d(TAG, "getOrCreateUserProfile called for UID: " + uid);
-        firestoreUserDataSource.getUser(uid, new FirestoreUserDataSource.FirestoreOperationCallbacks() {
-            @Override
-            public void onSuccess(@NonNull User user) {
-                Log.d(TAG, "User profile found in Firestore via DataSource for UID: " + user.getId());
-                callbacks.onSuccess(user);
-            }
+	@Inject
+	public UserRepositoryImpl(
+			FirestoreUserDataSource firestoreUserDataSource,
+			FirebaseAuthDataSource firebaseAuthDataSource
+	) {
+		this.firestoreUserDataSource = firestoreUserDataSource;
+		this.firebaseAuthDataSource = firebaseAuthDataSource;
 
-            @Override
-            public void onNotFound() {
-                Log.d(TAG, "User profile not found in Firestore via DataSource for UID: " + uid + ". Attempting to create.");
-                User newUser = new User.Builder()
-                        .id(uid)
-                        .name(displayName)
-                        .email(email)
-                        // Initialize new location fields to null or default
-                        .lastLatitude(null)
-                        .lastLongitude(null)
-                        .lastLocationAddress(null)
-                        .build();
+		this.fullUserProfile = Transformations.switchMap(firebaseAuthDataSource.getDomainUserAuthStateLiveData(), authUser -> {
+			if (userProfileListenerRegistration != null) {
+				userProfileListenerRegistration.remove();
+			}
 
-                firestoreUserDataSource.createUser(newUser, new FirestoreUserDataSource.FirestoreOperationCallbacks() {
-                    @Override
-                    public void onSuccess(@NonNull User createdUser) {
-                        Log.d(TAG, "Successfully created new user profile via DataSource for UID: " + createdUser.getId());
-                        callbacks.onSuccess(createdUser);
-                    }
+			if (authUser == null || authUser.getId() == null) {
+				return new MutableLiveData<>(null);
+			}
 
-                    @Override
-                    public void onError(@NonNull String message) {
-                        Log.e(TAG, "Error creating new user profile via DataSource for UID: " + uid + " - " + message);
-                        callbacks.onError(message);
-                    }
+			MutableLiveData<User> firestoreUserLiveData = new MutableLiveData<>();
+			userProfileListenerRegistration = FirebaseFirestore.getInstance().collection("users").document(authUser.getId())
+					.addSnapshotListener((snapshot, e) -> {
+						if (e != null) {
+							Log.e(TAG, "Error listening to user profile", e);
+							firestoreUserLiveData.postValue(null);
+							return;
+						}
 
-                    @Override
-                    public void onNotFound() {
-                        // This case should ideally not be reached during a createUser call's callback.
-                        Log.e(TAG, "onNotFound called unexpectedly during createUser callback for UID: " + uid);
-                        callbacks.onError("Unexpected error during profile creation (onNotFound).");
-                    }
-                });
-            }
+						if (snapshot != null && snapshot.exists()) {
+							User user = snapshot.toObject(User.class);
+							if (user != null) {
+								user.setId(snapshot.getId());
+							}
+							firestoreUserLiveData.postValue(user);
+						} else {
+							firestoreUserLiveData.postValue(authUser);
+						}
+					});
+			return firestoreUserLiveData;
+		});
+	}
 
-            @Override
-            public void onError(@NonNull String message) {
-                Log.e(TAG, "Error getting user profile from DataSource for UID: " + uid + " - " + message);
-                callbacks.onError(message);
-            }
-        });
-    }
+	@Override
+	public LiveData<User> getFullUserProfile() {
+		return fullUserProfile;
+	}
 
-    @Override
-    public void updateUserDefaultLocation(@NonNull String uid, double latitude, double longitude, @Nullable String addressName, @NonNull LocationUpdateCallbacks callbacks) {
-        Log.d(TAG, "Attempting to update default location for UID: " + uid);
-        // First, get the existing user data to ensure we don't overwrite other fields unintentionally
-        // if we were to construct a new User object with only location data.
-        // It's safer to fetch, modify, then update.
-        firestoreUserDataSource.getUser(uid, new FirestoreUserDataSource.FirestoreOperationCallbacks() {
-            @Override
-            public void onSuccess(@NonNull User user) {
-                Log.d(TAG, "User " + uid + " found. Updating location fields on the fetched User object.");
-                user.setLastLatitude(latitude);
-                user.setLastLongitude(longitude);
-                user.setLastLocationAddress(addressName);
+	@Override
+	public void getOrCreateUserProfile(
+			@NonNull String uid,
+			@Nullable String displayName,
+			@Nullable String email,
+			@Nullable String photoUrl,
+			@NonNull ProfileOperationCallbacks callbacks
+	) {
+		firestoreUserDataSource.getOrCreateUserProfile(uid, displayName, email, photoUrl, new FirestoreUserDataSource.UserCallbacks() {
+			@Override
+			public void onSuccess(@NonNull User user) {
+				callbacks.onSuccess(user);
+			}
 
-                // Now call the updateUser method in the DataSource with the modified User object
-                firestoreUserDataSource.updateUser(user, new FirestoreUserDataSource.FirestoreOperationCallbacks() {
-                    @Override
-                    public void onSuccess(@NonNull User updatedUser) { // updateUser callback returns the User object
-                        Log.d(TAG, "User " + uid + " location updated successfully in DataSource.");
-                        callbacks.onSuccess(); // Domain callback for LocationUpdateCallbacks is void
-                    }
+			@Override
+			public void onError(@NonNull String message) {
+				callbacks.onError(message);
+			}
+		});
+	}
 
-                    @Override
-                    public void onError(@NonNull String message) {
-                        Log.e(TAG, "Error updating user " + uid + " location in DataSource: " + message);
-                        callbacks.onError(message);
-                    }
+	@Override
+	public void startObservingUserProfile() {
+		firebaseAuthDataSource.startObserving();
+	}
 
-                    @Override
-                    public void onNotFound() {
-                        // This implies the user was deleted between the getUser and updateUser calls, which is rare.
-                        Log.e(TAG, "User " + uid + " not found during updateUser call, though getUser succeeded. Inconsistent state?");
-                        callbacks.onError("User not found during location update save operation.");
-                    }
-                });
-            }
+	@Override
+	public void stopObservingUserProfile() {
+		firebaseAuthDataSource.stopObserving();
+		if (userProfileListenerRegistration != null) {
+			userProfileListenerRegistration.remove();
+			userProfileListenerRegistration = null;
+		}
+	}
 
-            @Override
-            public void onNotFound() {
-                Log.e(TAG, "User " + uid + " not found. Cannot update default location.");
-                callbacks.onError("User profile not found, cannot update location.");
-            }
+	@Override
+	public void updateUserDefaultLocation(
+			double latitude,
+			double longitude,
+			@Nullable String addressName,
+			@NonNull OperationCallbacks callbacks
+	) {
+		User currentUser = fullUserProfile.getValue();
+		if (currentUser == null || currentUser.getId() == null) {
+			callbacks.onError("User not logged in.");
+			return;
+		}
 
-            @Override
-            public void onError(@NonNull String message) {
-                Log.e(TAG, "Error fetching user " + uid + " before attempting location update: " + message);
-                callbacks.onError("Could not retrieve user profile to update location: " + message);
-            }
-        });
-    }
+		firestoreUserDataSource.updateUserLocation(currentUser.getId(), latitude, longitude, addressName, new FirestoreUserDataSource.OperationCallbacks() {
+			@Override
+			public void onSuccess() {
+				callbacks.onSuccess();
+			}
+
+			@Override
+			public void onError(@NonNull String message) {
+				callbacks.onError(message);
+			}
+		});
+	}
+
+	@Override
+	public void toggleFavoriteStatus(@NonNull String postId, @NonNull OperationCallbacks callbacks) {
+		User currentUser = fullUserProfile.getValue();
+		if (currentUser == null || currentUser.getId() == null) {
+			callbacks.onError("User not logged in.");
+			return;
+		}
+
+		List<String> favorites = currentUser.getFavoritePosts();
+		boolean shouldAdd = favorites == null || !favorites.contains(postId);
+
+		firestoreUserDataSource.updateUserFavorites(currentUser.getId(), postId, shouldAdd, new FirestoreUserDataSource.OperationCallbacks() {
+			@Override
+			public void onSuccess() {
+				callbacks.onSuccess();
+			}
+
+			@Override
+			public void onError(@NonNull String message) {
+				callbacks.onError(message);
+			}
+		});
+	}
+
+	@Override
+	public void getUserById(String userId, @NonNull UserRepository.GetUserByIdCallbacks callbacks) {
+		firestoreUserDataSource.getUserById(userId, new FirestoreUserDataSource.GetUserByIdCallbacks() {
+			@Override
+			public void onSuccess(@Nullable User user) {
+				callbacks.onSuccess(user);
+			}
+
+			@Override
+			public void onError(@NonNull String message) {
+				callbacks.onError(message);
+			}
+		});
+	}
 }

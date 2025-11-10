@@ -4,8 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,7 +21,6 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.carousel.CarouselLayoutManager;
 import com.google.android.material.carousel.CarouselSnapHelper;
 import com.shoppr.navigation.NavigationRoute;
@@ -40,21 +37,24 @@ import javax.inject.Inject;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class CreatePostFragment extends BaseFragment {
+public class CreatePostFragment extends BaseFragment<FragmentCreatePostBinding> {
 	private static final String TAG = "CreatePostFragment";
 
 	private CreatePostViewModel viewModel;
-	private FragmentCreatePostBinding binding;
 
 	@Inject
 	Navigator navigator;
 
-	// Adapter for the image carousel
 	private SelectedImagesCarouselAdapter selectedImagesAdapter;
 	private ActivityResultLauncher<Intent> pickImagesLauncher;
-	// postCreationLocation is now managed by observing ViewModel's postCreationLocation LiveData
 
-	public CreatePostFragment() { /* Required empty public constructor */ }
+	public CreatePostFragment() {
+	}
+
+	@Override
+	protected boolean shouldHideBottomNav() {
+		return true;
+	}
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -64,7 +64,7 @@ public class CreatePostFragment extends BaseFragment {
 		pickImagesLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
 			if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
 				List<Uri> newlySelectedUris = new ArrayList<>();
-				if (result.getData().getClipData() != null) { // Multiple images selected
+				if (result.getData().getClipData() != null) {
 					int count = result.getData().getClipData().getItemCount();
 					for (int i = 0; i < count; i++) {
 						Uri imageUri = result.getData().getClipData().getItemAt(i).getUri();
@@ -72,16 +72,14 @@ public class CreatePostFragment extends BaseFragment {
 							newlySelectedUris.add(imageUri);
 						}
 					}
-				} else if (result.getData().getData() != null) { // Single image selected
+				} else if (result.getData().getData() != null) {
 					Uri imageUri = result.getData().getData();
 					if (imageUri != null) {
 						newlySelectedUris.add(imageUri);
 					}
 				}
-				// ViewModel handles combining/updating its list
 				viewModel.onUserSelectedLocalImageUris(newlySelectedUris);
 				Toast.makeText(getContext(), newlySelectedUris.size() + " image(s) added.", Toast.LENGTH_SHORT).show();
-				// Adapter will be updated by observing viewModel.selectedImageUris
 			} else {
 				Log.d(TAG, "Image selection cancelled or failed.");
 			}
@@ -89,10 +87,8 @@ public class CreatePostFragment extends BaseFragment {
 	}
 
 	@Override
-	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-													 Bundle savedInstanceState) {
-		binding = FragmentCreatePostBinding.inflate(inflater, container, false);
-		return binding.getRoot();
+	protected FragmentCreatePostBinding inflateBinding(@NonNull LayoutInflater inflater, @Nullable ViewGroup container) {
+		return FragmentCreatePostBinding.inflate(inflater, container, false);
 	}
 
 	@Override
@@ -103,29 +99,28 @@ public class CreatePostFragment extends BaseFragment {
 		NavController navController = NavHostFragment.findNavController(this);
 		NavigationUI.setupWithNavController(toolbar, navController);
 
-		// Inset handling for AppBarLayout removed as per your request.
-		// The AppBarLayout's android:paddingTop="16dp" from your XML will apply.
-
 		setupCarousel();
 		setupCurrencySpinner();
-		setupInputListeners();
 		setupButtonListeners();
 		observeViewModel();
 	}
 
+	@Override
+	protected InsetType getInsetType() {
+		return InsetType.TOP;
+	}
+
 	private void setupCarousel() {
 		if (getContext() == null || binding == null) return;
-		// Initialize with an empty list; adapter will be updated by LiveData from ViewModel
 		selectedImagesAdapter = new SelectedImagesCarouselAdapter(new ArrayList<>(), uriToRemove -> {
-			viewModel.removeSelectedImageUri(uriToRemove); // Tell ViewModel to remove
+			viewModel.removeSelectedImageUri(uriToRemove);
 			Toast.makeText(getContext(), "Image removed", Toast.LENGTH_SHORT).show();
-			// updateCarouselVisibility will be called by the LiveData observer
 		});
 		binding.carouselSelectedImages.setLayoutManager(new CarouselLayoutManager());
 		CarouselSnapHelper snapHelper = new CarouselSnapHelper();
 		snapHelper.attachToRecyclerView(binding.carouselSelectedImages);
 		binding.carouselSelectedImages.setAdapter(selectedImagesAdapter);
-		updateCarouselVisibility(viewModel.selectedImageUris.getValue()); // Initial visibility
+		updateCarouselVisibility(viewModel.selectedImageUris.getValue());
 	}
 
 	private void updateCarouselVisibility(@Nullable List<Uri> uris) {
@@ -137,46 +132,15 @@ public class CreatePostFragment extends BaseFragment {
 
 	private void setupCurrencySpinner() {
 		if (binding == null || getContext() == null) return;
-		String[] currencies = new String[]{"USD", "EUR", "CHF", "GBP", "JPY", "CAD"};
+		String[] currencies = new String[]{"USD", "EUR", "CHF"};
 		ArrayAdapter<String> adapter = new ArrayAdapter<>(
 				requireContext(),
 				android.R.layout.simple_dropdown_item_1line,
 				currencies
 		);
 		binding.autocompleteCurrency.setAdapter(adapter);
-		// Set initial value from ViewModel or default
-		String currentCurrency = viewModel.baseOfferCurrency.getValue();
-		binding.autocompleteCurrency.setText(currentCurrency != null ? currentCurrency : "USD", false);
+		binding.autocompleteCurrency.setText("USD", false);
 	}
-
-	private void setupInputListeners() {
-		if (binding == null) return;
-		binding.editTextRawText.addTextChangedListener(createTextWatcher(viewModel::onRawTextChanged));
-		binding.editTextBaseOffer.addTextChangedListener(createTextWatcher(viewModel::onBaseOfferPriceChanged));
-		binding.autocompleteCurrency.addTextChangedListener(createTextWatcher(viewModel::onBaseOfferCurrencyChanged));
-	}
-
-	private TextWatcher createTextWatcher(TextChangeCallback callback) {
-		return new TextWatcher() {
-			@Override
-			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-			}
-
-			@Override
-			public void onTextChanged(CharSequence s, int start, int before, int count) {
-				callback.onTextChanged(s.toString());
-			}
-
-			@Override
-			public void afterTextChanged(Editable s) {
-			}
-		};
-	}
-
-	interface TextChangeCallback {
-		void onTextChanged(String text);
-	}
-
 
 	private void setupButtonListeners() {
 		if (binding == null) return;
@@ -189,9 +153,10 @@ public class CreatePostFragment extends BaseFragment {
 		});
 
 		binding.buttonToolbarCreatePost.setOnClickListener(v -> {
-			Log.d(TAG, "Toolbar Create Post button clicked.");
-			// ViewModel now uses its internal state for location and image URIs
-			viewModel.onCreatePostClicked();
+			String rawText = binding.editTextRawText.getText().toString();
+			String price = binding.editTextBaseOffer.getText().toString();
+			String currency = binding.autocompleteCurrency.getText().toString();
+			viewModel.onCreatePostClicked(rawText, price, currency);
 		});
 	}
 
@@ -206,15 +171,13 @@ public class CreatePostFragment extends BaseFragment {
 		});
 
 		viewModel.operationError.observe(getViewLifecycleOwner(), event -> {
-			if (binding == null || event == null) return;
 			String errorMessage = event.getContentIfNotHandled();
 			if (errorMessage != null) {
-				Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+				Toast.makeText(getContext(), "Error: " + errorMessage, Toast.LENGTH_LONG).show();
 			}
 		});
 
 		viewModel.successMessage.observe(getViewLifecycleOwner(), event -> {
-			if (binding == null || event == null) return;
 			String message = event.getContentIfNotHandled();
 			if (message != null) {
 				Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
@@ -222,55 +185,15 @@ public class CreatePostFragment extends BaseFragment {
 		});
 
 		viewModel.navigationCommand.observe(getViewLifecycleOwner(), event -> {
-			if (binding == null || event == null) return;
 			NavigationRoute route = event.getContentIfNotHandled();
 			if (route != null) {
-				Log.d(TAG, "Navigation command received: " + route.getClass().getSimpleName());
-				if (route instanceof NavigationRoute.Map || route.getClass().getSimpleName().contains("Map")) {
-					NavHostFragment.findNavController(this).popBackStack();
-				} else {
-					navigator.navigate(route);
-				}
+				NavHostFragment.findNavController(this).popBackStack();
 			}
 		});
 
-		// Observe currentListerLiveData to know if user is logged in
-		viewModel.currentListerLiveData.observe(getViewLifecycleOwner(), lister -> {
-			if (binding == null) return;
-			MaterialButton createPostButton = binding.buttonToolbarCreatePost;
-			if (lister == null) {
-				Log.w(TAG, "Lister is null. Disabling create post button.");
-				createPostButton.setEnabled(false);
-				Toast.makeText(getContext(), "Please log in to create a post.", Toast.LENGTH_LONG).show();
-			}
-			// Further enabling based on location is handled by observing postCreationLocation
-		});
-
-		// Observe the derived postCreationLocation from ViewModel
-		viewModel.postCreationLocation.observe(getViewLifecycleOwner(), locationData -> {
-			if (binding == null) return;
-			MaterialButton createPostButton = binding.buttonToolbarCreatePost;
-			// Fragment no longer needs to store postCreationLocation locally for submission.
-			// It just uses this observer to enable/disable the button.
-			if (locationData != null && locationData.latitude != null && locationData.longitude != null) {
-				Log.d(TAG, "ViewModel provided postCreationLocation: " + locationData);
-				if (viewModel.currentListerLiveData.getValue() != null) {
-					createPostButton.setEnabled(true);
-				}
-			} else {
-				Log.w(TAG, "ViewModel provided null or invalid postCreationLocation.");
-				createPostButton.setEnabled(false);
-				if (viewModel.currentListerLiveData.getValue() != null) { // Only show if user is logged in but location is missing
-					Toast.makeText(getContext(), "Your default location isn't set. Please visit the map screen.", Toast.LENGTH_LONG).show();
-				}
-			}
-		});
-
-		// Observe selectedImageUris from ViewModel to update the carousel adapter
 		viewModel.selectedImageUris.observe(getViewLifecycleOwner(), uris -> {
 			if (selectedImagesAdapter != null) {
-				Log.d(TAG, "Updating carousel adapter with URIs from ViewModel, count: " + (uris != null ? uris.size() : 0));
-				selectedImagesAdapter.updateUris(uris != null ? uris : new ArrayList<>()); // Changed from submitList
+				selectedImagesAdapter.updateUris(uris != null ? uris : new ArrayList<>());
 				updateCarouselVisibility(uris);
 			}
 		});
@@ -279,6 +202,5 @@ public class CreatePostFragment extends BaseFragment {
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView();
-		binding = null;
 	}
 }

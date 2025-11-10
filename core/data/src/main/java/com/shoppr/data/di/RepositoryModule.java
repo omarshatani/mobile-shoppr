@@ -1,17 +1,26 @@
 package com.shoppr.data.di;
 
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.functions.FirebaseFunctions;
 import com.shoppr.data.datasource.FirebaseAuthDataSourceImpl;
+import com.shoppr.data.datasource.FirebaseFunctionsDataSourceImpl;
+import com.shoppr.data.datasource.FirebaseStorageDataSourceImpl;
+import com.shoppr.data.datasource.FirestoreFeedbackDataSourceImpl;
 import com.shoppr.data.datasource.FirestorePostDataSourceImpl;
+import com.shoppr.data.datasource.FirestoreRequestDataSourceImpl;
+import com.shoppr.data.datasource.FirestoreTransactionDataSourceImpl;
 import com.shoppr.data.datasource.FirestoreUserDataSourceImpl;
 import com.shoppr.data.repository.AuthenticationRepositoryImpl;
+import com.shoppr.data.repository.FeedbackRepositoryImpl;
 import com.shoppr.data.repository.LLMRepositoryImpl;
 import com.shoppr.data.repository.PostRepositoryImpl;
+import com.shoppr.data.repository.RequestRepositoryImpl;
+import com.shoppr.data.repository.TransactionRepositoryImpl;
 import com.shoppr.data.repository.UserRepositoryImpl;
 import com.shoppr.domain.repository.AuthenticationRepository;
+import com.shoppr.domain.repository.FeedbackRepository;
 import com.shoppr.domain.repository.LLMRepository;
 import com.shoppr.domain.repository.PostRepository;
+import com.shoppr.domain.repository.RequestRepository;
+import com.shoppr.domain.repository.TransactionRepository;
 import com.shoppr.domain.repository.UserRepository;
 
 import javax.inject.Singleton;
@@ -33,20 +42,37 @@ public class RepositoryModule {
 
 	@Provides
 	@Singleton
-	public UserRepository provideUserRepository() {
-		return new UserRepositoryImpl(new FirestoreUserDataSourceImpl(FirebaseFirestore.getInstance()));
+	public UserRepository provideUserRepository(FirestoreUserDataSourceImpl firestoreUserDataSourceImpl, FirebaseAuthDataSourceImpl firebaseAuthDataSourceImpl) {
+		return new UserRepositoryImpl(firestoreUserDataSourceImpl, firebaseAuthDataSourceImpl);
 	}
 
 	@Provides
 	@Singleton
-	public PostRepository providePostRepository() {
-		return new PostRepositoryImpl(new FirestorePostDataSourceImpl(FirebaseFirestore.getInstance()));
+	public PostRepository providePostRepository(FirestorePostDataSourceImpl firestoreUserDataSourceImpl, FirebaseStorageDataSourceImpl firebaseStorageDataSourceImpl) {
+		return new PostRepositoryImpl(firestoreUserDataSourceImpl, firebaseStorageDataSourceImpl);
 	}
 
 	@Provides
 	@Singleton
-	public LLMRepository provideLLMRepository() {
-		return new LLMRepositoryImpl(FirebaseFunctions.getInstance());
+	public LLMRepository provideLLMRepository(FirebaseFunctionsDataSourceImpl firebaseFunctionsDataSourceImpl) {
+		return new LLMRepositoryImpl(firebaseFunctionsDataSourceImpl);
 	}
 
+	@Provides
+	@Singleton
+	public RequestRepository provideRequestRepository(FirestoreRequestDataSourceImpl firestoreRequestDataSourceImpl) {
+		return new RequestRepositoryImpl(firestoreRequestDataSourceImpl);
+	}
+
+	@Provides
+	@Singleton
+	public TransactionRepository provideTransactionRepository(FirestoreTransactionDataSourceImpl firestoreTransactionDataSourceImpl) {
+		return new TransactionRepositoryImpl(firestoreTransactionDataSourceImpl);
+	}
+
+	@Provides
+	@Singleton
+	public FeedbackRepository provideFeedbackRepository(FirestoreFeedbackDataSourceImpl firestoreFeedbackDataSourceImpl) {
+		return new FeedbackRepositoryImpl(firestoreFeedbackDataSourceImpl);
+	}
 }

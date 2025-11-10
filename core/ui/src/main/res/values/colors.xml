@@ -79,4 +79,19 @@
     <color name="md_theme_dark_surfaceContainer">#211F26</color>
     <color name="md_theme_dark_surfaceContainerHigh">#2B2931</color>
     <color name="md_theme_dark_surfaceContainerHighest">#36343B</color>
+
+    <color name="colorSuccessContainer">#C8E6C9</color>
+    <color name="color_background_pending">#cbdaff</color>
+    <color name="color_text_pending">#2e74ff</color>
+    <color name="color_background_counter_offer">#879eff</color>
+    <color name="color_text_counter_offer">#e5eaff</color>
+    <color name="color_background_completed">#acff9f</color>
+    <color name="color_text_completed">#299d29</color>
+    <color name="color_background_accepted">#81d383</color>
+    <color name="color_text_accepted">#346834</color>
+    <color name="color_accept_offer_background">#2ad32a</color>
+    <color name="color_background_rejected">#ffb5b8</color>
+    <color name="color_reject_offer_background">#e62c4f</color>
+    <color name="color_text_rejected">#e62c4f</color>
+
 </resources>

@@ -3,14 +3,32 @@
     <string name="settings_header">Settings</string>
     <string name="support_header">Support</string>
 
-    <string name="menu_contact">Contact</string>
-    <string name="menu_location">Location</string>
-    <string name="menu_barcode">Barcode</string>
-
-    <string name="menu_likes_coffee">Likes Coffee With Milk</string>
-    <string name="menu_points">Points</string>
-    <string name="menu_visit_history">Visit</string>
-    <string name="menu_calendar">Calendar</string>
+    <string name="menu_personal_information">Personal information</string>">
+    <string name="menu_my_posts">Messages</string>
+    <string name="menu_favorites">Favorites</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_help">Need help?</string>
 
     <string name="logout">Logout</string>
+
+    <string name="add_to_favorites">Add to favorites</string>
+    <string name="favorite">Favorite</string>
+    <string name="post_image">Post image</string>
+    <string name="in_favorites">In Favorites</string>
+    <string name="guest">Guest</string>
+    <string name="make_an_offer">Make an Offer</string>
+    <string name="offer_made">Offer sent</string>
+    <string name="edit_offer">Edit Offer</string>
+
+    <string name="your_offer">Your Offer</string>
+    <string name="their_offer">Their Offer</string>
+    <string name="add_a_note_optional">Add a Note (Optional)</string>
+    <string name="update_offer">Update Offer</string>
+    <string name="submit_offer">Submit Offer</string>
+    <string name="cancel">Cancel</string>
+    <string name="withdraw_offer">Withdraw Offer</string>
+    <string name="no_requests_yet">No requests yet</string>
+    <string name="your_sent_and_received_offers_will_appear_here">Your sent and received offers will appear here.</string>
+    <string name="latest_offer">Latest offer</string>
+    <string name="propose_an_offer">Propose</string>
 </resources>

@@ -1,0 +1,100 @@
+package com.shoppr.post;
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.NavigationUI;
+
+import com.google.android.material.chip.Chip;
+import com.shoppr.post.databinding.FragmentPostDetailBinding;
+import com.shoppr.ui.BaseFragment;
+import com.shoppr.ui.utils.FormattingUtils;
+import com.shoppr.ui.utils.ImageLoader;
+
+import java.util.List;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
+public class PostDetailFragment extends BaseFragment<FragmentPostDetailBinding> {
+
+	private PostDetailViewModel viewModel;
+
+	@Override
+	protected FragmentPostDetailBinding inflateBinding(@NonNull LayoutInflater inflater, @Nullable ViewGroup container) {
+		return FragmentPostDetailBinding.inflate(inflater, container, false);
+	}
+
+	@Override
+	public void onCreate(@Nullable Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		viewModel = new ViewModelProvider(this).get(PostDetailViewModel.class);
+	}
+
+	@Override
+	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+		setupToolbar();
+
+		String postId = PostDetailFragmentArgs.fromBundle(getArguments()).getPostId();
+		viewModel.loadPostDetails(postId);
+
+		observeViewModel();
+	}
+
+	@Override
+	protected InsetType getInsetType() {
+		return InsetType.TOP;
+	}
+
+	private void setupToolbar() {
+		NavController navController = NavHostFragment.findNavController(this);
+		NavigationUI.setupWithNavController(binding.topAppBar, navController);
+	}
+
+	private void observeViewModel() {
+		viewModel.getSelectedPost().observe(getViewLifecycleOwner(), post -> {
+			if (post != null) {
+				binding.detailPostHeadline.setText(post.getTitle());
+				binding.detailPostDescription.setText(post.getDescription());
+				binding.detailPostPrice.setText(String.format("%s", FormattingUtils.formatCurrency(post.getCurrency(), Double.parseDouble(post.getPrice()))));
+
+				binding.detailChipGroupCategory.removeAllViews();
+				List<String> categories = post.getCategories();
+				if (categories != null && !categories.isEmpty()) {
+					binding.detailChipGroupCategory.setVisibility(View.VISIBLE);
+					for (String categoryName : categories) {
+						Chip chip = new Chip(getContext());
+						chip.setText(categoryName);
+						binding.detailChipGroupCategory.addView(chip);
+					}
+				} else {
+					binding.detailChipGroupCategory.setVisibility(View.GONE);
+				}
+
+				if (post.getLister() != null) {
+					binding.detailListerName.setText(String.format("by %s", post.getLister().getName()));
+					binding.detailListerName.setVisibility(View.VISIBLE);
+				} else {
+					binding.detailListerName.setVisibility(View.GONE);
+				}
+
+				String imageUrl = (post.getImageUrl() != null && !post.getImageUrl().isEmpty()) ? post.getImageUrl().get(0) : null;
+				ImageLoader.loadImage(binding.detailPostImage, imageUrl);
+			}
+		});
+	}
+
+	@Override
+	public void onDestroyView() {
+		super.onDestroyView();
+		binding = null;
+	}
+}

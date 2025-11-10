@@ -1,21 +1,66 @@
 package com.shoppr.domain.datasource;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.shoppr.model.User;
 
 public interface FirestoreUserDataSource {
-    interface FirestoreOperationCallbacks {
+
+    /**
+     * Callbacks for operations that return a full User object.
+     */
+    interface UserCallbacks {
         void onSuccess(@NonNull User user);
-
         void onError(@NonNull String message);
-
-        void onNotFound();
     }
 
-    void getUser(@NonNull String uid, @NonNull FirestoreOperationCallbacks callbacks);
+    /**
+     * Callbacks for simple success/error operations.
+     */
+    interface OperationCallbacks {
+        void onSuccess();
 
-    void createUser(@NonNull User user, @NonNull FirestoreOperationCallbacks callbacks); // Can be used for initial create
+        void onError(@NonNull String message);
+    }
 
-    void updateUser(@NonNull User user, @NonNull FirestoreOperationCallbacks callbacks); // For updates, including location
+    interface GetUserByIdCallbacks {
+        void onSuccess(@Nullable User user);
+
+        void onError(@NonNull String message);
+    }
+
+    /**
+     * Fetches a user profile from Firestore. If it doesn't exist, it creates one.
+     */
+    void getOrCreateUserProfile(
+        @NonNull String uid,
+        @Nullable String displayName,
+        @Nullable String email,
+        @Nullable String photoUrl,
+        @NonNull UserCallbacks callbacks
+    );
+
+    /**
+     * Updates the location fields for a specific user.
+     */
+    void updateUserLocation(
+        @NonNull String uid,
+        double latitude,
+        double longitude,
+        @Nullable String addressName,
+        @NonNull OperationCallbacks callbacks
+    );
+
+    /**
+     * Atomically adds or removes a postId from the user's favoritePosts list.
+     */
+    void updateUserFavorites(
+        @NonNull String uid,
+        @NonNull String postId,
+        boolean shouldAdd,
+        @NonNull OperationCallbacks callbacks
+    );
+
+    void getUserById(String userId, @NonNull GetUserByIdCallbacks callbacks);
 }

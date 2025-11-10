@@ -2,32 +2,23 @@ package com.shoppr.domain.usecase;
 
 import androidx.lifecycle.LiveData;
 
-import com.shoppr.model.Event;
 import com.shoppr.model.User;
 
 public interface GetCurrentUserUseCase {
-    /**
-     * Gets a LiveData stream that emits the full User domain object (including profile details
-     * from Firestore and last known location) when a user is authenticated and their
-     * profile is ready. Emits null if no user is authenticated or if profile
-     * retrieval/creation fails.
-     */
+
+	/**
+	 * Returns a LiveData object that emits the full User profile from Firestore.
+	 * This LiveData will automatically update whenever the user's profile changes.
+	 */
     LiveData<User> getFullUserProfile();
 
     /**
-     * Exposes errors that might occur during the profile fetching/creation part
-     * that is orchestrated by this use case.
-     */
-    LiveData<Event<String>> getProfileErrorEvents();
+		 * Starts observing the user's profile for real-time updates.
+		 */
+		void startObserving();
 
     /**
-     * Call this when the ViewModel observing this use case is ready to receive updates.
-     * This will trigger the underlying auth observation and profile fetching if it's not already active.
-     */
-    void startObserving();
-
-    /**
-     * Call this when the ViewModel is no longer interested in updates to conserve resources.
-     */
-    void stopObserving();
+		 * Stops observing the user's profile to prevent memory leaks.
+		 */
+		void stopObserving();
 }

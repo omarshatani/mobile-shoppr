@@ -1,21 +1,19 @@
 package com.shoppr.domain.usecase;
 
+import android.net.Uri;
+
 import androidx.annotation.NonNull;
 
 import com.shoppr.model.Post;
 
-public interface SavePostUseCase {
-    interface SavePostCallbacks {
-        void onSaveSuccess();
+import java.util.List;
 
-        void onSaveError(@NonNull String message);
+public interface SavePostUseCase {
+    interface SavePostCallback {
+        void onSuccess(@NonNull Post createdPost);
+
+        void onError(String message);
     }
 
-    /**
-     * Executes the post saving logic.
-     *
-     * @param post      The Post object to be saved.
-     * @param callbacks Callbacks to signal completion.
-     */
-    void execute(@NonNull Post post, @NonNull SavePostCallbacks callbacks);
+    void execute(Post post, List<Uri> imageUris, SavePostCallback callback);
 }

@@ -4,69 +4,58 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 
+import com.shoppr.model.ListingState;
 import com.shoppr.model.Post;
 
 import java.util.List;
 
 public interface FirestorePostDataSource {
-    interface FirestorePostCallbacks {
-        void onSuccess();
-
-        void onError(@NonNull String message);
-    }
-
-    interface FirestoreGetPostCallbacks {
-        void onSuccess(@NonNull Post post);
-
-        void onError(@NonNull String message);
-    }
 
     /**
-     * Saves a post to Firestore.
-     *
-     * @param post      The Post object to save.
-     * @param callbacks Callbacks for the operation.
+     * Callbacks for operations that return a single Post.
      */
-    void savePost(@NonNull Post post, @NonNull FirestorePostCallbacks callbacks);
-
-
-    /**
-		 * Callbacks for retrieving a single post by its ID from Firestore.
-		 */
-		interface FirestoreGetPostByIdCallbacks {
+    interface PostOperationCallbacks {
         void onSuccess(@NonNull Post post);
         void onError(@NonNull String message);
         void onNotFound();
     }
-    void getPostById(@NonNull String postId, @NonNull FirestoreGetPostByIdCallbacks callbacks);
-
 
     /**
-     * Updates an existing post in Firestore.
-     *
-     * @param post The Post object with updated data.
+     * Callbacks for simple success/error operations.
      */
-    void updatePost(@NonNull Post post);
+    interface GeneralCallbacks {
+        void onSuccess();
+        void onError(@NonNull String message);
+    }
 
     /**
-     * Deletes a post from Firestore by its ID.
-     *
-     * @param postId The ID of the post to delete.
+     * Fetches all posts for a general feed, excluding posts by the current user.
      */
-    void deletePost(@NonNull String postId);
+    LiveData<List<Post>> getFeedPosts(@Nullable String currentUserIdToExclude);
 
     /**
-     * Fetches posts from Firestore for map display.
-     * @param currentUserId The ID of the currently logged-in user, to potentially exclude their posts.
-     * @return LiveData holding a list of Post objects.
+     * Fetches all posts created by a specific user.
      */
-    LiveData<List<Post>> getPostsForMap(@Nullable String currentUserId);
+    LiveData<List<Post>> getPostsForUser(@NonNull String userId);
 
     /**
-     * Fetches posts from Firestore created by a specific user.
-     *
-     * @param userId The ID of the user whose posts are to be fetched.
-     * @return LiveData holding a list of Post objects.
+     * Fetches a list of posts based on a list of post IDs.
      */
-    LiveData<List<Post>> getPostsCreatedByUser(@NonNull String userId);
+    LiveData<List<Post>> getPostsByIds(@NonNull List<String> postIds);
+
+    /**
+     * Fetches a single post by its ID.
+     */
+    void getPostById(@NonNull String postId, @NonNull PostOperationCallbacks callbacks);
+
+    /**
+     * Creates a new post document in Firestore.
+     */
+    void createPost(@NonNull Post post, @NonNull PostOperationCallbacks callbacks);
+
+    /**
+     * Updates the state of a post in Firestore.
+     */
+    void updatePostState(@NonNull String postId, @NonNull ListingState newListingState, @NonNull GeneralCallbacks callbacks);
+
 }

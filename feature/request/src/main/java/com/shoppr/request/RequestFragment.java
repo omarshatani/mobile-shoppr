@@ -7,47 +7,72 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.view.ViewCompat;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.shoppr.request.adapter.RequestsAdapter;
 import com.shoppr.request.databinding.FragmentRequestBinding;
 import com.shoppr.ui.BaseFragment;
-import com.shoppr.ui.utils.InsetUtils;
 
-public class RequestFragment extends BaseFragment {
+import dagger.hilt.android.AndroidEntryPoint;
 
-	private static final String TAG = "RequestFragment";
-	private FragmentRequestBinding binding;
+@AndroidEntryPoint
+public class RequestFragment extends BaseFragment<FragmentRequestBinding> implements RequestsAdapter.OnRequestClickListener {
+
 	private RequestViewModel viewModel;
-
-	public static RequestFragment newInstance() {
-		return new RequestFragment();
-	}
-
-	public RequestFragment() {}
+	private RequestsAdapter requestsAdapter;
 
 	@Override
-	public void onCreate(@Nullable Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		viewModel = new ViewModelProvider(this).get(RequestViewModel.class);
+	protected FragmentRequestBinding inflateBinding(@NonNull LayoutInflater inflater, @Nullable ViewGroup container) {
+		return FragmentRequestBinding.inflate(inflater, container, false);
 	}
 
-	@Override
-	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-													 @Nullable Bundle savedInstanceState) {
-		binding = FragmentRequestBinding.inflate(inflater, container, false);
-		return binding.getRoot();
-	}
 
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
+
+		viewModel = new ViewModelProvider(this).get(RequestViewModel.class);
+
+		setupRecyclerView();
+		observeViewModel();
+	}
+
+	private void setupRecyclerView() {
+		requestsAdapter = new RequestsAdapter(this); // Pass `this` as the listener
+		binding.recyclerViewRequests.setLayoutManager(new LinearLayoutManager(getContext()));
+		binding.recyclerViewRequests.setAdapter(requestsAdapter);
+	}
+
+	private void observeViewModel() {
+		viewModel.currentUser.observe(getViewLifecycleOwner(), user -> {
+			if (user != null) {
+				requestsAdapter.setCurrentUserId(user.getId());
+			}
+		});
+
+		viewModel.getRequests().observe(getViewLifecycleOwner(), requestUiModels -> {
+			if (requestUiModels != null && !requestUiModels.isEmpty()) {
+				requestsAdapter.submitList(requestUiModels);
+				binding.recyclerViewRequests.setVisibility(View.VISIBLE);
+				binding.viewEmptyState.setVisibility(View.GONE);
+			} else {
+				binding.recyclerViewRequests.setVisibility(View.GONE);
+				binding.viewEmptyState.setVisibility(View.VISIBLE);
+			}
+		});
 	}
 
 	@Override
-	public void onDestroy() {
-		super.onDestroy();
-		binding = null;
+	public InsetType getInsetType() {
+		return InsetType.TOP_AND_BOTTOM;
 	}
+
+	@Override
+	public void onRequestClicked(RequestUiModel requestUiModel) {
+		String requestId = requestUiModel.getRequest().getId();
+		NavHostFragment.findNavController(this).navigate(RequestFragmentDirections.actionRequestFragmentToRequestDetailFragment(requestId));
+	}
+
 }

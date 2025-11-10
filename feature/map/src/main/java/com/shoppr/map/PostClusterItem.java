@@ -10,7 +10,7 @@ class PostClusterItem implements com.google.maps.android.clustering.ClusterItem 
 	private final LatLng position;
 	private final String title;
 	private final String snippet;
-	public final Post post; // Store the original Post object
+	public final Post post;
 
 	public PostClusterItem(double lat, double lng, String title, String snippet, Post post) {
 		this.position = new LatLng(lat, lng);
@@ -37,7 +37,6 @@ class PostClusterItem implements com.google.maps.android.clustering.ClusterItem 
 		return snippet;
 	}
 
-	// getZIndex is optional for ClusterItem, added for completeness
 	@Nullable
 	public Float getZIndex() { return 0.0f; }
 }

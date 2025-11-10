@@ -2,35 +2,54 @@ package com.shoppr.domain.repository;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.LiveData;
 
 import com.shoppr.model.User;
 
 public interface UserRepository {
-    interface ProfileOperationCallbacks {
-        void onSuccess(@NonNull User user);
 
-        void onError(@NonNull String message);
-    }
+    LiveData<User> getFullUserProfile();
 
-    void getOrCreateUserProfile(
-            @NonNull String uid,
-            @Nullable String displayName,
-            @Nullable String email,
-            @Nullable String photoUrl,
-            @NonNull ProfileOperationCallbacks callbacks
-    );
-
-    interface LocationUpdateCallbacks {
+    interface OperationCallbacks {
         void onSuccess();
 
         void onError(@NonNull String message);
     }
 
-    void updateUserDefaultLocation(
-            @NonNull String uid,
-            double latitude,
-            double longitude,
-            @Nullable String addressName,
-            @NonNull LocationUpdateCallbacks callbacks
+    interface ProfileOperationCallbacks {
+        void onSuccess(@NonNull User user);
+        void onError(@NonNull String message);
+    }
+
+	interface GetUserByIdCallbacks {
+		void onSuccess(@Nullable User user);
+
+		void onError(@NonNull String message);
+	}
+
+    void startObservingUserProfile();
+
+    void stopObservingUserProfile();
+
+    void getOrCreateUserProfile(
+        @NonNull String uid,
+        @Nullable String displayName,
+        @Nullable String email,
+        @Nullable String photoUrl,
+        @NonNull ProfileOperationCallbacks callbacks
     );
+
+    void updateUserDefaultLocation(
+        double latitude,
+        double longitude,
+        @Nullable String addressName,
+        @NonNull OperationCallbacks callbacks
+    );
+
+    void toggleFavoriteStatus(
+        @NonNull String postId,
+        @NonNull OperationCallbacks callbacks
+    );
+
+	void getUserById(String userId, @NonNull GetUserByIdCallbacks callbacks);
 }

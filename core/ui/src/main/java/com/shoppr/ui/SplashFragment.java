@@ -43,12 +43,12 @@ public class SplashFragment extends Fragment {
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
+
 		observeNavigation();
 	}
 
 	private void observeNavigation() {
 		viewModel.navigation.observe(getViewLifecycleOwner(), new Event.EventObserver<>(content -> {
-			// This lambda is only called once per event
 			Log.d(TAG, "Received navigation command: " + content.getClass().getSimpleName());
 			if (navigator != null) {
 				navigator.navigate(content);

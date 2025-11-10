@@ -1,40 +1,43 @@
 package com.shoppr.navigation;
 
-public abstract class NavigationRoute {
+public interface NavigationRoute {
+	// Sealed interface is a modern Java feature for creating restricted class hierarchies.
+	// It's like an advanced enum.
 
-	private NavigationRoute() {
+	// --- Initial App Flow ---
+	// From Splash screen to the two possible starting points.
+	final class SplashToLogin implements NavigationRoute {
 	}
 
-	public static final class SplashToLogin extends NavigationRoute {
+	final class SplashToMap implements NavigationRoute {
+	} // Note: In our refactor, this now goes to MainFragment
+
+	// --- Login Flow ---
+	// From the Login screen to the main part of the app.
+	final class LoginToMap implements NavigationRoute {
+	} // This also goes to MainFragment
+
+	// --- Global Actions from Anywhere ---
+	// These routes correspond to global actions in your main_nav_graph.
+	// They can be called from any screen to navigate to a top-level destination.
+
+	final class ProfileToLogin implements NavigationRoute {
+	} // For handling logout
+
+	final class CreatePost implements NavigationRoute {
+	} // To open the create post screen
+
+	final class CreatePostToMap implements NavigationRoute {
+	} // To return to the map screen
+
+	final class ProfileToFavorites implements NavigationRoute {
 	}
 
-	public static final class SplashToMap extends NavigationRoute {
+	final class Request implements NavigationRoute {
+
 	}
 
-	public static final class Login extends NavigationRoute {
-	}
-
-	public static final class LoginToMap extends NavigationRoute {
-	}
-
-	public static final class Checkout extends NavigationRoute {
-	}
-
-	public static final class Map extends NavigationRoute {
-	}
-
-	public static final class Posts extends NavigationRoute {
-	}
-
-	public static final class PostsToCreatePost extends NavigationRoute {}
-
-	public static final class Requests extends NavigationRoute {
-	}
-
-	public static final class Profile extends NavigationRoute {
-	}
-
-	public static final class ProfileToLogin extends NavigationRoute {
+	final class RequestToCheckout implements NavigationRoute {
 	}
 
 }

@@ -1,7 +1,15 @@
 package com.shoppr.navigation;
 
-public interface Navigator {
-    void navigate(NavigationRoute route);
+import android.os.Bundle;
 
-    void goBack();
+import androidx.navigation.NavController;
+
+public interface Navigator {
+	void setNavController(NavController navController);
+
+	void navigate(NavigationRoute route);
+
+	void navigate(NavigationRoute route, Bundle args);
+
+	void goBack();
 }

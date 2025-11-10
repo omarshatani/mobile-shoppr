@@ -1,6 +1,6 @@
 package com.shoppr.data.usecase;
 
-import android.util.Log;
+import android.net.Uri;
 
 import androidx.annotation.NonNull;
 
@@ -8,10 +8,11 @@ import com.shoppr.domain.repository.PostRepository;
 import com.shoppr.domain.usecase.SavePostUseCase;
 import com.shoppr.model.Post;
 
+import java.util.List;
+
 import javax.inject.Inject;
 
 public class SavePostUseCaseImpl implements SavePostUseCase {
-	private static final String TAG = "SavePostUseCaseImpl";
 	private final PostRepository postRepository;
 
 	@Inject
@@ -20,22 +21,16 @@ public class SavePostUseCaseImpl implements SavePostUseCase {
 	}
 
 	@Override
-	public void execute(@NonNull Post post, @NonNull final SavePostCallbacks callbacks) {
-		Log.d(TAG, "Executing SavePostUseCase for post: " + post.getTitle());
-		// Add any business logic here before saving if needed
-		// e.g., validation, adding timestamps if not handled by repository/datasource
-
-		postRepository.savePost(post, new PostRepository.SavePostCallbacks() {
+	public void execute(Post post, List<Uri> imageUris, SavePostCallback callback) {
+		postRepository.createPost(post, imageUris, new PostRepository.PostCreationCallbacks() {
 			@Override
-			public void onSaveSuccess() {
-				Log.d(TAG, "PostRepository reported save success.");
-				callbacks.onSaveSuccess();
+			public void onSuccess(@NonNull Post createdPost) {
+				callback.onSuccess(createdPost);
 			}
 
 			@Override
-			public void onSaveError(@NonNull String message) {
-				Log.e(TAG, "PostRepository reported save error: " + message);
-				callbacks.onSaveError(message);
+			public void onError(String message) {
+				callback.onError(message);
 			}
 		});
 	}
